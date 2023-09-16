@@ -1,10 +1,5 @@
-import chisel3.stage.ChiselGeneratorAnnotation
-import circt.stage.{ChiselStage, FirtoolOption}
-import gcd.GCD
+import chisel3.{emitVerilog, fromIntToWidth}
+import systolic_array.{SystolicArray}
 object Main extends App {
-  (new ChiselStage).execute(
-    Array("--target", "systemverilog"),
-    Seq(ChiselGeneratorAnnotation(() => new GCD()),
-      FirtoolOption("--disable-all-randomization"))
-  )
+  emitVerilog(new SystolicArray())
 }
