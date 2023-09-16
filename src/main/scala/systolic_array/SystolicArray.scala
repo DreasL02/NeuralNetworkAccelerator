@@ -18,7 +18,7 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
   for (column <- 0 until horizontal){
     for(row <- 0 until vertical){
 
-      // ---- Inputs ----
+      //vertical inputs
       if(column == 0){
         //Take from buffer
         processingElements(0)(row).in_a := io.a(row)
@@ -26,6 +26,8 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
         //Take from previous PE
         processingElements(column)(row).in_a := processingElements(column-1)(row).out_a
       }
+
+      //horizontal inputs
       if (row == 0) {
         //Take from buffer
         processingElements(column)(0).in_b := io.b(column)
@@ -34,6 +36,7 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
         processingElements(column)(row).in_b := processingElements(column)(row-1).out_b
       }
 
+      //outputs
       io.c(i) := processingElements(column)(row).out_c
       i = i + 1
     }
