@@ -7,14 +7,13 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
     val a = Input(Vec(horizontal, UInt(w.W)))
     val b = Input(Vec(vertical, UInt(w.W)))
 
-    val c = Output(Vec(horizontal*vertical, UInt((w+w).W)))
+    val c = Output(Vec(horizontal,Vec(vertical, UInt((w+w).W))))
   })
 
   //https://github.com/ccelio/chisel-style-guide#vector-of-modules
 
   val processingElements = VecInit.fill(horizontal, vertical)(Module(new ProcessingElement(w)).io)
 
-  var i : Int = 0
   for (column <- 0 until horizontal){
     for(row <- 0 until vertical){
 
@@ -36,9 +35,8 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
         processingElements(column)(row).in_b := processingElements(column)(row-1).out_b
       }
 
-      //outputs
-      io.c(i) := processingElements(column)(row).out_c
-      i = i + 1
+      io.c(column)(row) := processingElements(column)(row).out_c
+
     }
   }
 

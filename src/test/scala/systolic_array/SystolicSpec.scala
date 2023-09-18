@@ -8,68 +8,88 @@ import chisel3.experimental.BundleLiterals._
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
 
-  def calculateMatrixMultiplication(v_a: Array[Array[Int]], v_b : Array[Array[Int]]): Array[Array[Int]] = {
-    val v_c : Array[Array[Int]] = Array.fill(v_a.length,v_b(0).length)(0)
-    for(i <- v_a.indices) {
-      for (j <- v_b.indices) {
+  def calculateMatrixMultiplication(m1: Array[Array[Int]], m2 : Array[Array[Int]]): Array[Array[Int]] = {
+    //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
+    val mr : Array[Array[Int]] = Array.fill(m1.length, m2(0).length)(0)
+    for(i <- m1.indices) {
+      for (j <- m2.indices) {
         var sum = 0
-        for (k <- v_b(0).indices) {
-          sum = sum + v_a(i)(k)*v_b(k)(j)
+        for (k <- m2(0).indices) {
+          sum = sum + m1(i)(k)*m2(k)(j)
         }
-        v_c(i)(j) = sum
+        mr(i)(j) = sum
       }
     }
-    v_c
+    mr
   }
 
+  def convertMatrixToMappedAMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
+    val m_a : Array[Array[Int]] = Array.fill(m(0).length, 2 * m.length)(0)
+    for (i <- m.indices) {
+      for (j <- m(0).indices) {
+        m_a(i)(j+(m.length-i)) = m(i)(j)
+      }
+    }
+    m_a
+  }
+  def convertMatrixToMappedBMatrix(m : Array[Array[Int]]): Array[Array[Int]] = {
+    val m_b: Array[Array[Int]] = Array.fill(2 * m(0).length, m.length)(0)
+    for(i <- m.indices){
+      for (j <- m(0).indices) {
+        m_b(i+(m(0).length-j))(j) = m(i)(j)
+      }
+    }
+    m_b
+  }
+
+  def matrixToString(m :Array[Array[Int]]) : String ={
+    var str = ""
+    for (i <- m.indices){
+      for(j <- m(0).indices){
+        str = str + "%d ".format(m(i)(j))
+      }
+      str = str + "\n"
+    }
+    str
+  }
 
   "SystolicArray should calculate a 2x2 * 2x2 matrix multiplication correctly in 4 cycles" in {
     test(new SystolicArray(w = 16, horizontal = 2,vertical = 2)) { dut =>
-      val values_in_a = Vector(2,2,3,3)
-      val values_in_b = Vector(1,3,5,6)
-      val values_in_c = Vector(12, 18, 18, 27)
+      val m1 = Array(Array(2,3), Array(4,5))
+      val m2 = Array(Array(1,3), Array(5,6))
+      val mr = calculateMatrixMultiplication(m1, m2)
+      /*
+      print(matrixToString(m1))
+      println("*")
+      print(matrixToString(m2))
+      println("=")
+      print(matrixToString(mr))
+      */
+      val mm1 = convertMatrixToMappedAMatrix(m1)
+      val mm2 = convertMatrixToMappedBMatrix(m2)
 
-      val a = Array.fill(2,4)(0)
-      val b = Array.fill(2,4)(0)
+      //print(matrixToString(mm1))
+      //print(matrixToString(mm2))
 
-      a(0)(0) = values_in_a(0)
-      a(1)(0) = values_in_a(1)
-      a(1)(1) = values_in_a(2)
-      a(0)(2) = values_in_a(3)
-
-      b(0)(0) = values_in_b(0)
-      b(1)(0) = values_in_b(1)
-      b(1)(1) = values_in_b(2)
-      b(0)(2) = values_in_b(3)
-
-      println("%d %d * %d %d = %d %d \n%d %d   %d %d   %d %d".format(
-        values_in_a(0), values_in_a(1),
-        values_in_b(0), values_in_b(1),
-        values_in_c(0), values_in_c(1),
-        values_in_a(2), values_in_a(3),
-        values_in_b(2), values_in_b(3),
-        values_in_c(2), values_in_c(3)
-      ))
-      println("CYCLE %d".format(0))
-      println("%d %d \n%d %d".format(
-        dut.io.c(0).peekInt(), dut.io.c(1).peekInt(),
-        dut.io.c(2).peekInt(), dut.io.c(3).peekInt()))
-      val cycles = 4
-      for (i <- 0 until cycles){
-        dut.io.a(0).poke(a(0)(i))
-        dut.io.a(1).poke(a(1)(i))
-
-        dut.io.b(0).poke(b(0)(i))
-        dut.io.b(1).poke(b(1)(i))
-
+      val max_number_of_cycles = m1.length*m2(0).length
+      for (cycle <- 0 until max_number_of_cycles){
+        for (i <- mm1.indices){
+          //println("i: %d j: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length-1-cycle)))
+          dut.io.a(i).poke(mm1(i)(mm1(0).length-1-cycle))
+        }
+        //println("----")
+        for (i <- mm2(0).indices) {
+          //println("i: %d j: %d v: %d".format(cycle, i, mm2(mm2.length - 1 - cycle)(i)))
+          dut.io.b(i).poke(mm2(mm2.length - 1 - cycle)(i))
+        }
+        //println("****")
         dut.clock.step()
-        println("CYCLE %d".format(i+1))
-        println("%d %d \n%d %d".format(
-          dut.io.c(0).peekInt(), dut.io.c(1).peekInt(),
-          dut.io.c(2).peekInt(), dut.io.c(3).peekInt()))
       }
-      for (i <- 0 until values_in_c.length) {
-        dut.io.c(i).expect(values_in_c(i))
+
+      for (i <- mr.indices) {
+        for (j <- mr(0).indices){
+          dut.io.c(j)(i).expect(mr(i)(j))
+        }
       }
     }
   }
