@@ -2,22 +2,22 @@ package systolic_array
 
 import chisel3._
 
-class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) extends Module{
+class SystolicArray(w : Int = 16, dimension : Int = 4) extends Module{
   val io = IO(new Bundle {
-    val a = Input(Vec(horizontal, UInt(w.W)))
-    val b = Input(Vec(vertical, UInt(w.W)))
+    val a = Input(Vec(dimension, UInt(w.W)))
+    val b = Input(Vec(dimension, UInt(w.W)))
 
-    val c = Output(Vec(horizontal,Vec(vertical, UInt((w+w).W))))
+    val c = Output(Vec(dimension,Vec(dimension, UInt((w+w).W))))
   })
 
   //https://github.com/ccelio/chisel-style-guide#vector-of-modules
 
-  val processingElements = VecInit.fill(horizontal, vertical)(Module(new ProcessingElement(w)).io)
+  val processingElements = VecInit.fill(dimension, dimension)(Module(new ProcessingElement(w)).io)
 
-  for (column <- 0 until horizontal){
-    for(row <- 0 until vertical){
+  for (column <- 0 until dimension){
+    for(row <- 0 until dimension){
 
-      //vertical inputs
+      //Vertical inputs
       if(column == 0){
         //Take from buffer
         processingElements(0)(row).in_a := io.a(row)
@@ -26,7 +26,7 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
         processingElements(column)(row).in_a := processingElements(column-1)(row).out_a
       }
 
-      //horizontal inputs
+      //Horizontal inputs
       if (row == 0) {
         //Take from buffer
         processingElements(column)(0).in_b := io.b(column)
@@ -36,8 +36,6 @@ class SystolicArray(w : Int = 16, horizontal : Int = 4, vertical : Int = 4) exte
       }
 
       io.c(column)(row) := processingElements(column)(row).out_c
-
     }
   }
-
 }

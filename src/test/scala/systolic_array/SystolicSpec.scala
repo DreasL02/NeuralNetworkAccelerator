@@ -33,6 +33,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
     }
     m_a
   }
+
   def convertMatrixToMappedBMatrix(m : Array[Array[Int]]): Array[Array[Int]] = {
     val m_b: Array[Array[Int]] = Array.fill(m(0).length * m(0).length, m.length)(0)
     for(i <- m.indices){
@@ -54,10 +55,10 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
     str
   }
 
-  "SystolicArray should calculate a 2x2 * 2x2 matrix multiplication correctly in 4 cycles" in {
-    test(new SystolicArray(w = 16, horizontal = 4,vertical = 4)) { dut =>
-      val m1 = Array(Array(20,3,3, 2), Array(4,5,5,2), Array(2, 2, 3,2), Array(2,4, 6,8))
-      val m2 = Array(Array(13,3,8,7), Array(15,6,2,5), Array(1, 8, 9, 4), Array(2,4, 6,8))
+  "SystolicArray should calculate a 4x4 * 4x4 matrix multiplication correctly" in {
+    test(new SystolicArray(w = 16, dimension = 3)) { dut =>
+      val m1 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
+      val m2 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
       val mr = calculateMatrixMultiplication(m1, m2)
 
       print(matrixToString(m1))
@@ -73,21 +74,18 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
       print(matrixToString(mm2))
 
       val max_number_of_cycles = mm1.length*mm2(0).length
-      println(mm1.indices)
-      println(mm1(0).indices)
-      println(max_number_of_cycles)
 
       for (cycle <- 0 until max_number_of_cycles){
         for (i <- mm1.indices){
-          println("c: %d i: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length-1-cycle)))
+          //println("c: %d i: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length-1-cycle)))
           dut.io.a(i).poke(mm1(i)(mm1(0).length-1-cycle))
         }
-        println("----")
+        //println("----")
         for (i <- mm2(0).indices) {
-          println("c: %d i: %d v: %d".format(cycle, i, mm2(mm2.length - 1 - cycle)(i)))
+          //println("c: %d i: %d v: %d".format(cycle, i, mm2(mm2.length - 1 - cycle)(i)))
           dut.io.b(i).poke(mm2(mm2.length - 1 - cycle)(i))
         }
-        println("****")
+        //println("****")
         dut.clock.step()
       }
 
