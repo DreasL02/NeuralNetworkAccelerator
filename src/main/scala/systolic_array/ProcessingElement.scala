@@ -9,7 +9,7 @@ class ProcessingElement(w : Int = 16) extends Module{
 
     val out_a = Output(UInt(w.W))
     val out_b = Output(UInt(w.W))
-    val out_c = Output(UInt((w+w).W)) //https://stackoverflow.com/questions/32721080/binary-multiplication-how-many-bits-is-a-product
+    val out_c = Output(UInt((w+w).W))
   })
 
   val a_reg = RegInit(0.U(w.W))

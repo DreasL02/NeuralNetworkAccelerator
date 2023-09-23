@@ -55,7 +55,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
     str
   }
 
-  "SystolicArray should calculate a 4x4 * 4x4 matrix multiplication correctly" in {
+  "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication correctly" in {
     test(new SystolicArray(w = 16, dimension = 3)) { dut =>
       val m1 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
       val m2 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
@@ -70,8 +70,8 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)
 
-      print(matrixToString(mm1))
-      print(matrixToString(mm2))
+      //print(matrixToString(mm1))
+      //print(matrixToString(mm2))
 
       val max_number_of_cycles = mm1.length*mm2(0).length
 
