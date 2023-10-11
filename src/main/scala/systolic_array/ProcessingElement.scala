@@ -5,12 +5,12 @@ import chisel3.util.log2Ceil
 //http://ecelabs.njit.edu/ece459/lab3.php
 class ProcessingElement(w : Int = 8) extends Module{
   val io = IO(new Bundle {
-    val in_a = Input(UInt(w.W))
-    val in_b = Input(UInt(w.W))
+    val aIn = Input(UInt(w.W))
+    val bIn = Input(UInt(w.W))
 
-    val out_a = Output(UInt(w.W))
-    val out_b = Output(UInt(w.W))
-    val out_c = Output(UInt(w.W))
+    val aOut = Output(UInt(w.W))
+    val bOut = Output(UInt(w.W))
+    val cOut = Output(UInt(w.W))
 
     val fixedPoint = Input(UInt(log2Ceil(w).W))
   })
@@ -20,16 +20,16 @@ class ProcessingElement(w : Int = 8) extends Module{
   val bReg = RegInit(0.U(w.W))
   val cReg = RegInit(0.U((w+w).W))
 
-  aReg := io.in_a
-  bReg := io.in_b
-  cReg := io.in_a * io.in_b + cReg
+  aReg := io.aIn
+  bReg := io.bIn
+  cReg := io.aIn * io.bIn + cReg
 
-  io.out_a := aReg
-  io.out_b := bReg
+  io.aOut := aReg
+  io.bOut := bReg
 
   rounder.io.input := cReg
   rounder.io.fixedPoint := io.fixedPoint
 
-  io.out_c := rounder.io.output
+  io.cOut := rounder.io.output
 }
 

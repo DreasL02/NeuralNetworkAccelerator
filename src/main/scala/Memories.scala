@@ -1,37 +1,37 @@
 import chisel3._
 import chisel3.util.log2Ceil
-class Memories(w : Int = 8, dimension : Int = 4, initial_data_memory_state : Array[Int], initial_weights_memory_state : Array[Int], initial_bias_memory_state : Array[Int], initial_config_memory_state : Array[Int]) extends Module{
+class Memories(w : Int = 8, dimension : Int = 4, initialDataMemoryState : Array[Int], initialWeightsMemoryState : Array[Int], initialBiasMemoryState : Array[Int], initialConfigMemoryState : Array[Int]) extends Module{
   val io = IO(new Bundle{
-    val data_address = Input(UInt(log2Ceil(initial_data_memory_state.length).W))
-    val weights_address = Input(UInt(log2Ceil(initial_weights_memory_state.length).W))
-    val bias_address = Input(UInt(log2Ceil(initial_bias_memory_state.length).W))
-    val config_address = Input(UInt(log2Ceil(initial_config_memory_state.length).W))
+    val dataAddress = Input(UInt(log2Ceil(initialDataMemoryState.length).W))
+    val weightsAddress = Input(UInt(log2Ceil(initialWeightsMemoryState.length).W))
+    val biasAddress = Input(UInt(log2Ceil(initialBiasMemoryState.length).W))
+    val configAddress = Input(UInt(log2Ceil(initialConfigMemoryState.length).W))
 
-    val data_read = Output(Vec(dimension, UInt(w.W)))
-    val weights_read = Output(Vec(dimension, UInt(w.W)))
-    val bias_read = Output(Vec(dimension, UInt(w.W)))
+    val dataRead = Output(Vec(dimension, UInt(w.W)))
+    val weightsRead = Output(Vec(dimension, UInt(w.W)))
+    val biasRead = Output(Vec(dimension, UInt(w.W)))
 
-    val config_read = Output(UInt((log2Ceil(w)+1).W))
+    val configRead = Output(UInt((log2Ceil(w)+1).W))
 
     val write = Input(Bool())
-    val data_write = Input(Vec(dimension, UInt(w.W)))
+    val dataWrite = Input(Vec(dimension, UInt(w.W)))
   })
 
-  val data_memory = RegInit(VecInit(initial_data_memory_state.toIndexedSeq.map(_.S(w.W).asUInt)))
-  val weights_memory = RegInit(VecInit(initial_weights_memory_state.toIndexedSeq.map(_.S(w.W).asUInt)))
-  val bias_memory = RegInit(VecInit(initial_bias_memory_state.toIndexedSeq.map(_.S(w.W).asUInt)))
+  val dataMemory = RegInit(VecInit(initialDataMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
+  val weightsMemory = RegInit(VecInit(initialWeightsMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
+  val biasMemory = RegInit(VecInit(initialBiasMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
 
-  val config_memory = RegInit(VecInit(initial_config_memory_state.toIndexedSeq.map(_.S((log2Ceil(w)+1).W).asUInt))) //fixed_point encoding + if signed
+  val configMemory = RegInit(VecInit(initialConfigMemoryState.toIndexedSeq.map(_.S((log2Ceil(w)+1).W).asUInt))) //fixed_point encoding + if signed
 
   for (i <- 0 until dimension) {
-    io.data_read(i) := data_memory(io.data_address+i.U)
-    io.weights_read(i) := weights_memory(io.weights_address+i.U)
-    io.bias_read(i) := bias_memory(io.bias_address+i.U)
+    io.dataRead(i) := dataMemory(io.dataAddress+i.U)
+    io.weightsRead(i) := weightsMemory(io.weightsAddress+i.U)
+    io.biasRead(i) := biasMemory(io.biasAddress+i.U)
 
     when(io.write) {
-      data_memory(io.data_address + i.U) := io.data_write(i)
+      dataMemory(io.dataAddress + i.U) := io.dataWrite(i)
     }
   }
 
-  io.config_read := config_memory(io.config_address)
+  io.configRead := configMemory(io.configAddress)
 }

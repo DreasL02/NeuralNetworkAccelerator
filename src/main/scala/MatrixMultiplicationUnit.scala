@@ -9,8 +9,8 @@ class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
   }
 
   val io = IO(new Bundle {
-    val inputs_load = Input(Bool())
-    val weights_load = Input(Bool())
+    val loadInputs = Input(Bool())
+    val loadWeights = Input(Bool())
 
     val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
     val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
@@ -24,21 +24,21 @@ class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
     val signed = Input(Bool())
   })
 
-  val inputs_buffers = Vec(dimension, Module(new Buffer(w, dimension)))
-  val weights_buffers = Vec(dimension, Module(new Buffer(w, dimension)))
+  val inputsBuffers = Vec(dimension, Module(new Buffer(w, dimension)))
+  val weightsBuffers = Vec(dimension, Module(new Buffer(w, dimension)))
 
   for (i <- 0 until dimension) {
-    inputs_buffers(i).io.load := io.inputs_load
-    weights_buffers(i).io.load := io.weights_load
+    inputsBuffers(i).io.load := io.loadInputs
+    weightsBuffers(i).io.load := io.loadWeights
 
-    inputs_buffers(i).io.data := io.inputs(i)
-    weights_buffers(i).io.data := io.weights(i)
+    inputsBuffers(i).io.data := io.inputs(i)
+    weightsBuffers(i).io.data := io.weights(i)
   }
 
   val systolicArray = Module(new SystolicArray(w, dimension))
   for (i <- 0 until dimension) {
-    systolicArray.io.a(i) := inputs_buffers(i).io.output
-    systolicArray.io.b(i) := weights_buffers(i).io.output
+    systolicArray.io.a(i) := inputsBuffers(i).io.output
+    systolicArray.io.b(i) := weightsBuffers(i).io.output
   }
   systolicArray.io.fixedPoint := io.fixedPoint
 
