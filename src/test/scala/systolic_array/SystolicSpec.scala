@@ -70,6 +70,8 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)
 
+      dut.io.fixed_point_of_results.poke(0.U)
+
       //print(matrixToString(mm1))
       //print(matrixToString(mm2))
 
