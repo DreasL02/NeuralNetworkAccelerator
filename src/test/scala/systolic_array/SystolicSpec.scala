@@ -103,9 +103,9 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication correctly" in {
-    test(new SystolicArray(w = 8, dimension = 2)) { dut =>
-      var m1f = Array(Array(1.2f, 1.3f), Array(0.9f, 0.4f))
-      var m2f = Array(Array(1.2f, 1.3f), Array(0.9f, 0.4f))
+    test(new SystolicArray(w = 16, dimension = 3)) { dut =>
+      var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 31.2f, 0.9f))
+      var m2f = Array(Array(2.2f, 1.3f, 10.0f), Array(4.9f, 0.4f, 8.8f), Array(2.2f, 1.2f, 0.9f))
       var mrf = calculateMatrixMultiplication(m1f, m2f)
 
       print(matrixToString(m1f))
@@ -114,7 +114,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       println("=")
       print(matrixToString(mrf))
 
-      val fixedpoint = 2
+      val fixedpoint = 1
 
       val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedpoint)
       val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedpoint)
@@ -140,7 +140,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)
 
-      dut.io.fixedPoint.poke(2.U)
+      dut.io.fixedPoint.poke(fixedpoint.asUInt)
       //print(matrixToString(mm1))
       //print(matrixToString(mm2))
 
@@ -167,18 +167,19 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
       val result_fixed = convertFixedMatrixToFloatMatrix(result, fixedpoint)
       print(matrixToString(result_fixed))
-
       print(matrixToString(result))
 
       for (i <- mrf.indices) {
         for (j <- mrf(0).indices) {
-          print(FixedPointConverter.floatToFixed(mrf(i)(j), fixedpoint))
-          //dut.io.c(j)(i).expect(FixedPointConverter.floatToFixed(mrf(i)(j), fixedpoint))
+          val a = result_fixed(i)(j)
+          val b = mrf(i)(j)
+          var valid = false
+          if (a - 1 <= b && a + 1 >= b) {
+            valid = true
+          }
+          assert(valid, ": element at (%d,%d) did not match (got %f : expected %f)".format(i, j, a, b))
         }
-        println()
       }
-
-
     }
   }
 }
