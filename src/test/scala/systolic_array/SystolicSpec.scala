@@ -106,6 +106,9 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new SystolicArray(w = 16, dimension = 3)) { dut =>
       var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 31.2f, 0.9f))
       var m2f = Array(Array(2.2f, 1.3f, 10.0f), Array(4.9f, 0.4f, 8.8f), Array(2.2f, 1.2f, 0.9f))
+
+      val fixedPoint = 4
+
       var mrf = calculateMatrixMultiplication(m1f, m2f)
 
       print(matrixToString(m1f))
@@ -114,10 +117,9 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       println("=")
       print(matrixToString(mrf))
 
-      val fixedpoint = 1
 
-      val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedpoint)
-      val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedpoint)
+      val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint)
+      val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint)
       val mr = calculateMatrixMultiplication(m1, m2)
 
       println("-------")
@@ -127,8 +129,8 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       println("=")
       print(matrixToString(mr))
 
-      m1f = convertFixedMatrixToFloatMatrix(m1, fixedpoint)
-      m2f = convertFixedMatrixToFloatMatrix(m2, fixedpoint)
+      m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint)
+      m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint)
       mrf = calculateMatrixMultiplication(m1f, m2f)
 
       print(matrixToString(m1f))
@@ -140,7 +142,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)
 
-      dut.io.fixedPoint.poke(fixedpoint.asUInt)
+      dut.io.fixedPoint.poke(fixedPoint.asUInt)
       //print(matrixToString(mm1))
       //print(matrixToString(mm2))
 
@@ -165,7 +167,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           result(i)(j) = dut.io.c(j)(i).peek().litValue.toInt
         }
       }
-      val result_fixed = convertFixedMatrixToFloatMatrix(result, fixedpoint)
+      val result_fixed = convertFixedMatrixToFloatMatrix(result, fixedPoint)
       print(matrixToString(result_fixed))
       print(matrixToString(result))
 
