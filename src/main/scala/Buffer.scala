@@ -1,6 +1,6 @@
  import chisel3._
 
-class Buffer(w : Int = 8, dimension : Int = 4) extends Module{
+class Buffer(w : Int = 8, dimension : Int = 4, shift : Int) extends Module{
   val io = IO(new Bundle {
     val load = Input(Bool())
     val data = Input(Vec(dimension, UInt(w.W)))
@@ -14,7 +14,9 @@ class Buffer(w : Int = 8, dimension : Int = 4) extends Module{
   }
 
   when(io.load){
-    buffer := io.data
+    for (i <- shift until dimension+shift) {
+      buffer(i) := io.data(i)
+    }
   }.otherwise(
     buffer(dimension+1) := 0.U
   )
