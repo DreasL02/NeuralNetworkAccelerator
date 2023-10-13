@@ -58,5 +58,5 @@ class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
   rectifier.io.signed := io.signed
   io.result := rectifier.io.result
 
-  io.valid := counter(dimension*dimension-1.U)
+  io.valid := counter((dimension*dimension).asUInt-1.U)
 }

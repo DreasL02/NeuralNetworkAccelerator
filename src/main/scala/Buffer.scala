@@ -10,7 +10,7 @@ class Buffer(w : Int = 8, dimension : Int = 4, shift : Int) extends Module{
   val buffer = RegInit(VecInit(Seq.fill(dimension+2)(0.U(w.W))))
 
   for (i <- 0 until dimension + 1) {
-    buffer(i + 1) := buffer(i)
+    buffer(i) := buffer(i+1)
   }
 
   when(io.load){

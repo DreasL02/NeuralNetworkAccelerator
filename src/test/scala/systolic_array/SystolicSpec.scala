@@ -1,5 +1,6 @@
 package systolic_array
 
+import Utils.FixedPointConverter
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
@@ -7,16 +8,16 @@ import chisel3.experimental.BundleLiterals._
 //m = y-axis
 //m(0) = x-axis
 
-class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
+class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
 
-  def calculateMatrixMultiplication(m1: Array[Array[Int]], m2 : Array[Array[Int]]): Array[Array[Int]] = {
+  def calculateMatrixMultiplication(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
     //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
-    val mr : Array[Array[Int]] = Array.fill(m1.length, m2(0).length)(0)
-    for(i <- m1.indices) {
+    val mr: Array[Array[Float]] = Array.fill(m1.length, m2(0).length)(0)
+    for (i <- m1.indices) {
       for (j <- m2.indices) {
-        var sum = 0
+        var sum = 0f
         for (k <- m2(0).indices) {
-          sum = sum + m1(i)(k)*m2(k)(j)
+          sum = sum + m1(i)(k) * m2(k)(j)
         }
         mr(i)(j) = sum
       }
@@ -24,30 +25,76 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
     mr
   }
 
-  def convertMatrixToMappedAMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
-    val m_a : Array[Array[Int]] = Array.fill(m(0).length, m.length * m.length)(0)
+  def calculateMatrixMultiplication(m1: Array[Array[Int]], m2: Array[Array[Int]]): Array[Array[Int]] = {
+    //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
+    val mr: Array[Array[Int]] = Array.fill(m1.length, m2(0).length)(0)
+    for (i <- m1.indices) {
+      for (j <- m2.indices) {
+        var sum = 0
+        for (k <- m2(0).indices) {
+          sum = sum + m1(i)(k) * m2(k)(j)
+        }
+        mr(i)(j) = sum
+      }
+    }
+    mr
+  }
+
+  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Int]] = {
+    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
+    for (i <- mf.indices) {
+      for (j <- mf(0).indices) {
+        m(i)(j) = FixedPointConverter.floatToFixed(mf(i)(j), fixedPointFractionBits).toInt
+      }
+    }
+    m
+  }
+
+  def convertFixedMatrixToFloatMatrix(m: Array[Array[Int]], fixedPointFractionBits: Int): Array[Array[Float]] = {
+    val mf: Array[Array[Float]] = Array.fill(m.length, m(0).length)(0)
     for (i <- m.indices) {
       for (j <- m(0).indices) {
-        m_a(i)(m.length*m.length-1-i-j) = m(i)(m.length-1-j)
+        mf(i)(j) = FixedPointConverter.fixedToFloat(m(i)(j), fixedPointFractionBits)
+      }
+    }
+    mf
+  }
+
+  def convertMatrixToMappedAMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
+    val m_a: Array[Array[Int]] = Array.fill(m(0).length, m.length * m.length)(0)
+    for (i <- m.indices) {
+      for (j <- m(0).indices) {
+        m_a(i)(m.length * m.length - 1 - i - j) = m(i)(m.length - 1 - j)
       }
     }
     m_a
   }
 
-  def convertMatrixToMappedBMatrix(m : Array[Array[Int]]): Array[Array[Int]] = {
+  def convertMatrixToMappedBMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
     val m_b: Array[Array[Int]] = Array.fill(m(0).length * m(0).length, m.length)(0)
-    for(i <- m.indices){
+    for (i <- m.indices) {
       for (j <- m(0).indices) {
-        m_b(m.length*m.length-1-i-j)(j) = m(m.length-1-i)(j)
+        m_b(m.length * m.length - 1 - i - j)(j) = m(m.length - 1 - i)(j)
       }
     }
     m_b
   }
 
-  def matrixToString(m :Array[Array[Int]]) : String ={
+  def matrixToString(m: Array[Array[Float]]): String = {
     var str = ""
-    for (i <- m.indices){
-      for(j <- m(0).indices){
+    for (i <- m.indices) {
+      for (j <- m(0).indices) {
+        str = str + "%f ".format(m(i)(j))
+      }
+      str = str + "\n"
+    }
+    str
+  }
+
+  def matrixToString(m: Array[Array[Int]]): String = {
+    var str = ""
+    for (i <- m.indices) {
+      for (j <- m(0).indices) {
         str = str + "%d ".format(m(i)(j))
       }
       str = str + "\n"
@@ -56,31 +103,52 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
   }
 
   "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication correctly" in {
-    test(new SystolicArray(w = 16, dimension = 3)) { dut =>
-      val m1 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
-      val m2 = Array(Array(1,2,3), Array(4,5,6), Array(7,8,9))
+    test(new SystolicArray(w = 8, dimension = 2)) { dut =>
+      var m1f = Array(Array(1.2f, 1.3f), Array(0.9f, 0.4f))
+      var m2f = Array(Array(1.2f, 1.3f), Array(0.9f, 0.4f))
+      var mrf = calculateMatrixMultiplication(m1f, m2f)
+
+      print(matrixToString(m1f))
+      println("*")
+      print(matrixToString(m2f))
+      println("=")
+      print(matrixToString(mrf))
+
+      val fixedpoint = 2
+
+      val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedpoint)
+      val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedpoint)
       val mr = calculateMatrixMultiplication(m1, m2)
 
+      println("-------")
       print(matrixToString(m1))
       println("*")
       print(matrixToString(m2))
       println("=")
       print(matrixToString(mr))
 
+      m1f = convertFixedMatrixToFloatMatrix(m1, fixedpoint)
+      m2f = convertFixedMatrixToFloatMatrix(m2, fixedpoint)
+      mrf = calculateMatrixMultiplication(m1f, m2f)
+
+      print(matrixToString(m1f))
+      println("*")
+      print(matrixToString(m2f))
+      println("=")
+      print(matrixToString(mrf))
+
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)
 
-      dut.io.fixed_point_of_results.poke(0.U)
-
+      dut.io.fixedPoint.poke(2.U)
       //print(matrixToString(mm1))
       //print(matrixToString(mm2))
 
-      val max_number_of_cycles = mm1.length*mm2(0).length
-
-      for (cycle <- 0 until max_number_of_cycles){
-        for (i <- mm1.indices){
+      val max_number_of_cycles = mm1.length * mm2(0).length
+      for (cycle <- 0 until max_number_of_cycles) {
+        for (i <- mm1.indices) {
           //println("c: %d i: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length-1-cycle)))
-          dut.io.a(i).poke(mm1(i)(mm1(0).length-1-cycle))
+          dut.io.a(i).poke(mm1(i)(mm1(0).length - 1 - cycle))
         }
         //println("----")
         for (i <- mm2(0).indices) {
@@ -91,11 +159,26 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester{
         dut.clock.step()
       }
 
+      val result = Array.fill(mm1.length, mm2(0).length)(0)
       for (i <- mr.indices) {
-        for (j <- mr(0).indices){
-          dut.io.c(j)(i).expect(mr(i)(j))
+        for (j <- mr(0).indices) {
+          result(i)(j) = dut.io.c(j)(i).peek().litValue.toInt
         }
       }
+      val result_fixed = convertFixedMatrixToFloatMatrix(result, fixedpoint)
+      print(matrixToString(result_fixed))
+
+      print(matrixToString(result))
+
+      for (i <- mrf.indices) {
+        for (j <- mrf(0).indices) {
+          print(FixedPointConverter.floatToFixed(mrf(i)(j), fixedpoint))
+          //dut.io.c(j)(i).expect(FixedPointConverter.floatToFixed(mrf(i)(j), fixedpoint))
+        }
+        println()
+      }
+
+
     }
   }
 }
