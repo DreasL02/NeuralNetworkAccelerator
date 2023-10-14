@@ -32,6 +32,26 @@ object MatrixUtils {
     mr
   }
 
+  def calculateMatrixAddition(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
+    val mr: Array[Array[Float]] = Array.fill(m1.length, m2(0).length)(0)
+    for (i <- m1.indices) {
+      for (j <- m2.indices) {
+        mr(i)(j) = m1(i)(j) + m2(i)(j)
+      }
+    }
+    mr
+  }
+
+  def calculateMatrixAddition(m1: Array[Array[Int]], m2: Array[Array[Int]]): Array[Array[Int]] = {
+    val mr: Array[Array[Int]] = Array.fill(m1.length, m2(0).length)(0)
+    for (i <- m1.indices) {
+      for (j <- m2.indices) {
+        mr(i)(j) = m1(i)(j) + m2(i)(j)
+      }
+    }
+    mr
+  }
+
   def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Int]] = {
     val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
     for (i <- mf.indices) {
@@ -92,5 +112,47 @@ object MatrixUtils {
       str = str + "\n"
     }
     str
+  }
+
+  def printMatrixMultiplication(m1: Array[Array[Int]], m2: Array[Array[Int]], mr: Array[Array[Int]], text: String): Unit = {
+    println("--- %s ----".format(text))
+    print(matrixToString(m1))
+    println("*")
+    print(matrixToString(m2))
+    println("=")
+    print(matrixToString(mr))
+  }
+
+  def printMatrixMultiplication(m1: Array[Array[Float]], m2: Array[Array[Float]], mr: Array[Array[Float]], text: String): Unit = {
+    println("--- %s ----".format(text))
+    print(matrixToString(m1))
+    println("*")
+    print(matrixToString(m2))
+    println("=")
+    print(matrixToString(mr))
+  }
+
+  def printMatrixMAC(m1: Array[Array[Int]], m2: Array[Array[Int]], ma: Array[Array[Int]], mr: Array[Array[Int]], text: String): Int = {
+    println("--- %s ----".format(text))
+    print(matrixToString(m1))
+    println("*")
+    print(matrixToString(m2))
+    println("+")
+    print(matrixToString(ma))
+    println("=")
+    print(matrixToString(mr))
+    1
+  }
+
+  def printMatrixMAC(m1: Array[Array[Float]], m2: Array[Array[Float]], ma: Array[Array[Float]], mr: Array[Array[Float]], text: String): Float = {
+    println("--- %s ----".format(text))
+    print(matrixToString(m1))
+    println("*")
+    print(matrixToString(m2))
+    println("+")
+    print(matrixToString(ma))
+    println("=")
+    print(matrixToString(mr))
+    1.0f
   }
 }

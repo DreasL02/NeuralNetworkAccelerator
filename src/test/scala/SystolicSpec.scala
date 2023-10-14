@@ -17,34 +17,19 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       var mrf = calculateMatrixMultiplication(m1f, m2f)
 
-      println("--- GOLDEN MODEL CALCULATION IN PURE FLOATING ----")
-      print(matrixToString(m1f))
-      println("*")
-      print(matrixToString(m2f))
-      println("=")
-      print(matrixToString(mrf))
+      printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
       val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint)
       val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint)
       val mr = calculateMatrixMultiplication(m1, m2)
 
-      println("--- GOLDEN MODEL CALCULATION IN FIXED POINT ----")
-      print(matrixToString(m1))
-      println("*")
-      print(matrixToString(m2))
-      println("=")
-      print(matrixToString(mr))
+      printMatrixMultiplication(m1, m2, mr, "GOLDEN MODEL CALCULATION IN FIXED POINT")
 
       m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint)
       m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint)
       mrf = calculateMatrixMultiplication(m1f, m2f)
 
-      println("--- GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING ----")
-      print(matrixToString(m1f))
-      println("*")
-      print(matrixToString(m2f))
-      println("=")
-      print(matrixToString(mrf))
+      printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
 
       val mm1 = convertMatrixToMappedAMatrix(m1)
       val mm2 = convertMatrixToMappedBMatrix(m2)

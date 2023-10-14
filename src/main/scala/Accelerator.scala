@@ -1,9 +1,9 @@
 import chisel3._
 import chisel3.util.log2Ceil
 
-class Accelerator(w : Int = 8, dimension : Int = 4,
-                  initialDataMemoryState : Array[Int], initialWeightsMemoryState : Array[Int],
-                  initialBiasMemoryState : Array[Int], initialConfigMemoryState : Array[Int]) extends Module{
+class Accelerator(w: Int = 8, dimension: Int = 4,
+                  initialDataMemoryState: Array[Int], initialWeightsMemoryState: Array[Int],
+                  initialBiasMemoryState: Array[Int], initialConfigMemoryState: Array[Int]) extends Module {
   val io = IO(new Bundle {
   })
 
@@ -38,8 +38,8 @@ class Accelerator(w : Int = 8, dimension : Int = 4,
   mmu.io.weights := convertVecToMatrix(memories.io.weightsRead)
   mmu.io.biases := convertVecToMatrix(memories.io.biasRead)
   mmu.io.signed := memories.io.configRead(0)
-  mmu.io.fixedPoint := memories.io.configRead(log2Ceil(w)+1, 1)
+  mmu.io.fixedPoint := memories.io.configRead(log2Ceil(w) + 1, 1)
 
   memories.io.write := mmu.io.valid
-  memories.io.dataWrite := convertMatrixToVec(mmu.io.result)
+  memories.io.dataWrite := convertMatrixToVec(mmu.io.result) //TODO: might be reversed
 }

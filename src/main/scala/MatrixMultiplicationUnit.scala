@@ -1,10 +1,12 @@
 import chisel3._
 import chisel3.util.log2Ceil
 import systolic_array.SystolicArray
-class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
+
+class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
   val io = IO(new Bundle {
     val loadInputs = Input(Bool())
     val loadWeights = Input(Bool())
+    val loadBiases = Input(Bool())
 
     val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
     val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
@@ -16,12 +18,16 @@ class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
 
     val signed = Input(Bool())
     val fixedPoint = Input(UInt(log2Ceil(w).W))
+
+    val buffer1 = Output(Vec(dimension, UInt(w.W)))
+    val buffer2 = Output(Vec(dimension, UInt(w.W)))
   })
 
-  def counter(max: UInt) = {
+  def timer(max: UInt) = {
     val x = RegInit(0.asUInt(max.getWidth.W))
-    x := Mux(x === max, 0.U, x + 1.U)
-    x
+    val done = x === max
+    x := Mux(done, 0.U, x + 1.U)
+    done
   }
 
   val inputsBuffers = for (i <- 0 until dimension) yield {
@@ -49,14 +55,32 @@ class MatrixMultiplicationUnit(w : Int = 8, dimension : Int = 4) extends Module{
   }
   systolicArray.io.fixedPoint := io.fixedPoint
 
+  val biases = VecInit.fill(dimension, dimension)(RegInit(0.U))
+  for (i <- 0 until dimension) {
+    for (j <- 0 until dimension) {
+      when(io.loadBiases) {
+        biases(i)(j) := io.biases(i)(j)
+      }
+    }
+  }
+
   val accumulator = Module(new Accumulator(w, dimension))
-  accumulator.io.values := systolicArray.io.c
-  accumulator.io.biases := io.biases
+  for (i <- 0 until dimension) {
+    for (j <- 0 until dimension) {
+      accumulator.io.values(i)(j) := systolicArray.io.c(j)(i)
+    }
+  }
+  accumulator.io.biases := biases
 
   val rectifier = Module(new Rectifier(w, dimension))
   rectifier.io.values := accumulator.io.result
   rectifier.io.signed := io.signed
-  io.result := rectifier.io.result
 
-  io.valid := counter((dimension*dimension).asUInt-1.U)
+  io.result := rectifier.io.result
+  io.valid := timer(dimension.U * dimension.U - 1.U)
+
+  for (i <- 0 until dimension) {
+    io.buffer1(i) := inputsBuffers(i).io.output
+    io.buffer2(i) := weightsBuffers(i).io.output
+  }
 }
