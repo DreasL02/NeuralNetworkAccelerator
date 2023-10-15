@@ -2,8 +2,9 @@ import chisel3._
 import chisel3.util.log2Ceil
 
 class Accelerator(w: Int = 8, dimension: Int = 4,
-                  initialDataMemoryState: Array[Int], initialWeightsMemoryState: Array[Int],
-                  initialBiasMemoryState: Array[Int], initialConfigMemoryState: Array[Int]) extends Module {
+                  initialInputsMemoryState: Array[Int], initialWeightsMemoryState: Array[Int],
+                  initialBiasMemoryState: Array[Int], initialSignsMemoryState: Array[Int],
+                  initialFixedPointsMemoryState: Array[Int]) extends Module {
   val io = IO(new Bundle {
   })
 
@@ -27,18 +28,22 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
     vector
   }
 
-  val memories = Module(new Memories(w, dimension, initialDataMemoryState, initialWeightsMemoryState,
-    initialBiasMemoryState, initialConfigMemoryState))
+  val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
+    initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
 
   val mmu = Module(new MatrixMultiplicationUnit(w, dimension))
 
-  //missing address assignment
+  val controller = Module(new Controller())
+
+  //TODO: missing address assignment
+  memories.io.dataAddress := 0.U
+  memories.io.configAddress := 0.U
 
   mmu.io.inputs := convertVecToMatrix(memories.io.dataRead)
   mmu.io.weights := convertVecToMatrix(memories.io.weightsRead)
   mmu.io.biases := convertVecToMatrix(memories.io.biasRead)
-  mmu.io.signed := memories.io.configRead(0)
-  mmu.io.fixedPoint := memories.io.configRead(log2Ceil(w) + 1, 1)
+  mmu.io.signed := memories.io.signsRead
+  mmu.io.fixedPoint := memories.io.fixedPointRead
 
   memories.io.write := mmu.io.valid
   memories.io.dataWrite := convertMatrixToVec(mmu.io.result)

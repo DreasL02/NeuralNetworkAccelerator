@@ -1,4 +1,5 @@
 object Configuration {
+
   def mapInputs(inputs: Array[Array[Array[Int]]]): Array[Int] = {
     val mappedInputs = Array.fill(inputs.length * inputs(0).length * inputs(0)(0).length)(0)
     var address = 0
@@ -41,15 +42,6 @@ object Configuration {
     mappedBiases
   }
 
-  def mapConfig(signed: Array[Boolean], fixedPoint: Array[Int]): Array[Int] = { //TODO
-    val mappedConfig = Array.fill(signed.length)(0)
-    var address = 0
-    for (i <- signed.indices) { //layer
-      mappedConfig(address) = (if (signed(i)) 1 else 0) << 1 + fixedPoint(i)
-      address = address + 1
-    }
-    mappedConfig
-  }
 
   def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int): BigInt = {
     val scaledToFixed = floatRepresentation * (1 << fixedPointFractionalBits)
