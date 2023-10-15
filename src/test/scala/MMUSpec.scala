@@ -8,9 +8,9 @@ class MMUSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Matrix Multiplication Unit should behave correctly" in {
     val dimension = 3
     test(new MatrixMultiplicationUnit(w = 16, dimension = dimension)) { dut =>
-      var inputsFloat = Array(Array(1.0f, 2.0f, 3.0f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
-      var weightsFloat = Array(Array(1.0f, 2.0f, 3.0f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
-      var biasesFloat = Array(Array(1.0f, 2.0f, 3.0f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
+      var inputsFloat = Array(Array(1.0f, 2.3f, 3.0f), Array(4.0f, 5.05f, 6.0f), Array(7.0f, 8.6f, 9.0f))
+      var weightsFloat = Array(Array(1.0f, 2.0f, 3.0f), Array(4.8f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
+      var biasesFloat = Array(Array(1.0f, 2.0f, 3.4f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
       val fixedPoint = 6
       val signed = 0
 

@@ -41,5 +41,5 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   mmu.io.fixedPoint := memories.io.configRead(log2Ceil(w) + 1, 1)
 
   memories.io.write := mmu.io.valid
-  memories.io.dataWrite := convertMatrixToVec(mmu.io.result) //TODO: might be reversed
+  memories.io.dataWrite := convertMatrixToVec(mmu.io.result)
 }

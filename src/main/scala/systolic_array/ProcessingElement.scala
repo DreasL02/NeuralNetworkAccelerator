@@ -29,8 +29,9 @@ class ProcessingElement(w: Int = 8) extends Module {
   io.bOut := bReg
 
   rounder.io.input := cReg
-  rounder.io.fixedPoint := io.fixedPoint
-
+  rounder.io.fixedPoint := 2.U
   io.cOut := rounder.io.output
+
+  io.cOut := cReg
 }
 
