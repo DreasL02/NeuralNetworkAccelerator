@@ -50,112 +50,110 @@
   `endif // not def ENABLE_INITIAL_MEM_
 `endif // not def SYNTHESIS
 
-module ProcessingElement(	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-  input         clock,	// <stdin>:17:11, :57:11, :97:11, :137:11, :177:11, :217:11, :257:11, :297:11, :337:11, :377:11, :417:11, :457:11, :497:11, :537:11, :577:11, :617:11
-                reset,	// <stdin>:18:11, :58:11, :98:11, :138:11, :178:11, :218:11, :258:11, :298:11, :338:11, :378:11, :418:11, :458:11, :498:11, :538:11, :578:11, :618:11
-  input  [15:0] io_aIn,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
-                io_bIn,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
-  output [15:0] io_aOut,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
-                io_bOut,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
-                io_cOut	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
+module ProcessingElement(	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+  input        clock,	// <stdin>:17:11, :56:11, :95:11, :134:11, :173:11, :212:11, :251:11, :290:11, :329:11, :368:11, :407:11, :446:11, :485:11, :524:11, :563:11, :602:11
+               reset,	// <stdin>:18:11, :57:11, :96:11, :135:11, :174:11, :213:11, :252:11, :291:11, :330:11, :369:11, :408:11, :447:11, :486:11, :525:11, :564:11, :603:11
+  input  [7:0] io_aIn,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
+               io_bIn,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
+  output [7:0] io_aOut,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
+               io_bOut,	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
+               io_cOut	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:8:14
 );
 
-  reg [15:0] aReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
-  reg [15:0] bReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:21:21
-  reg [31:0] cReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21
-  always @(posedge clock) begin	// <stdin>:17:11, :57:11, :97:11, :137:11, :177:11, :217:11, :257:11, :297:11, :337:11, :377:11, :417:11, :457:11, :497:11, :537:11, :577:11, :617:11
-    if (reset) begin	// <stdin>:17:11, :57:11, :97:11, :137:11, :177:11, :217:11, :257:11, :297:11, :337:11, :377:11, :417:11, :457:11, :497:11, :537:11, :577:11, :617:11
-      aReg <= 16'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
-      bReg <= 16'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :21:21
-      cReg <= 32'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21
+  reg [7:0]  aReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
+  reg [7:0]  bReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:21:21
+  reg [15:0] cReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21
+  always @(posedge clock) begin	// <stdin>:17:11, :56:11, :95:11, :134:11, :173:11, :212:11, :251:11, :290:11, :329:11, :368:11, :407:11, :446:11, :485:11, :524:11, :563:11, :602:11
+    if (reset) begin	// <stdin>:17:11, :56:11, :95:11, :134:11, :173:11, :212:11, :251:11, :290:11, :329:11, :368:11, :407:11, :446:11, :485:11, :524:11, :563:11, :602:11
+      aReg <= 8'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
+      bReg <= 8'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :21:21
+      cReg <= 16'h0;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21
     end
-    else begin	// <stdin>:17:11, :57:11, :97:11, :137:11, :177:11, :217:11, :257:11, :297:11, :337:11, :377:11, :417:11, :457:11, :497:11, :537:11, :577:11, :617:11
+    else begin	// <stdin>:17:11, :56:11, :95:11, :134:11, :173:11, :212:11, :251:11, :290:11, :329:11, :368:11, :407:11, :446:11, :485:11, :524:11, :563:11, :602:11
       aReg <= io_aIn;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
       bReg <= io_bIn;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:21:21
-      cReg <= {16'h0, io_aIn} * {16'h0, io_bIn} + cReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :22:21, :26:{18,27}
+      cReg <= {8'h0, io_aIn} * {8'h0, io_bIn} + cReg;	// \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :22:21, :26:{18,27}
     end
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-    `ifdef FIRRTL_BEFORE_INITIAL	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-      `FIRRTL_BEFORE_INITIAL	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
+  `ifdef ENABLE_INITIAL_REG_	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+    `ifdef FIRRTL_BEFORE_INITIAL	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+      `FIRRTL_BEFORE_INITIAL	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
     `endif // FIRRTL_BEFORE_INITIAL
-    initial begin	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-      automatic logic [31:0] _RANDOM[0:1];	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-      `ifdef INIT_RANDOM_PROLOG_	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-        `INIT_RANDOM_PROLOG_	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
+    initial begin	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+      automatic logic [31:0] _RANDOM[0:0];	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+      `ifdef INIT_RANDOM_PROLOG_	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+        `INIT_RANDOM_PROLOG_	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-        for (logic [1:0] i = 2'h0; i < 2'h2; i += 2'h1) begin
-          _RANDOM[i[0]] = `RANDOM;	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-        end	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-        aReg = _RANDOM[1'h0][15:0];	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
-        bReg = _RANDOM[1'h0][31:16];	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :21:21
-        cReg = _RANDOM[1'h1];	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21
+      `ifdef RANDOMIZE_REG_INIT	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+        aReg = _RANDOM[/*Zero width*/ 1'b0][7:0];	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
+        bReg = _RANDOM[/*Zero width*/ 1'b0][15:8];	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :21:21
+        cReg = _RANDOM[/*Zero width*/ 1'b0][31:16];	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21, :22:21
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
-      `FIRRTL_AFTER_INITIAL	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3
+    `ifdef FIRRTL_AFTER_INITIAL	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
+      `FIRRTL_AFTER_INITIAL	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  assign io_aOut = aReg;	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
-  assign io_bOut = bReg;	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:21:21
-  assign io_cOut = cReg[15:0];	// <stdin>:16:3, :56:3, :96:3, :136:3, :176:3, :216:3, :256:3, :296:3, :336:3, :376:3, :416:3, :456:3, :496:3, :536:3, :576:3, :616:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21, :35:11
+  assign io_aOut = aReg;	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:20:21
+  assign io_bOut = bReg;	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:21:21
+  assign io_cOut = cReg[7:0];	// <stdin>:16:3, :55:3, :94:3, :133:3, :172:3, :211:3, :250:3, :289:3, :328:3, :367:3, :406:3, :445:3, :484:3, :523:3, :562:3, :601:3, \\src\\main\\scala\\systolic_array\\ProcessingElement.scala:22:21, :36:11
 endmodule
 
-module SystolicArray(	// <stdin>:643:3
-  input         clock,	// <stdin>:644:11
-                reset,	// <stdin>:645:11
-  input  [15:0] io_a_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_a_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_a_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_a_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_b_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_b_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_b_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_b_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-  input  [3:0]  io_fixedPoint,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-  output [15:0] io_c_0_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_0_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_0_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_0_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_1_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_1_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_1_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_1_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_2_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_2_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_2_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_2_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_3_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_3_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_3_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
-                io_c_3_3	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+module SystolicArray(	// <stdin>:627:3
+  input        clock,	// <stdin>:628:11
+               reset,	// <stdin>:629:11
+  input  [7:0] io_a_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_a_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_a_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_a_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_b_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_b_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_b_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_b_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+  input  [2:0] io_fixedPoint,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+  output [7:0] io_c_0_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_0_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_0_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_0_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_1_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_1_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_1_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_1_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_2_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_2_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_2_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_2_3,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_3_0,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_3_1,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_3_2,	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
+               io_c_3_3	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:7:14
 );
 
-  wire [15:0] _ProcessingElement_14_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_13_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_12_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_11_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_10_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_10_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_9_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_9_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_8_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_8_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_7_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_6_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_6_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_5_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_5_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_4_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_4_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_3_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_2_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_2_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_1_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_1_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
-  wire [15:0] _ProcessingElement_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_14_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_13_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_12_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_11_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_10_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_10_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_9_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_9_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_8_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_8_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_7_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_6_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_6_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_5_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_5_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_4_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_4_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_3_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_2_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_2_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_1_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_1_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_io_aOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
+  wire [7:0] _ProcessingElement_io_bOut;	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
   ProcessingElement ProcessingElement (	// \\src\\main\\scala\\systolic_array\\SystolicArray.scala:15:69
     .clock   (clock),
     .reset   (reset),

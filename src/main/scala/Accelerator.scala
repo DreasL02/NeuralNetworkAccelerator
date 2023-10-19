@@ -31,20 +31,22 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
 
-  val mmu = Module(new MatrixMultiplicationUnit(w, dimension))
+  val mmac = Module(new MatrixMultiplicationUnit(w, dimension))
 
   val controller = Module(new Controller())
 
+  val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, initialWeightsMemoryState.length))
+
   //TODO: missing address assignment
-  memories.io.dataAddress := 0.U
-  memories.io.configAddress := 0.U
+  memories.io.dataAddress := addressManager.matrixAddressReg
+  memories.io.configAddress := addressManager.vectorAddressReg
 
-  mmu.io.inputs := convertVecToMatrix(memories.io.dataRead)
-  mmu.io.weights := convertVecToMatrix(memories.io.weightsRead)
-  mmu.io.biases := convertVecToMatrix(memories.io.biasRead)
-  mmu.io.signed := memories.io.signsRead
-  mmu.io.fixedPoint := memories.io.fixedPointRead
+  mmac.io.inputs := convertVecToMatrix(memories.io.dataRead)
+  mmac.io.weights := convertVecToMatrix(memories.io.weightsRead)
+  mmac.io.biases := convertVecToMatrix(memories.io.biasRead)
+  mmac.io.signed := memories.io.signsRead
+  mmac.io.fixedPoint := memories.io.fixedPointRead
 
-  memories.io.write := mmu.io.valid
-  memories.io.dataWrite := convertMatrixToVec(mmu.io.result)
+  memories.io.write := mmac.io.valid
+  memories.io.dataWrite := convertMatrixToVec(mmac.io.result)
 }
