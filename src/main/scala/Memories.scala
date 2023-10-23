@@ -28,6 +28,10 @@ class Memories(w: Int = 8, dimension: Int = 4, initialInputsMemoryState: Array[I
   val fixedPointsMemory = RegInit(VecInit(initialFixedPointMemoryState.toIndexedSeq.map(_.S(log2Ceil(w).W).asUInt)))
 
   for (i <- 0 until dimension * dimension) {
+    io.dataRead(i) := 0.U
+    io.weightsRead(i) := 0.U
+    io.biasRead(i) := 0.U
+
     when(io.read) {
       io.dataRead(i) := inputsMemory(io.dataAddress + i.U)
       io.weightsRead(i) := weightsMemory(io.dataAddress + i.U)
@@ -39,6 +43,8 @@ class Memories(w: Int = 8, dimension: Int = 4, initialInputsMemoryState: Array[I
     }
   }
 
+  io.signsRead := 0.U
+  io.fixedPointRead := 0.U
   when(io.read) {
     io.signsRead := signsMemory(io.configAddress)
     io.fixedPointRead := fixedPointsMemory(io.configAddress)

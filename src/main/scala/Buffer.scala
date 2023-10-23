@@ -9,7 +9,9 @@ class Buffer(w: Int = 8, dimension: Int = 4, shift: Int) extends Module {
 
   val buffer = RegInit(VecInit(Seq.fill(dimension + shift)(0.U(w.W))))
 
-  for (i <- 0 until dimension - 1 + shift) {
+  val lastIndex = dimension + shift - 1
+
+  for (i <- 0 until lastIndex) {
     buffer(i) := buffer(i + 1)
   }
 
@@ -18,7 +20,7 @@ class Buffer(w: Int = 8, dimension: Int = 4, shift: Int) extends Module {
       buffer(i + shift) := io.data(i)
     }
   }.otherwise(
-    buffer(dimension + shift - 1) := 0.U
+    buffer(lastIndex) := 0.U
   )
 
   io.output := buffer(0)

@@ -1,8 +1,8 @@
-import Encodings.Codes
+import communication.Encodings.Codes
 import chisel3._
 import chisel3.util.{is, switch}
-import Encodings.States._
-import Encodings.Codes._
+import communication.Encodings.States._
+import communication.Encodings.Codes._
 
 class Controller extends Module {
 
@@ -14,14 +14,17 @@ class Controller extends Module {
     val calculatingDone = Input(Bool())
     val writingDone = Input(Bool())
     val addressChanged = Input(Bool())
+    val decodingCode = Input(Codes())
 
-    val decodingDone = Input(Codes())
+    val incrementAddress = Output(Bool())
+    val loadBuffers = Output(Bool())
+    val loadBiases = Output(Bool())
     val readMemory = Output(Bool())
     val writeMemory = Output(Bool())
   })
 
   val state = RegInit(receiving)
-  state := state //default to current state
+  state := state //default to keep current state
 
   // FSM state logic
   switch(state) {
@@ -31,13 +34,13 @@ class Controller extends Module {
       }
     }
     is(decoding) {
-      when(io.decodingDone === nextInputs) {
+      when(io.decodingCode === nextInputs) {
         state := inputs
-      }.elsewhen(io.decodingDone === nextTransmitting) {
+      }.elsewhen(io.decodingCode === nextTransmitting) {
         state := transmitting
-      }.elsewhen(io.decodingDone === nextReading) {
+      }.elsewhen(io.decodingCode === nextReading) {
         state := reading
-      }.elsewhen(io.decodingDone === nextAddress) {
+      }.elsewhen(io.decodingCode === nextAddress) {
         state := address
       }
     }
@@ -73,6 +76,13 @@ class Controller extends Module {
     }
   }
 
+  // Default outputs
+  io.incrementAddress := false.B
+  io.loadBuffers := false.B
+  io.loadBiases := false.B
+  io.readMemory := false.B
+  io.writeMemory := false.B
+
   // FSM output logic
   switch(state) {
     is(receiving) {
@@ -83,21 +93,29 @@ class Controller extends Module {
     }
     is(inputs) {
       // Store input data at address in memories (single layer)
+      io.writeMemory := true.B
     }
     is(transmitting) {
       // Transmit data at address in memories (single layer) over uart
+      io.readMemory := true.B
     }
     is(reading) {
       // Copy data at address in memories (single layer) to buffers
+      io.readMemory := true.B
+      io.loadBuffers := true.B
+      io.loadBiases := true.B
     }
     is(calculating) {
       // Perform computation with systolic array, addition and rectifier
+      io.loadBiases := true.B // must for some reason be true
     }
     is(writing) {
       // Store resulting data at address in memories (single layer)
+      io.writeMemory := true.B
     }
     is(address) {
       // Increment address
+      io.incrementAddress := true.B
     }
   }
 }

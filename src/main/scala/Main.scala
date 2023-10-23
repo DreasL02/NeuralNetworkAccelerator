@@ -37,6 +37,6 @@ object Main extends App {
   var mappedBiases = Configuration.mapBiases(biases)
 
   emitVerilog(new Accelerator(w = 16, dimension = 4,
-    mappedInputs = mappedInputs, mappedWeights = mappedWeights,
-    mappedBiases = mappedBiases, signs, fixedPoints))
+    mappedInputs, mappedWeights,
+    mappedBiases, signs, fixedPoints))
 }

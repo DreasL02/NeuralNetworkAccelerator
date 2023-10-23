@@ -23,8 +23,11 @@ class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
     val buffer2 = Output(Vec(dimension, UInt(w.W)))
   })
 
-  def timer(max: UInt) = {
+  def timer(max: UInt, reset: Bool) = {
     val x = RegInit(0.asUInt(max.getWidth.W))
+    when(reset) {
+      x := 0.U
+    }
     val done = x === max
     x := Mux(done, 0.U, x + 1.U)
     done
@@ -77,7 +80,7 @@ class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
   rectifier.io.signed := io.signed
 
   io.result := rectifier.io.result
-  io.valid := timer(dimension.U * dimension.U - 1.U)
+  io.valid := timer(dimension.U * dimension.U - 1.U, io.loadInputs || io.loadWeights)
 
   for (i <- 0 until dimension) {
     io.buffer1(i) := inputsBuffers(i).io.output
