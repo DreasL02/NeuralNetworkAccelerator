@@ -47,8 +47,9 @@ c = a * b + c
 Where a and b are the inputs to the PE and c is a stored value alongside the final result.
 
 <p align = "center">
-    <img src="figures/systolic_array.png" alt="3x3 Systolic Array" width="300" />
+    <img src="docs/figures/systolic_array.png" alt="3x3 Systolic Array" width="300" />
 </p>
+An explained example computation of a 3x3 systolic array can be found [here](docs/systolic_array_example.md).
 
 ### Buffers
 
