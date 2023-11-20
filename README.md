@@ -16,19 +16,18 @@ Rewrite
 Moore's law is coming to a halt and computing requirements are ever-increasing.
 To accommodate these requirements domain-specific architectures (DSA) are positioned to become more important in the
 future.
-\
+
 One area of increasing computing requirements is within the field of neural network inference.
 This is done through time expensive matrix multiplications.
-\
+
 By implementing a hardware accelerator for neural networks, we can offload the matrix multiplications from the CPU to
 the FPGA, which can be made more efficient at these types of operations, mainly by reducing the amount of memory access.
 The main way of achieving this is treating matrices as the primitive datatype, as opposed to the CPU, which uses
 numbers.
-\
+
 By making a scalable design in the FPGA, the performance costs can as well be fitted to the requirements of the Neural
 Network.
-\
-\
+
 Chisel is a hardware construction language embedded in Scala, which allows for a more high-level description of
 hardware, and is therefore ideal to describe such a scalable design.
 
@@ -47,6 +46,10 @@ c = a * b + c
 ```
 
 Where a and b are the inputs to the PE and c is a stored value alongside the final result.
+Notably the design handles varying fixed point numbers, and multiplication must therefore be handled with care,
+to ensure that the result is representable in the fixed point format. This is done through a rounding algorithm that
+rounds up to nearest with round up on tie.
+
 Each clock cycle the PE passes on a and b in opposite directions, while c is stored locally.
 If the values inputted into the array are formatted correctly, the result of the matrix multiplication
 will be stored across all c values after N * N - 1 clock cycles.
@@ -60,16 +63,26 @@ will be stored across all c values after N * N - 1 clock cycles.
         </figcaption>
     </p>
 </figure>
-A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be found explained 
+A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the gif below or as a pdf 
 
-[`here`](docs/systolic_array_example.md)
+[here](docs/systolic_array_example.pdf)
 .
 
+<figure>
+    <p align = "center">
+        <img src="docs/figures/systolic_example.gif" alt="3x3 Systolic Array" width="800" />
+        <figcaption>
+            Example of a integer computation in a 3x3 Systolic Array (gif self produced).
+        </figcaption>
+    </p>
+</figure>
+
 The PE and the Systolic Array are implemented in the
-[`PE`](src/main/scala/systolic_array/ProcessingElement.scala)
+[`ProcessingElement`](src/main/scala/systolic_array/ProcessingElement.scala)
 and
 [`SystolicArray`](src/main/scala/systolic_array/SystolicArray.scala)
-modules respectively.
+modules respectively. The rounder is implemented in the
+[`Rounder`](src/main/scala/systolic_array/Rounder.scala) module.
 
 ### Buffers
 
