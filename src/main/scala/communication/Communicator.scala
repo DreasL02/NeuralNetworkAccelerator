@@ -5,6 +5,9 @@ import communication.Encodings.Opcodes
 
 class Communicator extends Module {
   val io = IO(new Bundle {
+    val rx = Input(Bool())
+    val tx = Output(Bool())
+
     val valid = Output(Bool())
     val opcode = Output(UInt(Opcodes.opcodeWidth.W))
   })
@@ -12,5 +15,6 @@ class Communicator extends Module {
   io.opcode := 0.U
   when(io.valid) {
   }
+
 
 }

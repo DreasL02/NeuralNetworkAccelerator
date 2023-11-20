@@ -8,8 +8,9 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
                   initialBiasMemoryState: Array[Int], initialSignsMemoryState: Array[Int],
                   initialFixedPointsMemoryState: Array[Int]) extends Module {
   val io = IO(new Bundle {
+    val rxd = Input(Bool())
+    val txd = Output(Bool())
     val result = Output(Vec(dimension, Vec(dimension, UInt(w.W))))
-
   })
 
   def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
@@ -46,7 +47,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   val decoder = Module(new Decoder())
 
   decoder.io.opcode := communicator.io.opcode
-  
+
   addressManager.io.incrementMatrixAddress := controller.io.incrementAddress
   addressManager.io.incrementVectorAddress := controller.io.incrementAddress
 

@@ -1,9 +1,9 @@
 import chisel3.emitVerilog
+import communication.chisel.lib.uart.UartMain
 import systolic_array.SystolicArray
 
 
 object Main extends App {
-
   val inputsL1: Array[Array[Float]] = Array(Array(1.0f, 2.3f, 3.0f), Array(4.0f, 5.05f, 6.0f), Array(7.0f, 8.6f, 9.0f))
   val weightsL1: Array[Array[Float]] = Array(Array(1.0f, 2.3f, 3.0f), Array(4.0f, 5.05f, 6.0f), Array(7.0f, 8.6f, 9.0f))
   val biasesL1: Array[Array[Float]] = Array(Array(1.0f, 2.3f, 3.0f), Array(4.0f, 5.05f, 6.0f), Array(7.0f, 8.6f, 9.0f))
@@ -40,3 +40,12 @@ object Main extends App {
     mappedInputs, mappedWeights,
     mappedBiases, signs, fixedPoints))
 }
+
+
+
+/*
+object Main extends App {
+  print("UART \n")
+  emitVerilog(new UartMain(50000000 * 2, 115200))
+}
+*/

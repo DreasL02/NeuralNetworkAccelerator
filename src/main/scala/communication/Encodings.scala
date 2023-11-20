@@ -11,7 +11,6 @@ object Encodings {
     val none, nextInputs, nextTransmitting, nextReading, nextAddress = Value
   }
 
-
   object Opcodes {
     val opcodeWidth = 3
     val none = "b000".U(opcodeWidth.W)
