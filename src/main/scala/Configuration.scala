@@ -1,5 +1,7 @@
 object Configuration {
 
+  // Various functions to convert between different representations of the inputs, weights, and biases
+
   def mapInputs(inputs: Array[Array[Array[Int]]]): Array[Int] = {
     val mappedInputs = Array.fill(inputs.length * inputs(0).length * inputs(0)(0).length)(0)
     var address = 0

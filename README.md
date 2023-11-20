@@ -1,6 +1,7 @@
 Hardware Accelerator for Neural Networks in Chisel
 =======================
-This repository documents a small but scalable Neural Network Accelerator targeting the Basys3 FPGA board.
+This repository documents a small but scalable Neural Network Accelerator architecture and implementation.\
+It is written in Chisel 5.0 and targeting the Basys3 FPGA board.
 
 ### Authors
 
@@ -59,7 +60,16 @@ will be stored across all c values after N * N - 1 clock cycles.
         </figcaption>
     </p>
 </figure>
-A detailed example computation of a 3x3 systolic array across 8 clock cycles can be found explained [here](docs/systolic_array_example.md).
+A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be found explained 
+
+[`here`](docs/systolic_array_example.md)
+.
+
+The PE and the Systolic Array are implemented in the
+[`PE`](src/main/scala/systolic_array/ProcessingElement.scala)
+and
+[`SystolicArray`](src/main/scala/systolic_array/SystolicArray.scala)
+modules respectively.
 
 ### Buffers
 
