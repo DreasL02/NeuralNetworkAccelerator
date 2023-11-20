@@ -22,11 +22,12 @@ This is done through time expensive matrix multiplications.
 
 By implementing a hardware accelerator for neural networks, we can offload the matrix multiplications from the CPU to
 the FPGA, which can be made more efficient at these types of operations, mainly by reducing the amount of memory access.
-The main way of achieving this is treating matrices as the primitive datatype, as opposed to the CPU, which uses
-numbers.
+The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar CPU.
+By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive.
+This is especially true for large matrices, which are common in neural networks.
 
 By making a scalable design in the FPGA, the performance costs can as well be fitted to the requirements of the Neural
-Network.
+Network. It also allows us to make a highly specialized design, which is not possible in a CPU.
 
 Chisel is a hardware construction language embedded in Scala, which allows for a more high-level description of
 hardware, and is therefore ideal to describe such a scalable design.
@@ -46,9 +47,12 @@ c = a * b + c
 ```
 
 Where a and b are the inputs to the PE and c is a stored value alongside the final result.
+
 Notably the design handles varying fixed point numbers, and multiplication must therefore be handled with care,
-to ensure that the result is representable in the fixed point format. This is done through a rounding algorithm that
-rounds up to nearest with round up on tie.
+to ensure that the result is representable in the fixed point format. E.g, a multiplication of an
+input and a weight both in (4,4) fixed point format should result in a (4,4) fixed point format as opposed to a
+(8,8) fixed point format.
+This is done through a rounding algorithm that rounds up to nearest with round up on tie using shifting.
 
 Each clock cycle the PE passes on a and b in opposite directions, while c is stored locally.
 If the values inputted into the array are formatted correctly, the result of the matrix multiplication
@@ -63,19 +67,21 @@ will be stored across all c values after N * N - 1 clock cycles.
         </figcaption>
     </p>
 </figure>
-A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the gif below or as a pdf 
 
-[here](docs/systolic_array_example.pdf)
-.
+A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the gif below
+or as a pdf [`here`](docs/systolic_array_example.pdf).
 
+<!---
+Remove comment in final version
 <figure>
     <p align = "center">
         <img src="docs/figures/systolic_example.gif" alt="3x3 Systolic Array" width="800" />
         <figcaption>
-            Example of a integer computation in a 3x3 Systolic Array (gif self produced).
+            Example of an integer computation in a 3x3 Systolic Array (gif self produced).
         </figcaption>
     </p>
 </figure>
+-->
 
 The PE and the Systolic Array are implemented in the
 [`ProcessingElement`](src/main/scala/systolic_array/ProcessingElement.scala)
@@ -84,9 +90,18 @@ and
 modules respectively. The rounder is implemented in the
 [`Rounder`](src/main/scala/systolic_array/Rounder.scala) module.
 
+The remaining architecture is build around the Systolic Array to enable it to be used as a hardware accelerator.
+
 ### Buffers
 
+The inputs to the systolic array have to formatted correctly. This is done by a series of
+[`Buffer`](src/main/scala/Buffer.scala) modules.
+The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
+with a load signal to enable loading values from the memory into the entire series at the same time.
+
 ### Memory
+
+The memory is divided into four different parts
 
 ### Control
 
