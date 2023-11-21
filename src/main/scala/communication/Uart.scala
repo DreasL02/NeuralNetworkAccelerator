@@ -64,10 +64,10 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
  * The following code is inspired by Tommy's receive code at:
  * https://github.com/tommythorn/yarvi
  */
-class Rx(frequency: Int, baudRate: Int) extends Module {
+class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
-    val channel = new UartIO()
+    val channel = new DecoupledIO(UInt(bufferBitSize.W))
   })
 
   val BIT_CNT = ((frequency + baudRate / 2) / baudRate - 1).U
@@ -76,9 +76,9 @@ class Rx(frequency: Int, baudRate: Int) extends Module {
   // Sync in the asynchronous RX data, reset to 1 to not start reading after a reset
   val rxReg = RegNext(RegNext(io.rxd, 1.U), 1.U)
 
-  val shiftReg = RegInit(0.U(8.W))
+  val shiftReg = RegInit(0.U(bufferBitSize.W))
   val cntReg = RegInit(0.U(20.W))
-  val bitsReg = RegInit(0.U(4.W))
+  val bitsReg = RegInit(0.U(log2Ceil(bufferBitSize + 1).W))
   val valReg = RegInit(false.B)
 
   when(cntReg =/= 0.U) {
@@ -93,7 +93,7 @@ class Rx(frequency: Int, baudRate: Int) extends Module {
     }
   }.elsewhen(rxReg === 0.U) { // wait 1.5 bits after falling edge of start
     cntReg := START_CNT
-    bitsReg := 8.U
+    bitsReg := bufferBitSize.U
   }
 
   when(valReg && io.channel.ready) {
