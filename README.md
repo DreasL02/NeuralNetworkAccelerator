@@ -42,12 +42,16 @@ result.
 The activation function is typically a non-linear function, which allows the network to learn non-linear functions.
 The biases allow the network to learn the offset of the activation function.
 
-The process of computing the weights and biases is known as training, but this will not be implemented in the
+#### Training
+
+The process of computing the weights and biases is known as training, but this is not implemented in the
 accelerator. The networks are often trained using a framework such as [PyTorch](https://pytorch.org/)
 or [TensorFlow](https://www.tensorflow.org/),
 and then stored in a format such as [ONNX](https://github.com/onnx/onnx)
 or [TensorFlow Lite](https://www.tensorflow.org/lite).
 We will treat the weights and biases as constants, and only implement the inference part of the network.
+
+#### Inference
 
 Inference is the process of computing the output of the network given an input. This is covered below.
 
@@ -73,6 +77,8 @@ is defined as:
 ```
 f(x) = max(0, x)
 ```
+
+#### Number representation
 
 Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
 their hardware friendliness.
