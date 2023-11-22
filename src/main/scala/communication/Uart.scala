@@ -79,6 +79,7 @@ class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
   val shiftReg = RegInit(0.U(bufferBitSize.W))
   val cntReg = RegInit(0.U(20.W))
   val bitsReg = RegInit(0.U(log2Ceil(bufferBitSize + 1).W))
+
   val valReg = RegInit(false.B)
 
   when(cntReg =/= 0.U) {
