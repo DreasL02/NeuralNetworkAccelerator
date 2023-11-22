@@ -153,17 +153,60 @@ The inputs to the systolic array have to formatted correctly. This is done by a 
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
 
-### Memory
-
-The memory is divided into five different parts
-
 ### Accumulator
 
 ### Rectifier
 
+### Memory
+
+The memory is divided into five different parts to allow for separation of the different types of data.
+
+The first three are matrix storing memories for the input, weights and biases respectively:
+
+- Input memory
+- Weight memory
+- Bias memory
+
+The remaining two are used to store configuration values, like the fixed point format of the input and weights
+and whether the values are signed:
+
+- Fixed Point Config Memory
+- Signed Config Memory
+
+The weight and bias memories are implemented as real-only-memories encoded through values given in synthesis,
+while the renaming are implemented as a read-write-memories, to be changed during operation.
+All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
+implementation.
+
+The memories are implemented in
+[`Memories`](src/main/scala/Memories.scala).
+
+### Layer function
+
+With all of the above components, we can now document the layer function, which is the core of the accelerator.
+
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
+        <figcaption>
+            Data path for layer function (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+
 ### Control
 
 ### Communication
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/Transmission.png" alt="3x3 Systolic Array" width="800" />
+        <figcaption>
+            Data path for layer function (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
 ### Top-level
 
