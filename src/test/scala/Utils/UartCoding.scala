@@ -2,17 +2,18 @@ package Utils
 
 object UartCoding {
 
-  def encodeByteToUartBits(byte: Byte): String = {
-    // One start bit (0), data, two stop bits (11).
+  def encodeByteToUartDataBits(byte: Byte): String = {
     // The data bits are sent LSB first.
     val dataBitString = String.format("%8s", byte.toBinaryString).replace(' ', '0')
-    return "0" + dataBitString.reverse + "11"
+    return dataBitString.reverse
 
   }
 
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
-    val strings = bytes.map(encodeByteToUartBits)
-    return strings.mkString
+    val dataBitStrings = bytes.map(encodeByteToUartDataBits)
+    val combinedDataBitString = dataBitStrings.mkString
+    // One start bit (0), data (variable length, multiples of 8 bits), two stop bits (11).
+    return "0" + combinedDataBitString + "11"
   }
 
   def decodeUartBitsToString(bits: Array[BigInt]): String = {
