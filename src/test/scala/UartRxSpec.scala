@@ -2,7 +2,10 @@ import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import communication.chisel.lib.uart.Rx
-import org.scalatest.freespec.AnyFreeSpec
+
+// TODO: Bytes are signed.
+// TODO: Make the test test all values 0-255.
+// TODO: Make the test test multiple bytes.
 
 class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   "UartRx should behave correctly" in {
