@@ -61,14 +61,14 @@ This allows for a matrix multiplication to be used to compute the weighted sum o
 This is done for each neuron in the layer.
 The process is then repeated for each layer in the network, resulting in large amounts of matrix multiplications.
 
-The computation in a layer can be represented by the following formula
+The computation in a layer can be represented by the following formula:
 
 ```
-y = f(W * x + b)
+Y = f(W * X + B)
 ```
 
-Where y is the output of the layer, f is the activation function,
-W is the weight matrix, x is the input matrix and b is the bias matrix.
+Where Y is the output of the layer, f is the activation function,
+W is the weight matrix, X is the input matrix and B is the bias matrix.
 Examples of activation functions are the sigmoid function and the rectified linear unit (ReLU) function.
 
 The ReLU function is the most commonly used activation function, and
@@ -83,16 +83,17 @@ f(x) = max(0, x)
 Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
 their hardware friendliness.
 The precision of the fixed point number can often
-vary between layers, and even within a layer.
+vary between layers, and even within a layer, though the latter is not implemented in this project.
 
 ## Design & Implementation
 
 ### Systolic Array
 
-The core of the design is the Systolic Array, which is a scalable and pipelined algorithm for fast matrix
+The core of the design is the Systolic Array,
+which is a scalable and pipelined algorithm for fast matrix
 multiplication,
-also seen on Googles TPU [1].
-It consists of NxN processing element (PE).
+also seen on Googles TPU [1]. It allows us to perform the W * W efficiently.
+The array consists of NxN processing elements (PE).
 Each PE function as a multiplier and accumulator (MAC) unit implementing the following operation:
 
 ```
@@ -147,22 +148,103 @@ The remaining architecture is build around the Systolic Array to enable it to be
 
 ### Buffers
 
-The inputs to the systolic array have to formatted correctly. This is done by a series of
+The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of
 [`Buffer`](src/main/scala/Buffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
-
-### Memory
-
-The memory is divided into five different parts
+The values loaded from the memory have to follow a certain format. This is described in more detail in the
+[`Memory`](#memory) section.
 
 ### Accumulator
 
+The accumulator is a rather simple module, which is used to accumulate
+the results of the systolic array to the biases.
+Performing matrix addition is simply a matter of adding the values in the same position in the matrices.
+There is taken no care to ensure that the result is representable in the defined fixed point format,
+which can cause error if overflow occurs.
+
+It can found described in the
+[`Accumulator`](src/main/scala/Accumulator.scala) module.
+
 ### Rectifier
+
+### Memory
+
+The memory is divided into five different parts to allow for separation of the different types of data.
+
+The first three are matrix storing memories for the input, weights and biases respectively:
+
+- Input memory
+- Weight memory
+- Bias memory
+
+The remaining two are used to store configuration values, like the fixed point format of the input and weights
+and whether the values are signed:
+
+- Fixed Point Config Memory
+- Signed Config Memory
+
+Notably the latter three memories have their matrix data encoded in such a way that it is directly
+transferable to the systolic array.
+Below is an example of how the input memory is encoded for a 3x3 matrix with three different possible layers:
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/input_mem.png" alt="input_mem" width="800" />
+        <figcaption>
+            (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+
+Similarly, the weight memory is encoded for the example as:
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/weights_mem.png" alt="weight_mem" width="800" />
+        <figcaption>
+            (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+
+
+
+The weight and bias memories are implemented as real-only-memories encoded through values given in synthesis,
+while the renaming are implemented as a read-write-memories, to be changed during operation.
+
+All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
+implementation.
+
+The memories are described in
+[`Memories`](src/main/scala/Memories.scala).
+
+### Layer function
+
+With all of the above components, we can now document the layer function, which is the core of the accelerator.
+
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
+        <figcaption>
+            Data path for layer function (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
 ### Control
 
 ### Communication
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/Transmission.png" alt="3x3 Systolic Array" width="800" />
+        <figcaption>
+            Data path for layer function (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
 ### Top-level
 
