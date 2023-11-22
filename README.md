@@ -61,14 +61,14 @@ This allows for a matrix multiplication to be used to compute the weighted sum o
 This is done for each neuron in the layer.
 The process is then repeated for each layer in the network, resulting in large amounts of matrix multiplications.
 
-The computation in a layer can be represented by the following formula
+The computation in a layer can be represented by the following formula:
 
 ```
-y = f(W * x + b)
+Y = f(W * X + B)
 ```
 
-Where y is the output of the layer, f is the activation function,
-W is the weight matrix, x is the input matrix and b is the bias matrix.
+Where Y is the output of the layer, f is the activation function,
+W is the weight matrix, X is the input matrix and B is the bias matrix.
 Examples of activation functions are the sigmoid function and the rectified linear unit (ReLU) function.
 
 The ReLU function is the most commonly used activation function, and
@@ -83,16 +83,17 @@ f(x) = max(0, x)
 Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
 their hardware friendliness.
 The precision of the fixed point number can often
-vary between layers, and even within a layer.
+vary between layers, and even within a layer, though the latter is not implemented in this project.
 
 ## Design & Implementation
 
 ### Systolic Array
 
-The core of the design is the Systolic Array, which is a scalable and pipelined algorithm for fast matrix
+The core of the design is the Systolic Array,
+which is a scalable and pipelined algorithm for fast matrix
 multiplication,
-also seen on Googles TPU [1].
-It consists of NxN processing element (PE).
+also seen on Googles TPU [1]. It allows us to perform the W * W efficiently.
+The array consists of NxN processing elements (PE).
 Each PE function as a multiplier and accumulator (MAC) unit implementing the following operation:
 
 ```
