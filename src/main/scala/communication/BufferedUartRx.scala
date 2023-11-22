@@ -18,6 +18,8 @@ class BufferedUartRx(frequency: Int, baudRate: Int, bufferByteSize: Int = 1) ext
     val bufferCounter = Output(UInt(8.W))
   })
 
+  // TODO: Should this be owned by the buffer?
+  // Consider making this Module take a connection to an existing uart. Saves hardware by not duplicating the uart logic.
   val uartRx = Module(new Rx(frequency, baudRate))
 
   io.uartRxValidDebug := uartRx.io.channel.valid
@@ -26,14 +28,14 @@ class BufferedUartRx(frequency: Int, baudRate: Int, bufferByteSize: Int = 1) ext
   io.uartDebugBits := uartRx.io.channel.bits
 
   uartRx.io.rxd := io.rxd
-  uartRx.io.channel.ready := false.B
+  uartRx.io.channel.ready := false.B // TODO: This is dependent on validreg?
 
   val buffer = RegInit(VecInit(Seq.fill(bufferByteSize)(0.U(8.W))))
 
   io.channel.bits := buffer
   io.channel.valid := false.B
 
-  val counter = RegInit(0.U(8.W)) // TODO: Determine the correct width.
+  val counter = RegInit(0.U(log2Ceil(bufferByteSize + 1).W))
   io.bufferCounter := counter
 
   val validReg = RegInit(false.B)
