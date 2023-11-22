@@ -148,12 +148,23 @@ The remaining architecture is build around the Systolic Array to enable it to be
 
 ### Buffers
 
-The inputs to the systolic array have to formatted correctly. This is done by a series of
+The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of
 [`Buffer`](src/main/scala/Buffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
+The values loaded from the memory have to follow a certain format. This is described in more detail in the
+[`Memory`](#memory) section.
 
 ### Accumulator
+
+The accumulator is a rather simple module, which is used to accumulate
+the results of the systolic array to the biases.
+Performing matrix addition is simply a matter of adding the values in the same position in the matrices.
+There is taken no care to ensure that the result is representable in the defined fixed point format,
+which can cause error if overflow occurs.
+
+It can found described in the
+[`Accumulator`](src/main/scala/Accumulator.scala) module.
 
 ### Rectifier
 
@@ -173,12 +184,39 @@ and whether the values are signed:
 - Fixed Point Config Memory
 - Signed Config Memory
 
+Notably the latter three memories have their matrix data encoded in such a way that it is directly
+transferable to the systolic array.
+Below is an example of how the input memory is encoded for a 3x3 matrix with three different possible layers:
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/input_mem.png" alt="input_mem" width="800" />
+        <figcaption>
+            (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+
+Similarly, the weight memory is encoded for the example as:
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/weights_mem.png" alt="weight_mem" width="800" />
+        <figcaption>
+            (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+
+
+
 The weight and bias memories are implemented as real-only-memories encoded through values given in synthesis,
 while the renaming are implemented as a read-write-memories, to be changed during operation.
+
 All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
 implementation.
 
-The memories are implemented in
+The memories are described in
 [`Memories`](src/main/scala/Memories.scala).
 
 ### Layer function
