@@ -24,13 +24,66 @@ By implementing a hardware accelerator for neural networks, we can offload the m
 the FPGA, which can be made more efficient at these types of operations, mainly by reducing the amount of memory access.
 The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar CPU.
 By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive.
-This is especially true for large matrices, which are common in neural networks.
+This is especially true for large matrices, which are common in neural networks (see below).
 
 By making a scalable design in the FPGA, the performance costs can as well be fitted to the requirements of the Neural
-Network. It also allows us to make a highly specialized design, which is not possible in a CPU.
+Network. It also allows us to make a highly specialized design, which is not possible in a general purpose CPU.
 
 Chisel is a hardware construction language embedded in Scala, which allows for a more high-level description of
 hardware, and is therefore ideal to describe such a scalable design.
+
+## Neural Network Basics
+
+A neural network is a machine learning model, which is said to be inspired by the human brain.
+It consists of a series of layers, which each consist of a series of neurons.
+Each neuron is connected to all neurons in the previous layer, and each connection has a weight associated with it.
+The neuron then computes the weighted sum of the inputs, adds a bias value, and applies an activation function to the
+result.
+The activation function is typically a non-linear function, which allows the network to learn non-linear functions.
+The biases allow the network to learn the offset of the activation function.
+
+#### Training
+
+The process of computing the weights and biases is known as training, but this is not implemented in the
+accelerator. The networks are often trained using a framework such as [PyTorch](https://pytorch.org/)
+or [TensorFlow](https://www.tensorflow.org/),
+and then stored in a format such as [ONNX](https://github.com/onnx/onnx)
+or [TensorFlow Lite](https://www.tensorflow.org/lite).
+We will treat the weights and biases as constants, and only implement the inference part of the network.
+
+#### Inference
+
+Inference is the process of computing the output of the network given an input. This is covered below.
+
+The values in a layer are typically represented as a vector or a matrix,
+and the weights are represented as a matrix as well.
+This allows for a matrix multiplication to be used to compute the weighted sum of the inputs.
+This is done for each neuron in the layer.
+The process is then repeated for each layer in the network, resulting in large amounts of matrix multiplications.
+
+The computation in a layer can be represented by the following formula
+
+```
+y = f(W * x + b)
+```
+
+Where y is the output of the layer, f is the activation function,
+W is the weight matrix, x is the input matrix and b is the bias matrix.
+Examples of activation functions are the sigmoid function and the rectified linear unit (ReLU) function.
+
+The ReLU function is the most commonly used activation function, and
+is defined as:
+
+```
+f(x) = max(0, x)
+```
+
+#### Number representation
+
+Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
+their hardware friendliness.
+The precision of the fixed point number can often
+vary between layers, and even within a layer.
 
 ## Design & Implementation
 
@@ -46,7 +99,7 @@ Each PE function as a multiplier and accumulator (MAC) unit implementing the fol
 c = a * b + c
 ```
 
-Where a and b are the inputs to the PE and c is a stored value alongside the final result.
+Where a and b are the scalar inputs to the PE and c is a stored value alongside the final result.
 
 Notably the design handles varying fixed point numbers, and multiplication must therefore be handled with care,
 to ensure that the result is representable in the fixed point format. E.g, a multiplication of an
@@ -101,7 +154,11 @@ with a load signal to enable loading values from the memory into the entire seri
 
 ### Memory
 
-The memory is divided into four different parts
+The memory is divided into five different parts
+
+### Accumulator
+
+### Rectifier
 
 ### Control
 
@@ -114,4 +171,4 @@ The memory is divided into four different parts
 ## References
 
     [1]: Patterson, David A., and John L. Hennessy. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4. 
-    [2]:
+    [2]: 
