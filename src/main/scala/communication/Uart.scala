@@ -64,10 +64,12 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
  * The following code is inspired by Tommy's receive code at:
  * https://github.com/tommythorn/yarvi
  */
-class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
+class Rx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
-    val channel = new DecoupledIO(UInt(bufferBitSize.W))
+    val channel = new DecoupledIO(UInt(8.W))
+    val debugBitsReg = Output(UInt(8.W))
+    val debugCntReg = Output(UInt(20.W))
   })
 
   val BIT_CNT = ((frequency + baudRate / 2) / baudRate - 1).U
@@ -76,11 +78,16 @@ class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
   // Sync in the asynchronous RX data, reset to 1 to not start reading after a reset
   val rxReg = RegNext(RegNext(io.rxd, 1.U), 1.U)
 
-  val shiftReg = RegInit(0.U(bufferBitSize.W))
+  val shiftReg = RegInit(0.U(8.W))
   val cntReg = RegInit(0.U(20.W))
-  val bitsReg = RegInit(0.U(log2Ceil(bufferBitSize + 1).W))
-
+  val bitsReg = RegInit(0.U(4.W))
   val valReg = RegInit(false.B)
+
+  println("BIT_CNT = " + BIT_CNT)
+  println("START_CNT = " + START_CNT)
+
+  io.debugBitsReg := bitsReg
+  io.debugCntReg := cntReg
 
   when(cntReg =/= 0.U) {
     cntReg := cntReg - 1.U
@@ -94,7 +101,7 @@ class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
     }
   }.elsewhen(rxReg === 0.U) { // wait 1.5 bits after falling edge of start
     cntReg := START_CNT
-    bitsReg := bufferBitSize.U
+    bitsReg := 8.U
   }
 
   when(valReg && io.channel.ready) {
@@ -108,15 +115,15 @@ class Rx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
 /**
  * A single byte buffer with a ready/valid interface
  */
-class Buffer extends Module {
+class Buffer(bufferBitSize: Int = 8) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(new UartIO())
+    val in = Flipped(new DecoupledIO(UInt(bufferBitSize.W)))
     val out = new UartIO()
   })
 
   val empty :: full :: Nil = Enum(2)
   val stateReg = RegInit(empty)
-  val dataReg = RegInit(0.U(8.W))
+  val dataReg = RegInit(0.U(bufferBitSize.W))
 
   io.in.ready := stateReg === empty
   io.out.valid := stateReg === full
@@ -137,11 +144,12 @@ class Buffer extends Module {
 /**
  * A transmitter with a single buffer.
  */
-class BufferedTx(frequency: Int, baudRate: Int) extends Module {
+class BufferedTx(frequency: Int, baudRate: Int, bufferBitSize: Int = 8) extends Module {
   val io = IO(new Bundle {
     val txd = Output(UInt(1.W))
-    val channel = Flipped(new UartIO())
+    val channel = Flipped(new DecoupledIO(UInt(bufferBitSize.W)))
   })
+
   val tx = Module(new Tx(frequency, baudRate))
   val buf = Module(new Buffer())
 
@@ -181,8 +189,9 @@ class Echo(frequency: Int, baudRate: Int) extends Module {
     val txd = Output(UInt(1.W))
     val rxd = Input(UInt(1.W))
   })
-  // io.txd := RegNext(io.rxd)
-  val tx = Module(new BufferedTx(frequency, baudRate))
+
+  val bufferBitSize = 8 * 3
+  val tx = Module(new BufferedTx(frequency, baudRate, bufferBitSize))
   val rx = Module(new Rx(frequency, baudRate))
   io.txd := tx.io.txd
   rx.io.rxd := io.rxd
