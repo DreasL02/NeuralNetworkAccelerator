@@ -8,9 +8,6 @@
 
 package communication
 
-
-
-
 package chisel.lib.uart
 
 import chisel3._
@@ -26,8 +23,9 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
 
   val CYCLES_PER_SERIAL_BIT = ((frequency + baudRate / 2) / baudRate - 1).asUInt
   val SEQUENCE_LENGTH = 1 + 8 + 2 // one start bit, 8 data bits, two stop bits
+  val ELEVEN_HIGH_BITS = 0x7ff.U
 
-  val shiftReg = RegInit(0x7ff.U)
+  val shiftReg = RegInit(ELEVEN_HIGH_BITS)
   val cyclesCountReg = RegInit(0.U(20.W))
   val bitsIndexReg = RegInit(0.U(4.W))
 
@@ -47,7 +45,7 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
         shiftReg := 3.U ## io.channel.bits ## 0.U
         bitsIndexReg := SEQUENCE_LENGTH.U
       }.otherwise {
-        shiftReg := 0x7ff.U
+        shiftReg := ELEVEN_HIGH_BITS
       }
     }
 

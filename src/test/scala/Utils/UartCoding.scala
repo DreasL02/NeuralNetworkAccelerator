@@ -8,7 +8,7 @@ object UartCoding {
     // The data bits are sent LSB first.
     val dataBitStringLsbFirst = dataBitString.reverse
     // One start bit (0), data (8 bits), two stop bits (11).
-    return "11110" + dataBitStringLsbFirst + "11111"
+    return "0" + dataBitStringLsbFirst + "11"
   }
 
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
