@@ -1,7 +1,7 @@
 Hardware Accelerator for Neural Networks in Chisel
 =======================
 This repository documents a small but scalable Neural Network Accelerator architecture and implementation.\
-It is written in Chisel 5.0 and targeting the Basys3 FPGA board.
+It is written in Chisel 5.0 and targets the Basys3 FPGA board.
 
 ### Authors
 
@@ -92,7 +92,7 @@ vary between layers, and even within a layer, though the latter is not implement
 The core of the design is the Systolic Array,
 which is a scalable and pipelined algorithm for fast matrix
 multiplication,
-also seen on Googles TPU [1]. It allows us to perform the W * W efficiently.
+also seen on Googles TPU [1]. It allows us to perform the W * X operation in the layers efficiently.
 The array consists of NxN processing elements (PE).
 Each PE function as a multiplier and accumulator (MAC) unit implementing the following operation:
 
@@ -152,8 +152,22 @@ The inputs to the systolic array, the weights and inputs, have to formatted corr
 [`Buffer`](src/main/scala/Buffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
-The values loaded from the memory have to follow a certain format. This is described in more detail in the
-[`Memory`](#memory) section.
+The values loaded from the memory have to follow a certain format.
+
+This is described in more detail in the
+[`Memory & Encodings`](#memory--encodings) section.
+
+A visual example of the three instances of buffers with different shifts can be seen below:
+
+<figure>
+    <p align = "center">
+        <img src="docs/figures/3_buffers.png" alt="input_mem" width="800" />
+        <figcaption>
+          Three instances of buffers with different shifts. Orange registers are initialized to 0. 
+          Blue registers are initialized to values from memory (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
 ### Accumulator
 
@@ -168,7 +182,7 @@ It can found described in the
 
 ### Rectifier
 
-### Memory
+### Memory & Encodings
 
 The memory is divided into five different parts to allow for separation of the different types of data.
 
@@ -208,7 +222,10 @@ Similarly, the weight memory is encoded for the example as:
     </p>
 </figure>
 
+When transcribed to the buffers and systolic array, the computation is then valid and would result
+in the following format:
 
+The bias memory
 
 The weight and bias memories are implemented as real-only-memories encoded through values given in synthesis,
 while the renaming are implemented as a read-write-memories, to be changed during operation.
@@ -221,8 +238,7 @@ The memories are described in
 
 ### Layer function
 
-With all of the above components, we can now document the layer function, which is the core of the accelerator.
-
+With all of the above components, we can now assemble the layer function, which is the core of the accelerator.
 
 <figure>
     <p align = "center">
