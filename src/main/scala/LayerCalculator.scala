@@ -18,9 +18,6 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
 
     val signed = Input(Bool())
     val fixedPoint = Input(UInt(log2Ceil(w).W))
-
-    val buffer1 = Output(Vec(dimension, UInt(w.W)))
-    val buffer2 = Output(Vec(dimension, UInt(w.W)))
   })
 
   def timer(max: UInt, reset: Bool) = {
@@ -87,8 +84,4 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   io.result := rectifier.io.result
   io.valid := timer(dimension.U * dimension.U - 1.U, io.loadInputs || io.loadWeights)
 
-  for (i <- 0 until dimension) {
-    io.buffer1(i) := inputsBuffers(i).io.output
-    io.buffer2(i) := weightsBuffers(i).io.output
-  }
 }
