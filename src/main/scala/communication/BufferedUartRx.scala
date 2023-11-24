@@ -33,7 +33,6 @@ class BufferedUartRx(frequency: Int, baudRate: Int, bufferByteSize: Int = 1) ext
   val buffer = RegInit(VecInit(Seq.fill(bufferByteSize)(0.U(8.W))))
 
   io.channel.bits := buffer
-  io.channel.valid := false.B
 
   val counter = RegInit(0.U(log2Ceil(bufferByteSize + 1).W))
   io.bufferCounter := counter
@@ -41,19 +40,18 @@ class BufferedUartRx(frequency: Int, baudRate: Int, bufferByteSize: Int = 1) ext
   val validReg = RegInit(false.B)
   io.channel.valid := validReg
 
-  when (uartRx.io.channel.valid) {
+  when(uartRx.io.channel.valid) {
     uartRx.io.channel.ready := true.B
     buffer(counter) := uartRx.io.channel.bits
     counter := counter + 1.U
   }
 
-  when (counter === bufferByteSize.U) {
+  when(counter === bufferByteSize.U) {
     validReg := true.B
     counter := 0.U
   }
 
-  when (io.channel.ready && io.channel.valid) {
+  when(io.channel.ready && validReg) {
     validReg := false.B
   }
-
 }

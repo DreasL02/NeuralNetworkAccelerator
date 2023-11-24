@@ -6,18 +6,17 @@ class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVect
     val matrixAddress = Output(UInt(log2Ceil(lengthOfMatrixMemory).W))
     val vectorAddress = Output(UInt(log2Ceil(lengthOfVectorMemory).W))
 
-    val incrementMatrixAddress = Input(Bool())
-    val incrementVectorAddress = Input(Bool())
+    val incrementAddress = Input(Bool())
   })
 
   val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W))
   val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W))
 
-  when(io.incrementMatrixAddress) {
+  when(io.incrementAddress) {
     matrixAddressReg := matrixAddressReg + dimension.U * dimension.U
   }
 
-  when(io.incrementVectorAddress) {
+  when(io.incrementAddress) {
     vectorAddressReg := vectorAddressReg + 1.U
   }
 

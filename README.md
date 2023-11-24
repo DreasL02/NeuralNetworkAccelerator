@@ -146,6 +146,8 @@ modules respectively. The rounder is implemented in the
 
 The remaining architecture is build around the Systolic Array to enable it to be used as a hardware accelerator.
 
+In [1] a guideline for domain specific architectures is given.
+
 ### Buffers
 
 The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of

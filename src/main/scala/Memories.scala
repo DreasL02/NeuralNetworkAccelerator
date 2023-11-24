@@ -22,6 +22,7 @@ class Memories(w: Int = 8, dimension: Int = 4, initialInputsMemoryState: Array[I
   })
 
   val inputsMemory = RegInit(VecInit(initialInputsMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
+
   val weightsMemory = RegInit(VecInit(initialWeightsMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
   val biasMemory = RegInit(VecInit(initialBiasMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
   val signsMemory = RegInit(VecInit(initialSignsMemoryState.toIndexedSeq.map(_.S(1.W).asUInt)))

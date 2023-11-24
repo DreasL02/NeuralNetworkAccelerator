@@ -1,7 +1,7 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import communication.chisel.lib.uart.{Echo, Rx}
+import communication.chisel.lib.uart.{Rx}
 
 import scala.collection.mutable.ListBuffer
 

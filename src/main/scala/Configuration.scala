@@ -2,8 +2,8 @@ object Configuration {
 
   // Various functions to convert between different representations of the inputs, weights, and biases
 
-  def mapInputs(inputs: Array[Array[Array[Int]]]): Array[Int] = {
-    val mappedInputs = Array.fill(inputs.length * inputs(0).length * inputs(0)(0).length)(0)
+  def mapInputs(inputs: Array[Array[Array[Byte]]]): Array[Byte] = {
+    val mappedInputs = Array.fill(inputs.length * inputs(0).length * inputs(0)(0).length)(0.toByte)
     var address = 0
     for (i <- inputs.indices) { //layer
       for (j <- inputs(0).indices) { //row
@@ -45,16 +45,16 @@ object Configuration {
   }
 
 
-  def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int): BigInt = {
+  def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int): Byte = {
     val scaledToFixed = floatRepresentation * (1 << fixedPointFractionalBits)
-    BigDecimal.valueOf(scaledToFixed).toBigInt
+    scaledToFixed.toByte
   }
 
-  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Int]] = {
-    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
+  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Byte]] = {
+    val m: Array[Array[Byte]] = Array.fill(mf.length, mf(0).length)(0)
     for (i <- mf.indices) {
       for (j <- mf(0).indices) {
-        m(i)(j) = floatToFixed(mf(i)(j), fixedPointFractionBits).toInt
+        m(i)(j) = floatToFixed(mf(i)(j), fixedPointFractionBits)
       }
     }
     m

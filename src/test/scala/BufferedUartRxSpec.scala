@@ -79,6 +79,57 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "Should support a nine byte buffer" in {
+    test(new BufferedUartRx(100, 1, 9)) { dut =>
+
+      dut.clock.setTimeout(0)
+
+      val newMemoryBytesToSend = Array(
+        32.toByte, 2.toByte, 3.toByte,
+        4.toByte, 5.toByte, 6.toByte,
+        7.toByte, 8.toByte, 21.toByte
+      )
+
+      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(newMemoryBytesToSend)
+      println("Sending bit vector: " + bitsToSend)
+
+      dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
+      dut.io.channel.ready.poke(false.B)
+      dut.clock.step(10)
+
+      bitsToSend.foreach { bit =>
+        val bitAsBigInt = BigInt(bit - 48)
+        dut.io.rxd.poke(bitAsBigInt.U(1.W))
+
+
+        for (i <- 0 until 99) {
+          dut.clock.step(1)
+          if (false) {
+            print("valid = " + dut.io.uartRxValidDebug.peek().litToBoolean)
+            print(" bitsreg = " + dut.io.uartDebugBitsReg.peek().litValue)
+            print(" cntreg = " + dut.io.uartDebugCntReg.peek().litValue)
+            print(" rxd = " + dut.io.rxd.peek().litValue)
+            print(" data = " + dut.io.channel.bits(0).peek().litValue)
+            print(" i = " + i)
+            print(" | buffercounter = " + dut.io.bufferCounter.peek().litValue)
+            println()
+          }
+
+        }
+      }
+
+      println("Sent bit vector")
+
+      while (!dut.io.channel.valid.peek().litToBoolean) {
+        dut.clock.step()
+      }
+
+      for (i <- 0 until 9) {
+        dut.io.channel.bits(i).expect(newMemoryBytesToSend(i).U)
+      }
+    }
+  }
+
 
   "Should support multiple buffer fills of one byte" in {
     test(new BufferedUartRx(100, 1, 1)) { dut =>

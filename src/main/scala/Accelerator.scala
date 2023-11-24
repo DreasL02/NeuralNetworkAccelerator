@@ -3,59 +3,72 @@ import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
 
-class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int
-                  /*,initialInputsMemoryState: Array[Int],
-                  initialWeightsMemoryState: Array[Int],
-                  initialBiasMemoryState: Array[Int],
-                  initialSignsMemoryState: Array[Int],
-                  initialFixedPointsMemoryState: Array[Int]*/
+class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
+                  initialInputsMemoryState: Array[Byte]
+                  /*,
+                                    initialWeightsMemoryState: Array[Int],
+                                    initialBiasMemoryState: Array[Int],
+                                    initialSignsMemoryState: Array[Int],
+                                    initialFixedPointsMemoryState: Array[Int]*/
                  ) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(Bool())
     val txd = Output(Bool())
-    val address = Output(UInt(log2Ceil(8).W))
+    val ready = Output(Bool())
+    val value = Output(UInt(8.W))
+    val address = Output(UInt(8.W))
   })
 
-  def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
-    val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
-    for (i <- 0 until dimension) {
-      for (j <- 0 until dimension) {
-        matrix(i)(j) := vector(i * dimension + j)
-      }
-    }
-    matrix
-  }
+  val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, 8))
 
-  def convertMatrixToVec(matrix: Vec[Vec[UInt]]): Vec[UInt] = {
-    val vector = VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
-    for (i <- 0 until dimension) {
-      for (j <- 0 until dimension) {
-        vector(i * dimension + j) := matrix(i)(j)
-      }
-    }
-    vector
-  }
+  val communicator = Module(new Communicator(dimension * dimension * (w / 8), frequency, baudRate))
 
-  /*
-  val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
-    initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
-
-  val mmac = Module(new MatrixMultiplicationUnit(w, dimension))
-  */
-
-  val addressManager = Module(new AddressManager(dimension, 8, 8))
-
-  val communicator = Module(new Communicator(dimension*dimension*(w / 8), frequency, baudRate))
+  val memory = RegInit(VecInit(initialInputsMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
 
   communicator.io.uartRxPin := io.rxd
   io.txd := communicator.io.uartTxPin
 
-  // TODO: Only one of these should be necessary.
-  addressManager.io.incrementMatrixAddress := communicator.io.incrementAddress
-  addressManager.io.incrementVectorAddress := communicator.io.incrementAddress
+  addressManager.io.incrementAddress := communicator.io.incrementAddress
 
+  for (i <- 0 until dimension * dimension) {
+    when(communicator.io.writeEnable) {
+      memory(addressManager.io.matrixAddress + i.U) := communicator.io.dataOut(i)
+    }
+  }
 
   io.address := addressManager.io.vectorAddress
+  io.ready := communicator.io.ready
+  io.value := memory(addressManager.io.matrixAddress)
+
+
+  /*
+    def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
+      val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
+      for (i <- 0 until dimension) {
+        for (j <- 0 until dimension) {
+          matrix(i)(j) := vector(i * dimension + j)
+        }
+      }
+      matrix
+    }
+
+    def convertMatrixToVec(matrix: Vec[Vec[UInt]]): Vec[UInt] = {
+      val vector = VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
+      for (i <- 0 until dimension) {
+        for (j <- 0 until dimension) {
+          vector(i * dimension + j) := matrix(i)(j)
+        }
+      }
+      vector
+    }
+
+
+    val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
+      initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
+
+    val mmac = Module(new MatrixMultiplicationUnit(w, dimension))
+    */
+
 
   /*
   memories.io.dataAddress := addressManager.io.matrixAddress
