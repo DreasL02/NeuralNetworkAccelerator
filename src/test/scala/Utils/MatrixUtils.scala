@@ -92,6 +92,18 @@ object MatrixUtils {
     m_b
   }
 
+  def convertMappedMatrixToMatrix(m: Array[Int], dimension: Int): Array[Array[Int]] = {
+    val m_r: Array[Array[Int]] = Array.fill(dimension, dimension)(0)
+
+    for (i <- 0 until dimension) {
+      for (j <- 0 until dimension) {
+        m_r(i)(j) = m(i * dimension + j)
+      }
+    }
+    m_r
+  }
+
+
   def matrixToString(m: Array[Array[Float]]): String = {
     var str = ""
     for (i <- m.indices) {
@@ -113,6 +125,7 @@ object MatrixUtils {
     }
     str
   }
+
 
   def printMatrixMultiplication(m1: Array[Array[Int]], m2: Array[Array[Int]], mr: Array[Array[Int]], text: String): Unit = {
     println("--- %s ----".format(text))

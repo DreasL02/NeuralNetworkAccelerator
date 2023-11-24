@@ -15,7 +15,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
     val rxd = Input(Bool())
     val txd = Output(Bool())
     val ready = Output(Bool())
-    val value = Output(UInt(8.W))
+    val matrixMemory = Output(Vec(dimension * dimension, UInt(8.W)))
     val address = Output(UInt(8.W))
   })
 
@@ -38,8 +38,10 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
 
   io.address := addressManager.io.vectorAddress
   io.ready := communicator.io.ready
-  io.value := memory(addressManager.io.matrixAddress)
 
+  for (i <- 0 until dimension * dimension) {
+    io.matrixMemory(i) := memory(addressManager.io.matrixAddress + i.U)
+  }
 
   /*
     def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {

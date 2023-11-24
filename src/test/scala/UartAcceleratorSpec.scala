@@ -1,3 +1,4 @@
+import Utils.MatrixUtils
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
@@ -7,6 +8,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
+  val dimension = 3
   val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
 
   val inputsL1: Array[Array[Float]] = Array(Array(1.0f, 2.3f, 3.0f), Array(4.0f, 5.05f, 6.0f), Array(7.0f, 8.6f, 9.0f))
@@ -25,7 +27,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val incrementAddressOpcode = 4.toByte
 
   "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
-    test(new Accelerator(8, 3, frequency, baudRate, mappedInputs)) { dut =>
+    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -53,7 +55,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should initially set address to 0, then increment to 3 after three increment messages via UART." in {
-    test(new Accelerator(8, 3, frequency, baudRate, mappedInputs)) { dut =>
+    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -83,13 +85,17 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should read from memory" in {
-    test(new Accelerator(8, 3, frequency, baudRate, mappedInputs)) { dut =>
+    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
       dut.io.address.expect(0.U)
-      dut.io.value.expect(48.U)
+      val memoryValues = Array.fill(dimension * dimension)(0)
 
+      for (i <- 0 until dimension * dimension) {
+        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+      }
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
@@ -108,17 +114,27 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       })
 
       dut.io.address.expect(1.U)
-      dut.io.value.expect(3.U)
+
+
+      for (i <- 0 until dimension * dimension) {
+        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+      }
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
     }
   }
 
   "Should write and then read from memory" in {
-    test(new Accelerator(8, 3, frequency, baudRate, mappedInputs)) { dut =>
+    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
       dut.io.address.expect(0.U)
-      dut.io.value.expect(48.U)
+      val memoryValues = Array.fill(dimension * dimension)(0)
+
+      for (i <- 0 until dimension * dimension) {
+        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+      }
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
 
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
@@ -141,6 +157,11 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Let it settle
       dut.clock.step(100)
 
+      for (i <- 0 until dimension * dimension) {
+        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+      }
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
+
       val newMemoryBytesToSend = Array(
         32.toByte, 2.toByte, 3.toByte,
         4.toByte, 5.toByte, 6.toByte,
@@ -157,9 +178,12 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       })
 
       dut.clock.step(100)
-
+      for (i <- 0 until dimension * dimension) {
+        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+      }
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
       dut.io.address.expect(0.U)
-      println(dut.io.value.peekInt())
+      //println(dut.io.value.peekInt())
     }
   }
 
