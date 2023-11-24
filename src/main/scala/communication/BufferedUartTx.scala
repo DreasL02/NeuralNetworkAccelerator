@@ -13,6 +13,9 @@ class BufferedUartTx(frequency: Int, baudRate: Int, bufferByteSize: Int = 1) ext
     val channel = Flipped(DecoupledIO(Vec(bufferByteSize, UInt(8.W))))
   })
 
+  io.txd := 1.U(1.W) // UART idle signal is high
+  io.channel.ready := false.B
+
   // TODO: This is mostly an IO placeholder for now.
   // This should really be implemented by using the ByteBuffer and a shared UartTx.
 }

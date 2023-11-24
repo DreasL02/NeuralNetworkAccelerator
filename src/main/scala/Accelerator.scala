@@ -3,14 +3,17 @@ import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
 
-class Accelerator(w: Int = 8, dimension: Int = 4,
-                  initialInputsMemoryState: Array[Int], initialWeightsMemoryState: Array[Int],
-                  initialBiasMemoryState: Array[Int], initialSignsMemoryState: Array[Int],
-                  initialFixedPointsMemoryState: Array[Int]) extends Module {
+class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int
+                  /*,initialInputsMemoryState: Array[Int],
+                  initialWeightsMemoryState: Array[Int],
+                  initialBiasMemoryState: Array[Int],
+                  initialSignsMemoryState: Array[Int],
+                  initialFixedPointsMemoryState: Array[Int]*/
+                 ) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(Bool())
     val txd = Output(Bool())
-    val result = Output(Vec(dimension, Vec(dimension, UInt(w.W))))
+    val address = Output(UInt(log2Ceil(8).W))
   })
 
   def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
@@ -33,24 +36,28 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
     vector
   }
 
+  /*
   val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
 
   val mmac = Module(new MatrixMultiplicationUnit(w, dimension))
+  */
 
-  val controller = Module(new Controller())
+  val addressManager = Module(new AddressManager(dimension, 8, 8))
 
-  val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, initialWeightsMemoryState.length))
+  val communicator = Module(new Communicator(dimension*dimension*(w / 8), frequency, baudRate))
 
-  val communicator = Module(new Communicator())
+  communicator.io.uartRxPin := io.rxd
+  io.txd := communicator.io.uartTxPin
 
-  val decoder = Module(new Decoder())
+  // TODO: Only one of these should be necessary.
+  addressManager.io.incrementMatrixAddress := communicator.io.incrementAddress
+  addressManager.io.incrementVectorAddress := communicator.io.incrementAddress
 
-  decoder.io.opcode := communicator.io.opcode
 
-  addressManager.io.incrementMatrixAddress := controller.io.incrementAddress
-  addressManager.io.incrementVectorAddress := controller.io.incrementAddress
+  io.address := addressManager.io.vectorAddress
 
+  /*
   memories.io.dataAddress := addressManager.io.matrixAddress
   memories.io.configAddress := addressManager.io.vectorAddress
   memories.io.writeAddress := addressManager.io.matrixAddress
@@ -62,6 +69,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   mmac.io.fixedPoint := memories.io.fixedPointRead
 
   // TODO
+
   controller.io.receivedMessage := false.B
   controller.io.inputsStored := false.B
   controller.io.transmissionDone := false.B
@@ -78,7 +86,9 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   memories.io.read := controller.io.readMemory
   memories.io.write := controller.io.writeMemory
 
+
   memories.io.dataWrite := convertMatrixToVec(mmac.io.result)
 
   io.result := mmac.io.result
+*/
 }

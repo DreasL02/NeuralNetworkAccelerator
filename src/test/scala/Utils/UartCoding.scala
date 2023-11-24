@@ -2,19 +2,23 @@ package Utils
 
 object UartCoding {
 
+  def cyclesPerSerialBit(frequency: Int, baudRate: Int): Int = {
+    (frequency + baudRate / 2) / baudRate - 1
+  }
+
   def encodeByteToUartBits(byte: Byte): String = {
     val dataBitString = String.format("%8s", byte.toBinaryString).replace(' ', '0')
 
     // The data bits are sent LSB first.
     val dataBitStringLsbFirst = dataBitString.reverse
     // One start bit (0), data (8 bits), two stop bits (11).
-    return "0" + dataBitStringLsbFirst + "11"
+    "0" + dataBitStringLsbFirst + "11"
   }
 
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
     val dataBitStrings = bytes.map(encodeByteToUartBits)
     val combinedDataBitString = dataBitStrings.mkString
-    return combinedDataBitString
+    combinedDataBitString
   }
 
   def decodeUartBitsToString(bits: Array[BigInt], bufferBitSize: Int = 8): String = {
@@ -35,7 +39,7 @@ object UartCoding {
       i = i + (bufferBitSize + 1)
     }
 
-    return output
+    output
   }
 
 }
