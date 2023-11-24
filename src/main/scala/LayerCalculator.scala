@@ -83,5 +83,4 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
 
   io.result := rectifier.io.result
   io.valid := timer(dimension.U * dimension.U - 1.U, io.loadInputs || io.loadWeights)
-
 }
