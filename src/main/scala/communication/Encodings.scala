@@ -3,8 +3,8 @@ package communication
 import chisel3._
 
 object Encodings {
-  object States extends ChiselEnum {
-    val receiving, decoding, inputs, transmitting, reading, calculating, writing, address = Value
+  object SystolicStates extends ChiselEnum {
+    val idle, reading, calculating, writing, finished = Value
   }
 
   object Codes extends ChiselEnum {

@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
 
-class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
+class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   val io = IO(new Bundle {
     val loadInputs = Input(Bool())
     val loadWeights = Input(Bool())

@@ -4,10 +4,10 @@ import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
-class MMUSpec extends AnyFreeSpec with ChiselScalatestTester {
+class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Matrix Multiplication Unit should behave correctly" in {
     val dimension = 3
-    test(new MatrixMultiplicationUnit(w = 16, dimension = dimension)) { dut =>
+    test(new LayerCalculator(w = 16, dimension = dimension)) { dut =>
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 31.2f, 0.9f))
       var weightsFloat = Array(Array(2.2f, 1.3f, 10.0f), Array(4.9f, 0.4f, 8.8f), Array(2.2f, 1.2f, 0.9f))
       var biasesFloat = Array(Array(1.0f, 2.0f, 3.4f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
