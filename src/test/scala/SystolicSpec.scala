@@ -13,7 +13,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 31.2f, 0.9f))
       var m2f = Array(Array(2.2f, 1.3f, 10.0f), Array(4.9f, 0.4f, 8.8f), Array(2.2f, 1.2f, 0.9f))
 
-      val fixedPoint = 4
+      val fixedPoint = 3
 
       var mrf = calculateMatrixMultiplication(m1f, m2f)
 
@@ -42,7 +42,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       val max_number_of_cycles = mm1.length * mm2(0).length
       for (cycle <- 0 until max_number_of_cycles) {
         for (i <- mm1.indices) {
-          //println("c: %d i: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length-1-cycle)))
+          //println("c: %d i: %d v: %d".format(cycle, i, mm1(i)(mm1(0).length - 1 - cycle)))
           dut.io.a(i).poke(mm1(i)(mm1(0).length - 1 - cycle))
         }
         //println("----")
@@ -60,11 +60,12 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue.toInt
         }
       }
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint)
-      println("---- SHOULD MATCH ABOVE ----")
-      print(matrixToString(resultFloat))
-      println("---- FIXED POINT OF ABOVE ----")
+      println("---- SYSTOLIC ARRAY RESULT IN FIXED ----")
       print(matrixToString(resultFixed))
+      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint)
+      println("---- SYSTOLIC ARRAY RESULT IN FLOAT ----")
+      print(matrixToString(resultFloat))
+
 
       for (i <- mrf.indices) {
         for (j <- mrf(0).indices) {
