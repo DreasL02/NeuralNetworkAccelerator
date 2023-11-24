@@ -42,8 +42,8 @@ class MMUSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.loadInputs.poke(true.B)
       dut.io.loadWeights.poke(true.B)
       dut.io.loadBiases.poke(true.B)
-      //Assignment of values to buffers missing
 
+      // Load inputs, weights and biases into the buffers
       for (i <- inputsFixed.indices) {
         for (j <- inputsFixed(0).indices) {
           dut.io.inputs(i)(j).poke(inputsFixed(i)(dimension - 1 - j).asUInt)
@@ -58,6 +58,7 @@ class MMUSpec extends AnyFreeSpec with ChiselScalatestTester {
         cycles = cycles + 1
         dut.io.loadInputs.poke(false.B)
         dut.io.loadWeights.poke(false.B)
+        dut.io.loadBiases.poke(false.B)
       }
 
 
@@ -69,11 +70,13 @@ class MMUSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
 
       val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint)
-      println("---- SHOULD MATCH ABOVE ----")
+      println("DONE IN %d CYCLES".format(cycles))
+      println("RESULT IN FLOATING POINT")
       print(matrixToString(resultFloat))
-      println("---- FIXED POINT OF ABOVE ----")
+      println("RESULT IN FIXED POINT")
       print(matrixToString(resultFixed))
 
+      // Evaluate
       for (i <- additionResultFloat.indices) {
         for (j <- additionResultFloat(0).indices) {
           val a = resultFloat(i)(j)

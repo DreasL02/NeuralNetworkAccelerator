@@ -1,5 +1,5 @@
 import chisel3._
-import chisel3.util.log2Ceil
+import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
 
 class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
@@ -59,11 +59,16 @@ class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
   systolicArray.io.fixedPoint := io.fixedPoint
 
   val biases = VecInit.fill(dimension, dimension)(RegInit(0.U))
+
   for (i <- 0 until dimension) {
     for (j <- 0 until dimension) {
+      val biasValue = Wire(UInt(w.W))
+
+      biasValue := 0.U // default value when not loading
       when(io.loadBiases) {
-        biases(i)(j) := io.biases(i)(j)
+        biasValue := io.biases(i)(j) // load the bias value
       }
+      biases(i)(j) := ShiftRegister(biasValue, dimension * dimension - 1) //delay the bias value
     }
   }
 
