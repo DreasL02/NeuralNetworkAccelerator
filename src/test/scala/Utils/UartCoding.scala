@@ -2,21 +2,22 @@ package Utils
 
 object UartCoding {
 
-  def encodeByteToUartDataBits(byte: Byte): String = {
-    // The data bits are sent LSB first.
+  def encodeByteToUartBits(byte: Byte): String = {
     val dataBitString = String.format("%8s", byte.toBinaryString).replace(' ', '0')
-    return dataBitString.reverse
 
+    // The data bits are sent LSB first.
+    val dataBitStringLsbFirst = dataBitString.reverse
+    // One start bit (0), data (8 bits), two stop bits (11).
+    return "0" + dataBitStringLsbFirst + "11"
   }
 
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
-    val dataBitStrings = bytes.map(encodeByteToUartDataBits)
+    val dataBitStrings = bytes.map(encodeByteToUartBits)
     val combinedDataBitString = dataBitStrings.mkString
-    // One start bit (0), data (variable length, multiples of 8 bits), two stop bits (11).
-    return "0" + combinedDataBitString + "11"
+    return combinedDataBitString
   }
 
-  def decodeUartBitsToString(bits: Array[BigInt]): String = {
+  def decodeUartBitsToString(bits: Array[BigInt], bufferBitSize: Int = 8): String = {
     var output = ""
     var i = 0
 
@@ -28,10 +29,10 @@ object UartCoding {
           return output
         }
       }
-      val dataBits = bits.slice(i + 1, i + 8)
+      val dataBits = bits.slice(i + 1, i + bufferBitSize)
       val dataAsUInt = dataBits.zipWithIndex.map { case (element, index) => element * Math.pow(2, index).toInt }
       output = output + dataAsUInt.sum.toChar
-      i = i + 9
+      i = i + (bufferBitSize + 1)
     }
 
     return output

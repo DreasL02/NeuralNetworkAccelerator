@@ -61,7 +61,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4,
   mmac.io.signed := memories.io.signsRead
   mmac.io.fixedPoint := memories.io.fixedPointRead
 
-  //TODO
+  // TODO
   controller.io.receivedMessage := false.B
   controller.io.inputsStored := false.B
   controller.io.transmissionDone := false.B
