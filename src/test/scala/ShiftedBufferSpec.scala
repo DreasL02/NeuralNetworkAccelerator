@@ -2,11 +2,11 @@ import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
-class BufferSpec extends AnyFreeSpec with ChiselScalatestTester {
+class ShiftedBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Buffer should behave correctly" in {
     val dimension = 4
     val shift = 0
-    test(new Buffer(w = 8, dimension = dimension, shift = shift)) { dut =>
+    test(new ShiftedBuffer(w = 8, dimension = dimension, shift = shift)) { dut =>
       dut.io.load.poke(true.B)
       dut.io.data(0).poke(1.U)
       dut.io.data(1).poke(2.U)

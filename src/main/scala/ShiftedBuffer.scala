@@ -1,6 +1,6 @@
 import chisel3._
 
-class Buffer(w: Int = 8, dimension: Int = 4, shift: Int) extends Module {
+class ShiftedBuffer(w: Int = 8, dimension: Int = 4, shift: Int) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool())
     val data = Input(Vec(dimension, UInt(w.W)))

@@ -151,7 +151,7 @@ In [1] a guideline for domain specific architectures is given.
 ### Buffers
 
 The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of
-[`Buffer`](src/main/scala/Buffer.scala) modules.
+[`Buffer`](src/main/scala/ShiftedBuffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
 The values loaded from the memory have to follow a certain format.

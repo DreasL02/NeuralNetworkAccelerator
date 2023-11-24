@@ -34,12 +34,12 @@ class MatrixMultiplicationUnit(w: Int = 8, dimension: Int = 4) extends Module {
   }
 
   val inputsBuffers = for (i <- 0 until dimension) yield {
-    val buffer = Module(new Buffer(w, dimension, i))
+    val buffer = Module(new ShiftedBuffer(w, dimension, i))
     buffer
   }
 
   val weightsBuffers = for (i <- 0 until dimension) yield {
-    val buffer = Module(new Buffer(w, dimension, i))
+    val buffer = Module(new ShiftedBuffer(w, dimension, i))
     buffer
   }
 
