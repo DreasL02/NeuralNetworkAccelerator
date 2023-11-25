@@ -39,9 +39,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       dut.io.signed.poke(signed.asUInt)
       dut.io.fixedPoint.poke(fixedPoint)
-      dut.io.loadInputs.poke(true.B)
-      dut.io.loadWeights.poke(true.B)
-      dut.io.loadBiases.poke(true.B)
+      dut.io.load.poke(true.B)
 
       // Load inputs, weights and biases into the buffers
       for (i <- inputsFixed.indices) {
@@ -56,9 +54,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       while (!dut.io.valid.peekBoolean()) {
         dut.clock.step()
         cycles = cycles + 1
-        dut.io.loadInputs.poke(false.B)
-        dut.io.loadWeights.poke(false.B)
-        dut.io.loadBiases.poke(false.B)
+        dut.io.load.poke(false.B)
       }
 
 

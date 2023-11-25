@@ -18,13 +18,18 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     //val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
+
+    val startCalculation = Output(Bool())
+    val calculationDone = Input(Bool())
   })
 
   io.incrementAddress := false.B
   io.writeEnable := false.B
   io.ready := false.B
+  io.startCalculation := false.B
 
-  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: Nil = Enum(5)
+  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress ::
+    receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
 
   // TODO: All these modules should ideally utilize a shared a single UartRx and a single UartTx.
   val bufferedOpcodeInput = Module(new BufferedUartRx(frequency, baudRate, 1))
@@ -65,8 +70,8 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
           is(Codes.nextTransmitting) {
             state := sendingData
           }
-          is(Codes.nextReading) {
-            state := receivingData
+          is(Codes.nextCalculating) {
+            state := waitForExternalCalculation
           }
           is(Codes.nextAddress) {
             state := incrementingAddress
@@ -102,6 +107,13 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
         // Go to sending OK signal.
+        state := respondingWithOKSignal
+      }
+    }
+
+    is(waitForExternalCalculation) {
+      io.startCalculation := true.B
+      when(io.calculationDone) {
         state := respondingWithOKSignal
       }
     }
