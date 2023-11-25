@@ -35,7 +35,7 @@ object UartCoding {
       }
       val dataBits = bits.slice(i + 1, i + bufferBitSize)
       val dataAsUInt = dataBits.zipWithIndex.map { case (element, index) => element * Math.pow(2, index).toInt }
-      output = output + dataAsUInt.sum.toChar
+      output = output + dataAsUInt.sum
       i = i + (bufferBitSize + 1)
     }
 

@@ -13,16 +13,11 @@ class BufferedUartTxForTestingOnly(frequency: Int, baudRate: Int, bufferByteSize
     val inputChannel = Flipped(DecoupledIO(Vec(bufferByteSize, UInt(8.W))))
   })
 
-  io.txd := 1.U
-  io.inputChannel.ready := false.B
-
-  /*
-  val uartTx = Module(new Tx(frequency, baudRate))
+  val uartTx = Module(new UartTx(frequency, baudRate))
   io.txd := uartTx.io.txd
 
-  val byteBuffer = Module(new ByteBuffer(bufferByteSize))
+  val byteBuffer = Module(new SerializingByteBuffer(bufferByteSize))
 
   uartTx.io.inputChannel <> byteBuffer.io.outputChannel
-  byteBuffer.io.inputChannel <> io.inputChannel
-  */
+  io.inputChannel <> byteBuffer.io.inputChannel
 }
