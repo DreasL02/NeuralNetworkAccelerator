@@ -1,5 +1,5 @@
 import chisel3.emitVerilog
-import communication.chisel.lib.uart.{Tx}
+import communication.chisel.lib.uart.{UartTx}
 import systolic_array.SystolicArray
 
 /*
@@ -46,6 +46,6 @@ object Main extends App {
 
 object Main extends App {
   print("UART \n")
-  emitVerilog(new Tx(50000000 * 2, 115200))
+  emitVerilog(new UartTx(50000000 * 2, 115200))
 }
 

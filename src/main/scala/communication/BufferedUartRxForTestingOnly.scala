@@ -13,7 +13,7 @@ class BufferedUartRxForTestingOnly(frequency: Int, baudRate: Int, bufferByteSize
     val outputChannel = new DecoupledIO(Vec(bufferByteSize, UInt(8.W)))
   })
 
-  val uartRx = Module(new Rx(frequency, baudRate))
+  val uartRx = Module(new UartRx(frequency, baudRate))
   uartRx.io.rxd := io.rxd
 
   val byteBuffer = Module(new ByteBuffer(bufferByteSize))
