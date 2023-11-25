@@ -61,6 +61,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     is(receivingOpcodes) {
       bufferedOpcodeInput.io.channel.ready := true.B
       io.ready := true.B
+
       when(bufferedOpcodeInput.io.channel.valid) {
         // We have loaded the opcode into the buffer and decoded it.
         switch(decoder.io.decodingCode) {
@@ -75,14 +76,14 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
           }
           is(Codes.nextAddress) {
             state := incrementingAddress
-            // TODO: Are addresses the same size as opcodes?
           }
         }
       }
     }
 
     is(respondingWithOKSignal) {
-
+      // TODO: Send OK signal through the uart to indicate job done.
+      // TODO: When done sending OK signal, go to receiving opcodes.
     }
 
     is(incrementingAddress) {
@@ -112,8 +113,9 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(waitForExternalCalculation) {
-      io.startCalculation := true.B
-      when(io.calculationDone) {
+      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, may also increment the address
+
+      when(io.calculationDone) { //wait until layer is done calculating
         state := respondingWithOKSignal
       }
     }

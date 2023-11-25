@@ -17,6 +17,8 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     val fixedPoint = Input(UInt(log2Ceil(w).W))
   })
 
+  // TODO: look at disabling the rectifier and accumulator when not needed (i.e. when valid is false)
+
   def timer(max: UInt, reset: Bool) = {
     val x = RegInit(0.asUInt(max.getWidth.W))
     when(reset) {
