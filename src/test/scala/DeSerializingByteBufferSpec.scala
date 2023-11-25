@@ -1,18 +1,18 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import communication.chisel.lib.uart.{ByteBuffer}
+import communication.chisel.lib.uart.DeSerializingByteBuffer
 
-class ByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
+class DeSerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   "Output should be invalid by default" in {
-    test(new ByteBuffer(1)) { dut =>
+    test(new DeSerializingByteBuffer(1)) { dut =>
       dut.io.outputChannel.valid.expect(false.B)
     }
   }
 
   "Should buffer a single byte" in {
-    test(new ByteBuffer(1)) { dut =>
+    test(new DeSerializingByteBuffer(1)) { dut =>
 
       val testValue = 187.U(8.W)
 
@@ -32,7 +32,7 @@ class ByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should buffer two bytes" in {
-    test(new ByteBuffer(2)) { dut =>
+    test(new DeSerializingByteBuffer(2)) { dut =>
 
       val testValue1 = 187.U(8.W)
       val testValue2 = 109.U(8.W)
@@ -84,7 +84,7 @@ class ByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should buffer two bytes, then overwrite with two new bytes" in {
-    test(new ByteBuffer(2)) { dut =>
+    test(new DeSerializingByteBuffer(2)) { dut =>
 
       val testValue1 = 187.U(8.W)
       val testValue2 = 109.U(8.W)

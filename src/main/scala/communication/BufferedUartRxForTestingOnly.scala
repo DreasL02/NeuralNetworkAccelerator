@@ -16,7 +16,7 @@ class BufferedUartRxForTestingOnly(frequency: Int, baudRate: Int, bufferByteSize
   val uartRx = Module(new UartRx(frequency, baudRate))
   uartRx.io.rxd := io.rxd
 
-  val byteBuffer = Module(new ByteBuffer(bufferByteSize))
+  val byteBuffer = Module(new DeSerializingByteBuffer(bufferByteSize))
 
   byteBuffer.io.inputChannel <> uartRx.io.outputChannel
   io.outputChannel <> byteBuffer.io.outputChannel

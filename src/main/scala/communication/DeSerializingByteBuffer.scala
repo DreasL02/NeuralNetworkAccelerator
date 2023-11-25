@@ -5,7 +5,7 @@ package chisel.lib.uart
 import chisel3._
 import chisel3.util._
 
-class ByteBuffer(bufferByteSize: Int) extends Module {
+class DeSerializingByteBuffer(bufferByteSize: Int) extends Module {
   val bufferBitSize = bufferByteSize * 8
 
   val io = IO(new Bundle {
