@@ -1,9 +1,11 @@
 import chisel3._
 import chiseltest._
-import org.scalatest.freespec.AnyFreeSpec
 import communication.chisel.lib.uart.BufferedUartRxForTestingOnly
+import org.scalatest.freespec.AnyFreeSpec
 
-class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
+class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
+
+  // TODO: This is currently a copy of the BufferedUartRxSpec. It should be changed to test the BufferedUartTxForTestingOnly.
 
   val clockTimeout = 200_000_000
   val frequency = 100
