@@ -18,7 +18,7 @@ class UartIO extends DecoupledIO(UInt(8.W))
 class Tx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val txd = Output(UInt(1.W))
-    val channel = Flipped(new UartIO())
+    val inputChannel = Flipped(new UartIO())
   })
 
   val CYCLES_PER_SERIAL_BIT = ((frequency + baudRate / 2) / baudRate - 1).asUInt
@@ -29,7 +29,7 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
   val cyclesCountReg = RegInit(0.U(20.W))
   val bitsIndexReg = RegInit(0.U(4.W))
 
-  io.channel.ready := (cyclesCountReg === 0.U) && (bitsIndexReg === 0.U)
+  io.inputChannel.ready := (cyclesCountReg === 0.U) && (bitsIndexReg === 0.U)
   io.txd := shiftReg(0)
 
   when(cyclesCountReg === 0.U) {
@@ -40,9 +40,9 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
       shiftReg := 1.U ## shift(9, 0)
       bitsIndexReg := bitsIndexReg - 1.U
     }.otherwise {
-      when(io.channel.valid) {
+      when(io.inputChannel.valid) {
         // two stop bits, data, one start bit
-        shiftReg := 3.U ## io.channel.bits ## 0.U
+        shiftReg := 3.U ## io.inputChannel.bits ## 0.U // Todo: convert to binary literals
         bitsIndexReg := SEQUENCE_LENGTH.U
       }.otherwise {
         shiftReg := ELEVEN_HIGH_BITS
@@ -58,7 +58,7 @@ class Tx(frequency: Int, baudRate: Int) extends Module {
 class Rx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
-    val channel = new UartIO()
+    val outputChannel = new UartIO()
     val debugBitsReg = Output(UInt(8.W))
     val debugCntReg = Output(UInt(20.W))
   })
@@ -94,10 +94,10 @@ class Rx(frequency: Int, baudRate: Int) extends Module {
     bitsCounterReg := 8.U
   }
 
-  when (validReg && io.channel.ready) {
+  when (validReg && io.outputChannel.ready) {
     validReg := false.B
   }
 
-  io.channel.bits := dataBitsShiftReg
-  io.channel.valid := validReg
+  io.outputChannel.bits := dataBitsShiftReg
+  io.outputChannel.valid := validReg
 }
