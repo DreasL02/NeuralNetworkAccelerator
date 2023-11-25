@@ -11,7 +11,6 @@ class LayerFSM extends Module {
 
     val incrementAddress = Output(Bool())
     val loadBuffers = Output(Bool())
-    val loadBiases = Output(Bool())
     val readMemory = Output(Bool())
     val writeMemory = Output(Bool())
     val finished = Output(Bool())
@@ -28,6 +27,7 @@ class LayerFSM extends Module {
       }
     }
     is(reading) {
+      // should take 1 cycle with register memory
       state := calculating
     }
     is(calculating) {
@@ -36,6 +36,7 @@ class LayerFSM extends Module {
       }
     }
     is(writing) {
+      // should take 1 cycle with register memory
       state := finished
     }
     is(finished) {
@@ -46,7 +47,6 @@ class LayerFSM extends Module {
   // Default outputs
   io.incrementAddress := false.B
   io.loadBuffers := false.B
-  io.loadBiases := false.B
   io.readMemory := false.B
   io.writeMemory := false.B
   io.finished := false.B
@@ -60,7 +60,6 @@ class LayerFSM extends Module {
       // Copy data at address in memories (single layer) to buffers
       io.readMemory := true.B
       io.loadBuffers := true.B
-      io.loadBiases := true.B
       io.incrementAddress := true.B
       // TODO: See if increment address is a good idea, as it would lead to storing in the next layers
       // TODO: input but could cause issues with timing?

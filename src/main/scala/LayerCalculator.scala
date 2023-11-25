@@ -4,10 +4,7 @@ import systolic_array.SystolicArray
 
 class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   val io = IO(new Bundle {
-    val loadInputs = Input(Bool())
-    val loadWeights = Input(Bool())
-    val loadBiases = Input(Bool())
-
+    val load = Input(Bool())
     val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
     val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
 
@@ -41,8 +38,8 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   }
 
   for (i <- 0 until dimension) {
-    inputsBuffers(i).io.load := io.loadInputs
-    weightsBuffers(i).io.load := io.loadWeights
+    inputsBuffers(i).io.load := io.load
+    weightsBuffers(i).io.load := io.load
 
     inputsBuffers(i).io.data := io.inputs(i)
     weightsBuffers(i).io.data := io.weights(i)
@@ -62,7 +59,7 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
       val biasValue = Wire(UInt(w.W))
 
       biasValue := 0.U // default value when not loading
-      when(io.loadBiases) {
+      when(io.load) {
         biasValue := io.biases(i)(j) // load the bias value
       }
       biases(i)(j) := ShiftRegister(biasValue, dimension * dimension - 1) //delay the bias value
@@ -82,5 +79,5 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   rectifier.io.signed := io.signed
 
   io.result := rectifier.io.result
-  io.valid := timer(dimension.U * dimension.U - 1.U, io.loadInputs || io.loadWeights)
+  io.valid := timer(dimension.U * dimension.U - 1.U, io.load)
 }
