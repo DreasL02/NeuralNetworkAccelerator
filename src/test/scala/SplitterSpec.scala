@@ -60,10 +60,10 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       val input3 = 69.U
       val input4 = 1.U
 
-      dut.io.input(0).poke(input1)
+      dut.io.input(0).poke(input1) // lsb
       dut.io.input(1).poke(input2)
       dut.io.input(2).poke(input3)
-      dut.io.input(3).poke(input4)
+      dut.io.input(3).poke(input4) // msb
 
       dut.io.output.expect(21323227.U)
     }

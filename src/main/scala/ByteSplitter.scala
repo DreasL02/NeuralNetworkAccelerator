@@ -8,7 +8,7 @@ class ByteSplitter(w: Int = 8) extends Module {
     val input = Input(UInt(w.W))
     val output = Output(Vec(numberOfBytes, UInt(8.W)))
   })
-
+  // splits in order: (0) is lsb, (numberOfBytes - 1) is msb
   for (i <- 0 until numberOfBytes) {
     io.output(i) := io.input(i * 8 + 7, i * 8)
   }
