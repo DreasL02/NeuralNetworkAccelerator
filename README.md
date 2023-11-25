@@ -1,6 +1,6 @@
 Hardware Accelerator for Neural Networks in Chisel
 =======================
-This repository documents a small but scalable Neural Network Accelerator architecture and implementation.\
+This repository documents a Neural Network Accelerator architecture and its implementation.\
 It is written in Chisel 5.0 and targets the Basys3 FPGA board.
 
 ### Authors
@@ -144,14 +144,16 @@ and
 modules respectively. The rounder is implemented in the
 [`Rounder`](src/main/scala/systolic_array/Rounder.scala) module.
 
-The remaining architecture is build around the Systolic Array to enable it to be used as a hardware accelerator.
+A datapath is build around the Systolic Array to
+enable it to be used as a full layer neural network accelerator.
+This datapath is designed to interface with a memory component and a control component,
+which in turn can interface with a communication module, which
+currently is implemented as a UART module.
 
-In [1] a guideline for domain specific architectures is given.
-
-### Buffers
+### Shifted Buffers
 
 The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of
-[`Buffer`](src/main/scala/Buffer.scala) modules.
+[`ShiftedBuffer`](src/main/scala/ShiftedBuffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
 The values loaded from the memory have to follow a certain format.
@@ -238,7 +240,7 @@ implementation.
 The memories are described in
 [`Memories`](src/main/scala/Memories.scala).
 
-### Layer function
+### Layer Calculator (Accelerator Datapath)
 
 With all of the above components, we can now assemble the layer function, which is the core of the accelerator.
 
@@ -246,14 +248,20 @@ With all of the above components, we can now assemble the layer function, which 
     <p align = "center">
         <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
         <figcaption>
-            Data path for layer function (figure self produced).
+            Data path of the accelerator (figure self produced).
         </figcaption>
     </p>
 </figure>
 
-### Control
+### Datapath Controller
 
 ### Communication
+
+#### UART Protocol
+
+#### Receiver
+
+#### Transmitter
 
 <figure>
     <p align = "center">
@@ -266,7 +274,9 @@ With all of the above components, we can now assemble the layer function, which 
 
 ### Top-level
 
-## Interface & Testing
+## Unit Tests and Verification
+
+## Interfacing
 
 ## References
 

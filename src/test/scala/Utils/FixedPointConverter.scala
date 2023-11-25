@@ -7,7 +7,7 @@ object FixedPointConverter {
   }
 
   def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int): BigInt = {
-    val scaledToFixed = floatRepresentation * (1 << fixedPointFractionalBits)
+    val scaledToFixed = (floatRepresentation * (1 << fixedPointFractionalBits)).round
     BigDecimal.valueOf(scaledToFixed).toBigInt
   }
 

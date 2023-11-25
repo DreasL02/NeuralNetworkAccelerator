@@ -19,8 +19,8 @@ class Decoder extends Module {
     is(Opcodes.nextTransmitting) {
       io.decodingCode := Codes.nextTransmitting
     }
-    is(Opcodes.nextReading) {
-      io.decodingCode := Codes.nextReading
+    is(Opcodes.nextCalculating) {
+      io.decodingCode := Codes.nextCalculating
     }
     is(Opcodes.nextAddress) {
       io.decodingCode := Codes.nextAddress

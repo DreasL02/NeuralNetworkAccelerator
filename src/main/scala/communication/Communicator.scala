@@ -18,13 +18,17 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     //val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
+
+    val startCalculation = Output(Bool())
+    val calculationDone = Input(Bool())
   })
 
   io.incrementAddress := false.B
   io.writeEnable := false.B
   io.ready := false.B
+  io.startCalculation := false.B
 
-  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: Nil = Enum(5)
+  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
 
   // TODO: All these modules should ideally utilize a shared a single UartRx and a single UartTx.
   val bufferedOpcodeInput = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, 1))
@@ -68,19 +72,19 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
           is(Codes.nextTransmitting) {
             state := sendingData
           }
-          is(Codes.nextReading) {
-            state := receivingData
+          is(Codes.nextCalculating) {
+            state := waitForExternalCalculation
           }
           is(Codes.nextAddress) {
             state := incrementingAddress
-            // TODO: Are addresses the same size as opcodes?
           }
         }
       }
     }
 
     is(respondingWithOKSignal) {
-
+      // TODO: Send OK signal through the uart to indicate job done.
+      // TODO: When done sending OK signal, go to receiving opcodes.
     }
 
     is(incrementingAddress) {
@@ -113,6 +117,14 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
         // Go to sending OK signal.
+        state := respondingWithOKSignal
+      }
+    }
+
+    is(waitForExternalCalculation) {
+      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, may also increment the address
+
+      when(io.calculationDone) { //wait until layer is done calculating
         state := respondingWithOKSignal
       }
     }

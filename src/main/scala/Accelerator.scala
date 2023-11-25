@@ -43,6 +43,10 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
     io.matrixMemory(i) := memory(addressManager.io.matrixAddress + i.U)
   }
 
+  // TODO: couple up to layer FSM
+  communicator.io.calculationDone := false.B
+
+
   /*
     def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
       val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
