@@ -186,6 +186,8 @@ It can found described in the
 
 ### Rectifier
 
+- Kom måske ind på at vi ikke normalizer da det kræver division.
+
 ### Memory & Encodings
 
 The memory is divided into five different parts to allow for separation of the different types of data.
