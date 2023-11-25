@@ -4,20 +4,22 @@ import systolic_array.SystolicArray
 
 class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   val io = IO(new Bundle {
-    val load = Input(Bool())
-    val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
-    val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
+    val load = Input(Bool()) // load values
 
-    val biases = Input(Vec(dimension, Vec(dimension, UInt(w.W))))
+    val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
+    val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
+    val biases = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
+    val signed = Input(Bool()) // should only be used when load is true
+    val fixedPoint = Input(UInt(log2Ceil(w).W)) // should only be used when load is true
 
-    val valid = Output(Bool())
-    val result = Output(Vec(dimension, Vec(dimension, UInt(w.W))))
+    val valid = Output(Bool()) // indicates that the systolic array should be done
+    val result = Output(Vec(dimension, Vec(dimension, UInt(w.W)))) // result of layer
 
-    val signed = Input(Bool())
-    val fixedPoint = Input(UInt(log2Ceil(w).W))
+
   })
 
-  // TODO: look at disabling the rectifier and accumulator when not needed (i.e. when valid is false)
+  // TODO: look at perhaps disabling the rectifier and accumulator when not needed (i.e. when valid is false)
+  // Save power (tm)
 
   def timer(max: UInt, reset: Bool) = {
     val x = RegInit(0.asUInt(max.getWidth.W))
