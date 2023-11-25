@@ -60,7 +60,7 @@ class SerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.inputChannel.ready.expect(false.B)
       dut.io.outputChannel.bits.expect(testValue2)
 
-      dut.clock.step()
+      dut.clock.step(2)
 
       // Now the output should be invalid and the input ready to receive a new buffer.
       dut.io.outputChannel.valid.expect(false.B)
@@ -145,7 +145,7 @@ class SerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.inputChannel.ready.expect(false.B)
       dut.io.outputChannel.bits.expect(testValue2)
 
-      dut.clock.step()
+      dut.clock.step(2)
 
       // Now the output should be invalid and the input ready to receive a new buffer.
       dut.io.outputChannel.valid.expect(false.B)
@@ -196,7 +196,7 @@ class SerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.outputChannel.bits.expect(testValues(i))
       }
 
-      dut.clock.step()
+      dut.clock.step(2)
       dut.io.outputChannel.valid.expect(false.B)
       dut.io.inputChannel.ready.expect(true.B)
 

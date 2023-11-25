@@ -28,7 +28,7 @@ class SerializingByteBuffer(bufferByteSize: Int) extends Module {
 
   io.debugCounterOutput := byteIndexCounter
 
-  when (byteIndexCounter === (bufferByteSize).U) {
+  when (byteIndexCounter === bufferByteSize.U) {
     // We have outputted all the bytes. The output is no longer valid. We are ready to receive new bytes.
     outputValidReg := false.B
     inputReadyReg := true.B

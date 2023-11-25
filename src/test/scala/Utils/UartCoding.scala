@@ -1,5 +1,7 @@
 package Utils
 
+import scala.collection.mutable.ListBuffer
+
 object UartCoding {
 
   def cyclesPerSerialBit(frequency: Int, baudRate: Int): Int = {
@@ -21,8 +23,8 @@ object UartCoding {
     combinedDataBitString
   }
 
-  def decodeUartBitsToString(bits: Array[BigInt], bufferBitSize: Int = 8): String = {
-    var output = ""
+  def decodeUartBitsToByteArray(bits: Array[BigInt], bufferBitSize: Int = 8): Array[Byte] = {
+    var output = ListBuffer[Byte]()
     var i = 0
 
     while (i < bits.length) {
@@ -30,16 +32,16 @@ object UartCoding {
         i += 1
 
         if (i == bits.length - 1) {
-          return output
+          return output.toArray
         }
       }
       val dataBits = bits.slice(i + 1, i + bufferBitSize)
       val dataAsUInt = dataBits.zipWithIndex.map { case (element, index) => element * Math.pow(2, index).toInt }
-      output = output + dataAsUInt.sum
+      output.append(dataAsUInt.sum.toByte)
       i = i + (bufferBitSize + 1)
     }
 
-    output
+    output.toArray
   }
 
 }

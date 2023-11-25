@@ -38,9 +38,11 @@ class UartTx(frequency: Int, baudRate: Int) extends Module {
       shiftReg := 1.U ## shift(9, 0)
       bitsIndexReg := bitsIndexReg - 1.U
     }.otherwise {
+      // cyclesCountReg is 0 and bitsIndexReg is 0, so we are ready to send a new byte.
+      // If the input channel is valid, we send the daya from inputChannel. Otherwise, we send 11 idle bits.
       when(io.inputChannel.valid) {
         // two stop bits, data, one start bit
-        shiftReg := 3.U ## io.inputChannel.bits ## 0.U // Todo: convert to binary literals
+        shiftReg := "b11".U ## io.inputChannel.bits ## "b0".U
         bitsIndexReg := SEQUENCE_LENGTH.U
       }.otherwise {
         shiftReg := ELEVEN_HIGH_BITS

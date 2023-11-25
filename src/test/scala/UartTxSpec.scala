@@ -1,102 +1,54 @@
+import chisel3._
+import chiseltest._
+import org.scalatest.freespec.AnyFreeSpec
+import communication.chisel.lib.uart.UartTx
 
+import scala.collection.mutable.ListBuffer
 
-/*
+class UartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
-// TODO: Bytes are signed.
-// TODO: Make the test test all values 0-255.
-// TODO: Make the test test multiple bytes.
-class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
+  val clockTimeout = 200_000_000
+  val frequency = 100
+  val baudRate = 1
+  val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
+  val tenSeconds = frequency * 10
 
-  "UartRx should behave correctly" in {
-    test(new Rx(100, 1, 8)) { dut =>
+  val high = 1.U(1.W)
+  val low = 0.U(1.W)
 
-      val testValue = 113.toByte
+  "Output should be idle (high) by default" in {
+    test(new UartTx(frequency, baudRate)) { dut =>
+      dut.clock.setTimeout(clockTimeout)
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue))
-      println("Sending bit vector: " + bitsToSend)
-
-      dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
-      dut.io.channel.ready.poke(false.B)
-      dut.clock.step(10)
-
-      bitsToSend.foreach { bit =>
-        val bitAsBigInt = BigInt(bit - 48)
-        dut.io.rxd.poke(bitAsBigInt.U(1.W))
-        dut.clock.step(99)
+      for (i <- 0 until tenSeconds) {
+        dut.io.txd.expect(high)
+        dut.clock.step()
       }
-
-      while (!dut.io.channel.valid.peek().litToBoolean) {
-        dut.clock.step(1)
-      }
-
-      dut.io.channel.bits.expect(testValue.U)
     }
   }
 
-  "UartRx should receive multiple bytes (3) correctly" in {
-    test(new Rx(100, 1, 8 * 3)) { dut =>
+  "Timing should be correct" in {
+    test(new UartTx(frequency, baudRate)) { dut =>
 
-      val testValue1 = 113.toByte
-      val testValue2 =  97.toByte
-      val testValue3 =  46.toByte
+      dut.clock.setTimeout(clockTimeout)
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2, testValue3))
-      println("Sending bit vector: " + bitsToSend)
+      val testValue = 107.toByte
 
-      dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
-      dut.io.channel.ready.poke(false.B)
-      dut.clock.step(10)
+      dut.io.inputChannel.valid.poke(true.B)
+      dut.io.inputChannel.bits.poke(testValue.U(8.W))
 
-      bitsToSend.foreach { bit =>
-        val bitAsBigInt = BigInt(bit - 48)
-        dut.io.rxd.poke(bitAsBigInt.U(1.W))
-        dut.clock.step(99)
+      val uartOutputBuffer = ListBuffer[BigInt]()
+
+      for (i <- 0 until 11) {
+        dut.clock.step(cyclesPerSerialBit)
+        println(dut.io.inputChannel.ready.peekBoolean())
+        uartOutputBuffer.append(dut.io.txd.peekInt())
       }
 
-      while (!dut.io.channel.valid.peek().litToBoolean) {
-        dut.clock.step(1)
-      }
-
-      val expected = (testValue3 << 16 | testValue2 << 8 | testValue1).U
-      dut.io.channel.bits.expect(expected)
+      val hardwareOutput = uartOutputBuffer.mkString("")
+      val expectedOutput = Utils.UartCoding.encodeByteToUartBits(testValue)
+      println(s"hardwareOutput: $hardwareOutput, expectedOutput: $expectedOutput")
+      assert(hardwareOutput == expectedOutput)
     }
   }
-
-  "UartRx should receive multiple bytes (5) correctly" in {
-    test(new Rx(100, 1, 8 * 3)) { dut =>
-
-      val testValue1 = 108.toByte
-      val testValue2 = 123.toByte
-      val testValue3 = 1.toByte
-      val testValue4 = 101.toByte
-      val testValue5 = 3.toByte
-
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2, testValue3))
-      println("Sending bit vector: " + bitsToSend)
-
-      dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
-      dut.io.channel.ready.poke(false.B)
-      dut.clock.step(10)
-
-      bitsToSend.foreach { bit =>
-        val bitAsBigInt = BigInt(bit - 48)
-        dut.io.rxd.poke(bitAsBigInt.U(1.W))
-        dut.clock.step(99)
-      }
-
-      while (!dut.io.channel.valid.peek().litToBoolean) {
-        dut.clock.step(1)
-      }
-
-      // val expected = (testValue5 << 32 | testValue4 << 24 | testValue3 << 16 | testValue2 << 8 | testValue1).U
-      val expected = (testValue3 << 16 | testValue2 << 8 | testValue1).U
-
-
-    }
-  }
-
-
 }
-
-
-*/
