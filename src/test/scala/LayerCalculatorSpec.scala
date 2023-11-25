@@ -55,6 +55,8 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
         cycles = cycles + 1
         dut.io.load.poke(false.B)
+        dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
+        dut.io.signed.poke(1.U) // should be ignored when load is false
       }
 
 
