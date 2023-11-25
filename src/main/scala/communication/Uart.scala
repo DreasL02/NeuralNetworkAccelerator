@@ -94,7 +94,7 @@ class Rx(frequency: Int, baudRate: Int) extends Module {
     bitsCounterReg := 8.U
   }
 
-  when(validReg && io.channel.ready) {
+  when(validReg && io.outputChannel.ready) {
     validReg := false.B
   }
 
