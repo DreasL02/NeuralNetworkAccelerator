@@ -68,46 +68,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
       vector
     }
 
-
-    val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
-      initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
-
-    val mmac = Module(new MatrixMultiplicationUnit(w, dimension))
     */
 
 
-  /*
-  memories.io.dataAddress := addressManager.io.matrixAddress
-  memories.io.configAddress := addressManager.io.vectorAddress
-  memories.io.writeAddress := addressManager.io.matrixAddress
-
-  mmac.io.inputs := convertVecToMatrix(memories.io.dataRead)
-  mmac.io.weights := convertVecToMatrix(memories.io.weightsRead)
-  mmac.io.biases := convertVecToMatrix(memories.io.biasRead)
-  mmac.io.signed := memories.io.signsRead
-  mmac.io.fixedPoint := memories.io.fixedPointRead
-
-  // TODO
-
-  controller.io.receivedMessage := false.B
-  controller.io.inputsStored := false.B
-  controller.io.transmissionDone := false.B
-  controller.io.readingDone := false.B
-  controller.io.calculatingDone := mmac.io.valid
-  controller.io.writingDone := false.B
-  controller.io.addressChanged := false.B
-  controller.io.decodingCode := decoder.io.decodingCode
-
-  mmac.io.loadInputs := controller.io.loadBuffers
-  mmac.io.loadWeights := controller.io.loadBuffers
-  mmac.io.loadBiases := controller.io.loadBiases
-
-  memories.io.read := controller.io.readMemory
-  memories.io.write := controller.io.writeMemory
-
-
-  memories.io.dataWrite := convertMatrixToVec(mmac.io.result)
-
-  io.result := mmac.io.result
-*/
 }

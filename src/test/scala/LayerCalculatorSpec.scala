@@ -37,15 +37,15 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
 
-      dut.io.signed.poke(signed.asUInt)
-      dut.io.fixedPoint.poke(fixedPoint)
+      // Setup the dut
       dut.io.load.poke(true.B)
 
-      // Load inputs, weights and biases into the buffers
+      dut.io.signed.poke(signed.asUInt)
+      dut.io.fixedPoint.poke(fixedPoint)
       for (i <- inputsFixed.indices) {
         for (j <- inputsFixed(0).indices) {
-          dut.io.inputs(i)(j).poke(inputsFixed(i)(dimension - 1 - j).asUInt)
-          dut.io.weights(i)(j).poke(weightsFixed(dimension - 1 - j)(i).asUInt)
+          dut.io.inputs(i)(j).poke(inputsFixed(i)(dimension - 1 - j).asUInt) // correct format, reverse order in y
+          dut.io.weights(i)(j).poke(weightsFixed(dimension - 1 - j)(i).asUInt) // correct format, reverse order in x
           dut.io.biases(i)(j).poke(biasesFixed(i)(j).asUInt)
         }
       }
