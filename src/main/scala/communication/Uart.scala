@@ -79,22 +79,22 @@ class Rx(frequency: Int, baudRate: Int) extends Module {
   io.debugBitsReg := bitsCounterReg
   io.debugCntReg := serialBitsCounterReg
 
-  when (serialBitsCounterReg =/= 0.U) {
+  when(serialBitsCounterReg =/= 0.U) {
     serialBitsCounterReg := serialBitsCounterReg - 1.U
-  }.elsewhen (bitsCounterReg =/= 0.U) {
+  }.elsewhen(bitsCounterReg =/= 0.U) {
     serialBitsCounterReg := CYCLES_PER_SERIAL_BIT
     dataBitsShiftReg := Cat(rxdReg, dataBitsShiftReg >> 1)
     bitsCounterReg := bitsCounterReg - 1.U
-    // the last shifted in
-    when (bitsCounterReg === 1.U) {
+    // the last data bit shifted in
+    when(bitsCounterReg === 1.U) {
       validReg := true.B
     }
-  }.elsewhen (rxdReg === 0.U) {
+  }.elsewhen(rxdReg === 0.U) {
     serialBitsCounterReg := CYCLES_PER_SERIAL_BIT_START
     bitsCounterReg := 8.U
   }
 
-  when (validReg && io.channel.ready) {
+  when(validReg && io.channel.ready) {
     validReg := false.B
   }
 

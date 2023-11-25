@@ -28,8 +28,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.ready := false.B
   io.startCalculation := false.B
 
-  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress ::
-    receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
+  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
 
   // TODO: All these modules should ideally utilize a shared a single UartRx and a single UartTx.
   val bufferedOpcodeInput = Module(new BufferedUartRx(frequency, baudRate, 1))
