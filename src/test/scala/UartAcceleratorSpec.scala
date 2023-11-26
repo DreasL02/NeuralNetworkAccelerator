@@ -90,11 +90,12 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.setTimeout(clockTimeout)
 
       dut.io.address.expect(0.U)
-      val memoryValues = Array.fill(dimension * dimension)(0)
 
+      val memoryValues = Array.fill(dimension * dimension)(0)
       for (i <- 0 until dimension * dimension) {
         memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
+
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
@@ -132,14 +133,13 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       dut.io.address.expect(0.U)
 
-      val memoryValues = Array.fill(dimension * dimension)(0)
-
+      val initialMemoryValues = Array.fill(dimension * dimension)(0)
       for (i <- 0 until dimension * dimension) {
-        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+        initialMemoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
 
       println("Initial memory state:")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(initialMemoryValues, dimension)))
 
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
@@ -161,21 +161,22 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Let it settle
       dut.clock.step(100)
 
+      val memoryStateAfterOpcode = Array.fill(dimension * dimension)(0)
       for (i <- 0 until dimension * dimension) {
-        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+        memoryStateAfterOpcode(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
 
-      // TODO: Write expect test, not just print
-      println("Current memory state (should match initial):")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
+      println("Memory state after opcode (should match initial):")
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryStateAfterOpcode, dimension)))
+      assert(memoryStateAfterOpcode sameElements initialMemoryValues)
 
       val newMemoryBytesToSend = Array(
         32.toByte, 2.toByte, 3.toByte,
         4.toByte, 5.toByte, 6.toByte,
         7.toByte, 8.toByte, 21.toByte
       )
-      val newMemoryBitsToSend = Utils.UartCoding.encodeBytesToUartBits(newMemoryBytesToSend)
 
+      val newMemoryBitsToSend = Utils.UartCoding.encodeBytesToUartBits(newMemoryBytesToSend)
       println("Sending memory bit vector: " + newMemoryBitsToSend)
 
       newMemoryBitsToSend.foreach(bit => {
@@ -184,14 +185,15 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step(cyclesPerSerialBit)
       })
 
+      val memoryStateAfterData = Array.fill(dimension * dimension)(0)
       dut.clock.step(100)
       for (i <- 0 until dimension * dimension) {
-        memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
+        memoryStateAfterData(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
 
-      // TODO: Write expect test, not just print
-      println("Current memory state (should match newMemoryBytesToSend, see test code):")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
+      println("Current memory state (should match newMemoryBytesToSend):")
+      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryStateAfterData, dimension)))
+      assert(memoryStateAfterData sameElements newMemoryBytesToSend)
       dut.io.address.expect(0.U)
     }
   }
