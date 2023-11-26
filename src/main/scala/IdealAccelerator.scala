@@ -87,16 +87,16 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   when(communicator.io.writeEnable) {
     memories.io.inputsWrite := communicator.io.dataOut
   }.otherwise(
-    when(layerFSM.io.writeMemory || io.forceDebug) {
+    when(layerFSM.io.writeMemory) {
       memories.io.inputsWrite := convertMatrixToVec(layerCalculator.io.result)
     }
   )
 
   io.debugMatrixMemory1 := memories.io.inputsRead
   io.debugMatrixMemory2 := memories.io.weightsRead
-  io.debugMatrixMemory2 := memories.io.inputsWrite
+  //io.debugMatrixMemory2 := memories.io.inputsWrite
   io.debugMatrixMemory3 := memories.io.biasRead
-  io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
+  //io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
   io.matrixAddress := addressManager.io.matrixAddress
 
   // Address and memories

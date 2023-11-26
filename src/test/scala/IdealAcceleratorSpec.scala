@@ -10,6 +10,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val baudRate = 1
   val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
 
+  /*
   val dimension = 3
 
 
@@ -25,7 +26,22 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
   val signL2: Int = 0
   val fixedPointL2: Int = 2
+  */
 
+  val dimension = 4
+
+  val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f, 1.0f), Array(0.9f, 3.4f, 0.9f, 2.2f), Array(2.2f, 1.2f, 0.9f, 1.2f), Array(2.2f, 1.2f, 0.9f, 1.2f))
+  val weightsL1: Array[Array[Float]] = Array(Array(2.2f, 1.3f, 1.0f, 0.2f), Array(4.9f, 0.4f, 4.8f, 4.2f), Array(2.2f, 1.2f, 0.9f, 1.2f), Array(2.2f, 1.2f, 0.9f, 1.2f))
+  val biasesL1: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f))
+  val signL1: Int = 0
+  val fixedPointL1: Int = 2
+
+  val inputsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f))
+  val weightsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f))
+  val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f))
+  val signL2: Int = 0
+  val fixedPointL2: Int = 2
+  
   val inputs: Array[Array[Array[Int]]] = Array(
     Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1),
     Configuration.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2)
@@ -159,7 +175,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step(cyclesPerSerialBit)
       })
 
-      //dut.clock.step(10) //let systolic run!
+      dut.clock.step(dimension * dimension + 1) //let systolic run!
       //dut.io.address.expect(1.U)
       println("Evaluated into:")
       println(dut.io.address.peekInt())

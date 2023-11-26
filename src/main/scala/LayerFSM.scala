@@ -20,7 +20,6 @@ class LayerFSM extends Module {
 
   val state = RegInit(idle)
   state := state //default to keep current state
-  val oneCycleReg = RegInit(false.B)
 
   // FSM state logic
   switch(state) {
@@ -39,12 +38,9 @@ class LayerFSM extends Module {
       }
     }
     is(writing) {
-      // should take 1 cycle with register memory TODO: currently takes 2 cycles
-      oneCycleReg := true.B
-      when(oneCycleReg) {
-        state := finished
-        oneCycleReg := false.B
-      }
+      // should take 1 cycle with register memory
+      state := finished
+
     }
     is(finished) {
       state := idle
