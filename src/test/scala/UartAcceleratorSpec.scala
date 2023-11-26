@@ -126,19 +126,23 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Should write and then read from memory" in {
     test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
 
+      println("Test: Should write and then read from memory")
+
       dut.clock.setTimeout(clockTimeout)
 
       dut.io.address.expect(0.U)
+
       val memoryValues = Array.fill(dimension * dimension)(0)
 
       for (i <- 0 until dimension * dimension) {
         memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
+
+      println("Initial memory state:")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
 
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
-
 
       val bytesToSend = Array(
         nextInputsOpcode
@@ -146,7 +150,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
-      println("Sending bit vector: " + uartBitsToSend)
+      println("Sending bit vector (nextInputsOpcode): " + uartBitsToSend)
 
       uartBitsToSend.foreach(bit => {
         val bitAsBigInt = BigInt(bit - 48)
@@ -160,6 +164,9 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       for (i <- 0 until dimension * dimension) {
         memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
+
+      // TODO: Write expect test, not just print
+      println("Current memory state (should match initial):")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
 
       val newMemoryBytesToSend = Array(
@@ -181,9 +188,11 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       for (i <- 0 until dimension * dimension) {
         memoryValues(i) = dut.io.matrixMemory(i).peekInt().toInt
       }
+
+      // TODO: Write expect test, not just print
+      println("Current memory state (should match newMemoryBytesToSend, see test code):")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues, dimension)))
       dut.io.address.expect(0.U)
-      //println(dut.io.value.peekInt())
     }
   }
 

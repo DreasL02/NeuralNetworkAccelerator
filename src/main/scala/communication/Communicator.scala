@@ -3,7 +3,7 @@ package communication
 import chisel3._
 import chisel3.util._
 import communication.Encodings.{Codes, Opcodes}
-import communication.chisel.lib.uart.{BufferedUartRxForTestingOnly, BufferedUartTxForTestingOnly}
+import communication.chisel.lib.uart.{UartRx, UartTx, SerializingByteBuffer, DeSerializingByteBuffer}
 
 class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends Module {
 
@@ -30,21 +30,25 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
   val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
 
-  // TODO: All these modules should ideally utilize a shared a single UartRx and a single UartTx.
-  val bufferedOpcodeInput = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, 1))
-  val bufferedDataInput = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, matrixByteSize))
-  val bufferedDataOutput = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, matrixByteSize))
+  val uartRx = Module(new UartRx(frequency, baudRate))
+  val uartTx = Module(new UartTx(frequency, baudRate))
 
-  bufferedOpcodeInput.io.rxd := io.uartRxPin
-  bufferedDataInput.io.rxd := 1.U(1.W)
+  uartRx.io.rxd := io.uartRxPin
+  io.uartTxPin := uartTx.io.txd
 
-  val countDown = RegInit(35.U)
+  val bufferedOpcodeInput = Module(new DeSerializingByteBuffer(1))
+  val bufferedDataInput = Module(new DeSerializingByteBuffer(matrixByteSize))
+  val bufferedDataOutput = Module(new SerializingByteBuffer(matrixByteSize))
 
-  io.uartTxPin := bufferedDataOutput.io.txd
+  uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
+  uartRx.io.outputChannel <> bufferedOpcodeInput.io.inputChannel
 
   bufferedOpcodeInput.io.outputChannel.ready := false.B
-  bufferedDataInput.io.outputChannel.ready := false.B
   bufferedDataOutput.io.inputChannel.valid := false.B
+
+  bufferedDataInput.io.inputChannel.bits := 0.U
+  bufferedDataInput.io.inputChannel.valid := false.B
+  bufferedDataInput.io.outputChannel.ready := false.B
 
   bufferedDataOutput.io.inputChannel.bits := bufferedDataInput.io.outputChannel.bits // TODO: This is a hack.
 
@@ -94,13 +98,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(receivingData) {
-
-      bufferedDataInput.io.rxd := io.uartRxPin
-
-      when(countDown =/= 0.U) {
-        bufferedDataInput.io.rxd := 1.U(1.W)
-        countDown := countDown - 1.U
-      }
+      uartRx.io.outputChannel <> bufferedDataInput.io.inputChannel
 
       bufferedDataInput.io.outputChannel.ready := true.B
       when(bufferedDataInput.io.outputChannel.valid) {

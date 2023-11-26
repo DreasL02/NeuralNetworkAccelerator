@@ -14,6 +14,9 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val tenSeconds = frequency * 10
   val uartFrameSize = 11
 
+  val high = 1.U(1.W)
+  val low = 0.U(1.W)
+
   "Should send UART idle signal by default" in {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
 
@@ -65,6 +68,10 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.inputChannel.bits(0).poke(testValue1.U(8.W))
       dut.io.inputChannel.bits(1).poke(testValue2.U(8.W))
       dut.io.inputChannel.valid.poke(true.B)
+      dut.clock.step()
+      dut.io.inputChannel.bits(0).poke(0.U(8.W))
+      dut.io.inputChannel.bits(1).poke(0.U(8.W))
+      dut.io.inputChannel.valid.poke(false.B)
 
       val uartOutput = ListBuffer[BigInt]()
       for (i <- 0 until 2*uartFrameSize) {
@@ -79,13 +86,19 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       assert(bytesFromEmittedUartFrames.length == 2)
       assert(bytesFromEmittedUartFrames(0) == testValue1)
       assert(bytesFromEmittedUartFrames(1) == testValue2)
+
+      dut.clock.step(cyclesPerSerialBit)
+
+      // Check that the output remains idle
+      for (i <- 0 until tenSeconds) {
+        dut.io.txd.expect(high)
+        dut.clock.step()
+      }
     }
   }
 
   "Should support refilling a two byte buffer" in {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
-
-      // TODO: This test does not currently refill the buffer. It just sends two bytes.
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -96,22 +109,60 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.inputChannel.bits(0).poke(testValue1.U(8.W))
       dut.io.inputChannel.bits(1).poke(testValue2.U(8.W))
       dut.io.inputChannel.valid.poke(true.B)
+      dut.clock.step()
+      dut.io.inputChannel.bits(0).poke(0.U(8.W))
+      dut.io.inputChannel.bits(1).poke(0.U(8.W))
+      dut.io.inputChannel.valid.poke(false.B)
 
-      val uartOutput = ListBuffer[BigInt]()
+      val uartOutput1 = ListBuffer[BigInt]()
       for (i <- 0 until 2 * uartFrameSize) {
-        uartOutput.append(dut.io.txd.peekInt())
+        uartOutput1.append(dut.io.txd.peekInt())
         dut.clock.step(cyclesPerSerialBit)
       }
 
-      println("uartOutput: " + uartOutput.mkString)
+      println("uartOutput1: " + uartOutput1.mkString)
 
-      val bytesFromEmittedUartFrames = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
-      println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
-      assert(bytesFromEmittedUartFrames.length == 2)
-      assert(bytesFromEmittedUartFrames(0) == testValue1)
-      assert(bytesFromEmittedUartFrames(1) == testValue2)
+      val bytesFromEmittedUartFrames1 = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput1.toArray)
+      println("Bytes from emitted UART frames 1: " + bytesFromEmittedUartFrames1.mkString(", "))
+      assert(bytesFromEmittedUartFrames1.length == 2)
+      assert(bytesFromEmittedUartFrames1(0) == testValue1)
+      assert(bytesFromEmittedUartFrames1(1) == testValue2)
+
+      dut.clock.step(cyclesPerSerialBit)
+
+      for (i <- 0 until tenSeconds) {
+        dut.io.txd.expect(high)
+        dut.clock.step()
+      }
+
+      // -----------------------------
+      // Refill the buffer
+      // -----------------------------
+
+      dut.clock.step(1)
+
+      // Sanity check
+      dut.io.inputChannel.ready.expect(true.B)
+
+      val testValue3 = 33.toByte
+      val testValue4 = 44.toByte
+      dut.io.inputChannel.bits(0).poke(testValue3.U(8.W))
+      dut.io.inputChannel.bits(1).poke(testValue4.U(8.W))
+      dut.io.inputChannel.valid.poke(true.B)
+
+      val uartOutput2 = ListBuffer[BigInt]()
+      for (i <- 0 until 2 * uartFrameSize) {
+        uartOutput2.append(dut.io.txd.peekInt())
+        dut.clock.step(cyclesPerSerialBit)
+      }
+
+      println("uartOutput2: " + uartOutput2.mkString)
+
+      val bytesFromEmittedUartFrames2 = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput2.toArray)
+      println("Bytes from emitted UART frames 2: " + bytesFromEmittedUartFrames2.mkString(", "))
+      assert(bytesFromEmittedUartFrames2.length == 2)
+      assert(bytesFromEmittedUartFrames2(0) == testValue3)
+      assert(bytesFromEmittedUartFrames2(1) == testValue4)
     }
   }
-
-
 }
