@@ -11,12 +11,7 @@ class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVect
 
   val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W))
   val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W))
-
-  println("lengthOfMatrixMemory: " + lengthOfMatrixMemory)
-  println("lengthOfVectorMemory: " + lengthOfVectorMemory)
-  println("log2Ceil(lengthOfMatrixMemory): " + log2Ceil(lengthOfMatrixMemory))
-  println("log2Ceil(lengthOfVectorMemory): " + log2Ceil(lengthOfVectorMemory))
-
+  
   when(io.incrementAddress) {
     matrixAddressReg := matrixAddressReg + dimension.U * dimension.U
   }
