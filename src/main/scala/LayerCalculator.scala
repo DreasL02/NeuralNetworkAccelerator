@@ -14,19 +14,19 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
     val result = Output(Vec(dimension, Vec(dimension, UInt(w.W)))) // result of layer
-
-
   })
 
   // TODO: look at perhaps disabling the rectifier and accumulator when not needed (i.e. when valid is false)
   // Save power (tm)
 
-  def timer(max: UInt, reset: Bool) = {
-    val x = RegInit(0.asUInt(max.getWidth.W))
+  val CYCLES_UNTIL_VALID: Int = dimension * dimension - 1
+
+  def timer(max: Int, reset: Bool) = {
+    val x = RegInit(0.U(log2Ceil(max + 1).W))
     when(reset) {
       x := 0.U
     }
-    val done = x === max
+    val done = x === max.U
     x := Mux(done, 0.U, x + 1.U)
     done
   }
@@ -75,7 +75,7 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
       when(io.load) {
         biasValue := io.biases(i)(j) // load the bias value
       }
-      biases(i)(j) := ShiftRegister(biasValue, dimension * dimension - 1) //delay the bias value
+      biases(i)(j) := ShiftRegister(biasValue, CYCLES_UNTIL_VALID) //delay the bias value
     }
   }
 
@@ -96,8 +96,8 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   when(io.load) {
     signed := io.signed // load the signed value
   }
-  rectifier.io.signed := ShiftRegister(signed, dimension * dimension - 1) //delay the signed value
+  rectifier.io.signed := ShiftRegister(signed, CYCLES_UNTIL_VALID) //delay the signed value
 
   io.result := rectifier.io.result
-  io.valid := timer(dimension.U * dimension.U - 1.U, io.load)
+  io.valid := timer(CYCLES_UNTIL_VALID, io.load)
 }

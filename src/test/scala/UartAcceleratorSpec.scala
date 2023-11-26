@@ -18,8 +18,8 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val fixedPointL2: Int = 4
 
   val inputs: Array[Array[Array[Byte]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1),
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2)
+    Configuration.convertFloatMatrixToFixedMatrixBytes(inputsL1, fixedPointL1),
+    Configuration.convertFloatMatrixToFixedMatrixBytes(inputsL2, fixedPointL2)
   )
   var mappedInputs = Configuration.mapInputs(inputs)
 

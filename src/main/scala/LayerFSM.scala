@@ -6,14 +6,16 @@ import communication.Encodings.SystolicStates._
 class LayerFSM extends Module {
 
   val io = IO(new Bundle {
+    // To communication
     val start = Input(Bool())
-    val calculatingDone = Input(Bool())
+    val finished = Output(Bool())
 
+    // To layer calculator
+    val calculatingDone = Input(Bool())
     val incrementAddress = Output(Bool())
     val loadBuffers = Output(Bool())
     val readMemory = Output(Bool())
     val writeMemory = Output(Bool())
-    val finished = Output(Bool())
   })
 
   val state = RegInit(idle)

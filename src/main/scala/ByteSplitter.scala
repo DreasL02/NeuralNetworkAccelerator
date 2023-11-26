@@ -17,6 +17,7 @@ class ByteSplitter(w: Int = 8) extends Module {
 class ByteCollector(w: Int = 8) extends Module {
   private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
   val io = IO(new Bundle {
+    // in order: (0) is lsb, (numberOfBytes - 1) is msb
     val input = Input(Vec(numberOfBytes, UInt(8.W)))
     val output = Output(UInt(w.W))
   })

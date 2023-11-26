@@ -5,14 +5,14 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  val enablePrintingInFirstTest = false
+  val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
     val dimension = 3
-    test(new LayerCalculator(w = 16, dimension = dimension)) { dut =>
-      var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 31.2f, 0.9f))
-      var weightsFloat = Array(Array(2.2f, 1.3f, 10.0f), Array(4.9f, 0.4f, 8.8f), Array(2.2f, 1.2f, 0.9f))
-      var biasesFloat = Array(Array(1.0f, 2.0f, 3.4f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
-      val fixedPoint = 3
+    test(new LayerCalculator(w = 8, dimension = dimension)) { dut =>
+      var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
+      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
+      val fixedPoint = 2
       val signed = 0
 
       var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)

@@ -85,6 +85,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     is(respondingWithOKSignal) {
       // TODO: Send OK signal through the uart to indicate job done.
       // TODO: When done sending OK signal, go to receiving opcodes.
+      state := receivingOpcodes
     }
 
     is(incrementingAddress) {
@@ -96,7 +97,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
       bufferedDataInput.io.rxd := io.uartRxPin
 
-      when (countDown =/= 0.U) {
+      when(countDown =/= 0.U) {
         bufferedDataInput.io.rxd := 1.U(1.W)
         countDown := countDown - 1.U
       }
