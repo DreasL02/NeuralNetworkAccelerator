@@ -13,12 +13,15 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   val io = IO(new Bundle {
     val rxd = Input(Bool())
     val readDebug = Input(Bool())
+    val forceDebug = Input(Bool())
+
     val txd = Output(Bool())
     val ready = Output(Bool())
     val debugMatrixMemory1 = Output(Vec(dimension * dimension, UInt(w.W)))
     val debugMatrixMemory2 = Output(Vec(dimension * dimension, UInt(w.W)))
     val debugMatrixMemory3 = Output(Vec(dimension * dimension, UInt(w.W)))
     val address = Output(UInt(8.W))
+    val matrixAddress = Output(UInt(log2Ceil(initialInputsMemoryState.length).W))
   })
 
   def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
@@ -57,12 +60,9 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   addressManager.io.incrementAddress := communicator.io.incrementAddress || layerFSM.io.incrementAddress
 
-  memories.io.writeEnable := communicator.io.writeEnable || layerFSM.io.writeMemory
+  //memories.io.writeEnable := communicator.io.writeEnable || layerFSM.io.writeMemory || io.forceDebug
+  memories.io.writeEnable := layerFSM.io.writeMemory
   memories.io.readEnable := layerFSM.io.readMemory || io.readDebug
-
-  io.debugMatrixMemory1 := memories.io.inputsRead
-  io.debugMatrixMemory2 := memories.io.weightsRead
-  io.debugMatrixMemory3 := memories.io.biasRead
 
   io.address := addressManager.io.vectorAddress
   io.ready := communicator.io.ready
@@ -83,13 +83,21 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   layerCalculator.io.signed := memories.io.signsRead(0) === 1.U //bool conversion
   layerCalculator.io.fixedPoint := memories.io.fixedPointRead
 
-  memories.io.inputsWrite := DontCare
+  memories.io.inputsWrite := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
   when(communicator.io.writeEnable) {
     memories.io.inputsWrite := communicator.io.dataOut
-  }
-  when(layerFSM.io.writeMemory) {
-    memories.io.inputsWrite := convertMatrixToVec(layerCalculator.io.result)
-  }
+  }.otherwise(
+    when(layerFSM.io.writeMemory || io.forceDebug) {
+      memories.io.inputsWrite := convertMatrixToVec(layerCalculator.io.result)
+    }
+  )
+
+  io.debugMatrixMemory1 := memories.io.inputsRead
+  io.debugMatrixMemory2 := memories.io.weightsRead
+  io.debugMatrixMemory2 := memories.io.inputsWrite
+  io.debugMatrixMemory3 := memories.io.biasRead
+  io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
+  io.matrixAddress := addressManager.io.matrixAddress
 
   // Address and memories
   memories.io.matrixAddress := addressManager.io.matrixAddress

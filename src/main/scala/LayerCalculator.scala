@@ -69,13 +69,14 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
 
   for (i <- 0 until dimension) {
     for (j <- 0 until dimension) {
-      val biasValue = Wire(UInt(w.W))
-
-      biasValue := 0.U // default value when not loading
+      val bias = Wire(UInt(w.W))
+      val biasReg = RegInit(0.U(w.W))
+      bias := biasReg
       when(io.load) {
-        biasValue := io.biases(i)(j) // load the bias value
+        bias := io.biases(i)(j)
+        biasReg := io.biases(i)(j)
       }
-      biases(i)(j) := ShiftRegister(biasValue, CYCLES_UNTIL_VALID) //delay the bias value
+      biases(i)(j) := bias
     }
   }
 
@@ -92,11 +93,13 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   rectifier.io.values := accumulator.io.result
 
   val signed = Wire(Bool())
-  signed := false.B // default value when not loading
+  val signedReg = RegInit(false.B)
+  signed := signedReg
   when(io.load) {
-    signed := io.signed // load the signed value
+    signed := io.signed
+    signedReg := io.signed
   }
-  rectifier.io.signed := ShiftRegister(signed, CYCLES_UNTIL_VALID) //delay the signed value
+  rectifier.io.signed := signed
 
   io.result := rectifier.io.result
   io.valid := timer(CYCLES_UNTIL_VALID, io.load)

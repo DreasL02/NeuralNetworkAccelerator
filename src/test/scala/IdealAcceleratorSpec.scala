@@ -160,10 +160,12 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       })
 
       //dut.clock.step(10) //let systolic run!
-
       //dut.io.address.expect(1.U)
       println("Evaluated into:")
       println(dut.io.address.peekInt())
+      println(dut.io.matrixAddress.peekInt())
+
+      //dut.io.forceDebug.poke(true.B)
       dut.io.readDebug.poke(true.B)
       println(dut.io.ready.peek())
       for (i <- 0 until dimension * dimension) {
@@ -171,11 +173,11 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         memoryValues2(i) = dut.io.debugMatrixMemory2(i).peekInt().toInt
         memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
       }
-      println("-- inputs --")
+      println("-- Memory contents @ address --")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues1, dimension)))
-      println("-- weights --")
+      println("-- Write port to memory --")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues2, dimension)))
-      println("-- biases --")
+      println("-- Result form systolic array --")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.poke(false.B)
       println("-------")

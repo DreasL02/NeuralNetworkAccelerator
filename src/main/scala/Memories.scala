@@ -39,6 +39,7 @@ class Memories(w: Int = 8, dimension: Int = 4, initialInputsMemoryState: Array[I
 
     when(io.writeEnable) {
       inputsMemory(io.matrixAddress + i.U) := io.inputsWrite(i)
+      io.inputsRead(i) := io.inputsWrite(i)
     }
   }
 
