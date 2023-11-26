@@ -74,7 +74,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   //memories.io.writeEnable := communicator.io.writeEnable || layerFSM.io.writeMemory || io.forceDebug
   memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
-  memories.io.readEnable := layerFSM.io.readMemory || io.readDebug
+  memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug
 
   io.address := addressManager.io.vectorAddress
   io.ready := communicator.io.ready
@@ -103,6 +103,11 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
       memories.io.inputsWrite := convertMatrixToVec(mapResultToInput(layerCalculator.io.result))
     }
   )
+  communicator.io.dataIn := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
+  when(communicator.io.readEnable) {
+    communicator.io.dataIn := memories.io.inputsRead
+  }
+
 
   io.debugMatrixMemory1 := memories.io.inputsRead
   io.debugMatrixMemory2 := memories.io.weightsRead

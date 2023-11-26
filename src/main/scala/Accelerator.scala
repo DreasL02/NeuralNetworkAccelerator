@@ -34,6 +34,10 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
     when(communicator.io.writeEnable) {
       memory(addressManager.io.matrixAddress + i.U) := communicator.io.dataOut(i)
     }
+    communicator.io.dataIn(i) := 0.U //default
+    when(communicator.io.readEnable) {
+      communicator.io.dataIn(i) := memory(addressManager.io.matrixAddress + i.U)
+    }
   }
 
   io.address := addressManager.io.vectorAddress

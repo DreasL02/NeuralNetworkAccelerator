@@ -12,11 +12,11 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val uartTxPin = Output(UInt(1.W))
 
     val incrementAddress = Output(Bool())
-    //val readEnable = Output(Bool())
+    val readEnable = Output(Bool())
     val writeEnable = Output(Bool())
     val ready = Output(Bool())
 
-    //val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
+    val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
 
     val startCalculation = Output(Bool())
@@ -27,7 +27,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.writeEnable := false.B
   io.ready := false.B
   io.startCalculation := false.B
-
+  io.readEnable := false.B
   val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
 
   val uartRx = Module(new UartRx(frequency, baudRate))
@@ -50,7 +50,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   bufferedDataInput.io.inputChannel.valid := false.B
   bufferedDataInput.io.outputChannel.ready := false.B
 
-  bufferedDataOutput.io.inputChannel.bits := bufferedDataInput.io.outputChannel.bits // TODO: This is a hack.
+  bufferedDataOutput.io.inputChannel.bits := io.dataIn
 
   io.dataOut := bufferedDataInput.io.outputChannel.bits
 
@@ -99,7 +99,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     is(receivingData) {
       uartRx.io.outputChannel <> bufferedDataInput.io.inputChannel
-
       bufferedDataInput.io.outputChannel.ready := true.B
       when(bufferedDataInput.io.outputChannel.valid) {
         // We are done receiving data.
@@ -112,6 +111,9 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(sendingData) {
+      uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
+      bufferedDataOutput.io.inputChannel.valid := true.B
+      io.readEnable := true.B
       when(bufferedDataOutput.io.inputChannel.ready) {
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.

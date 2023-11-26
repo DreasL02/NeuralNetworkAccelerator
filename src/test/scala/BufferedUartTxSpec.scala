@@ -74,7 +74,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.inputChannel.valid.poke(false.B)
 
       val uartOutput = ListBuffer[BigInt]()
-      for (i <- 0 until 2*uartFrameSize) {
+      for (i <- 0 until 2 * uartFrameSize) {
         uartOutput.append(dut.io.txd.peekInt())
         dut.clock.step(cyclesPerSerialBit)
       }
