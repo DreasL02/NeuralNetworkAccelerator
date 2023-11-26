@@ -11,6 +11,8 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
                        initialFixedPointsMemoryState: Array[Int]
                       ) extends Module {
   val io = IO(new Bundle {
+    // all but rxd and txd are debug signals
+    // ready could be mapped to a LED perhaps?
     val rxd = Input(Bool())
     val readDebug = Input(Bool())
     val forceDebug = Input(Bool())
@@ -54,7 +56,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
     vector
   }
 
-  val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, 8))
+  val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, initialFixedPointsMemoryState.length))
 
   val communicator = Module(new Communicator(dimension * dimension * (w.toFloat / 8.0f).ceil.toInt, frequency, baudRate))
 
@@ -71,7 +73,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   addressManager.io.incrementAddress := communicator.io.incrementAddress || layerFSM.io.incrementAddress
 
   //memories.io.writeEnable := communicator.io.writeEnable || layerFSM.io.writeMemory || io.forceDebug
-  memories.io.writeEnable := layerFSM.io.writeMemory
+  memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
   memories.io.readEnable := layerFSM.io.readMemory || io.readDebug
 
   io.address := addressManager.io.vectorAddress

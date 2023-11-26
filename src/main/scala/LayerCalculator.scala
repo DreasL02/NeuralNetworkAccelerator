@@ -80,6 +80,7 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     }
   }
 
+  systolicArray.io.clear := io.load
 
   val accumulator = Module(new Accumulator(w, dimension))
   for (i <- 0 until dimension) {

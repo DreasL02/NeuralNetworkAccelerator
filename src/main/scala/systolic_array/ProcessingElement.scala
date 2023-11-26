@@ -14,6 +14,7 @@ class ProcessingElement(w: Int = 8) extends Module {
     val cOut = Output(UInt(w.W))
 
     val fixedPoint = Input(UInt(log2Ceil(w).W))
+    val clear = Input(Bool())
   })
 
   val rounder = Module(new Rounder(w_target = w, w_input = w + w))
@@ -32,5 +33,11 @@ class ProcessingElement(w: Int = 8) extends Module {
   rounder.io.input := cReg
   rounder.io.fixedPoint := io.fixedPoint
   io.cOut := rounder.io.output
+
+  when(io.clear) {
+    aReg := 0.U
+    bReg := 0.U
+    cReg := 0.U
+  }
 }
 

@@ -168,4 +168,18 @@ object MatrixUtils {
     print(matrixToString(mr))
     1.0f
   }
+
+  def calculateMACResult(inputsFloat: Array[Array[Float]], weightsFloat: Array[Array[Float]], biasesFloat: Array[Array[Float]], fixedPoint: Int): Array[Array[Float]] = {
+    val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint)
+    val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint)
+    val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint)
+
+    val inputsFloatAgain = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint)
+    val weightsFloatAgain = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint)
+    val biasesFloatAgain = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint)
+
+    val multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
+    val additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
+    additionResultFloat
+  }
 }

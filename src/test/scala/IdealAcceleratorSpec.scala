@@ -1,4 +1,4 @@
-import Utils.MatrixUtils
+import Utils.MatrixUtils._
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
@@ -10,24 +10,22 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val baudRate = 1
   val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val w = 8
-  /*
-  val dimension = 3
 
+  val dimension = 3
 
   val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
   val weightsL1: Array[Array[Float]] = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-  //val biasesL1: Array[Array[Float]] = Array(Array(1.0f, 2.0f, 3.4f), Array(4.0f, 5.0f, 6.0f), Array(7.0f, 8.0f, 9.0f))
   val biasesL1: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
   val signL1: Int = 0
-  val fixedPointL1: Int = 2
+  val fixedPointL1: Int = 0
 
   val inputsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
-  val weightsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
-  val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
+  val weightsL2: Array[Array[Float]] = Array(Array(1.0f, 0.9f, 0.8f), Array(0.7f, 0.6f, 0.4f), Array(0.3f, 0.2f, 0.1f))
+  val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
   val signL2: Int = 0
-  val fixedPointL2: Int = 2
-  */
+  val fixedPointL2: Int = 0
 
+  /*
   val dimension = 4
 
   val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f, 1.0f), Array(0.9f, 3.4f, 0.9f, 2.2f), Array(2.2f, 1.2f, 0.9f, 1.2f), Array(2.2f, 1.2f, 0.9f, 1.2f))
@@ -41,6 +39,8 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f))
   val signL2: Int = 0
   val fixedPointL2: Int = 2
+  */
+
 
   val inputs: Array[Array[Array[Int]]] = Array(
     Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1),
@@ -86,11 +86,11 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
       }
       println("-- inputs --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues1, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues1, dimension)))
       println("-- weights --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues2, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues2, dimension)))
       println("-- biases --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues3, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.poke(false.B)
       println("-------")
 
@@ -119,11 +119,11 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
       }
       println("-- inputs --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues1, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues1, dimension)))
       println("-- weights --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues2, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues2, dimension)))
       println("-- biases --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues3, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.poke(false.B)
       println("-------")
 
@@ -150,11 +150,11 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
       }
       println("-- inputs --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues1, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues1, dimension)))
       println("-- weights --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues2, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues2, dimension)))
       println("-- biases --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues3, dimension)))
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.poke(false.B)
       println("-------")
 
@@ -164,11 +164,8 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       val bytesToSend = Array(
         nextCalculatingOpcode
       )
-
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
-
       println("Sending bit vector: " + uartBitsToSend)
-
       uartBitsToSend.foreach(bit => {
         val bitAsBigInt = BigInt(bit - 48)
         dut.io.rxd.poke(bitAsBigInt.U(1.W))
@@ -181,7 +178,6 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println(dut.io.address.peekInt())
       println(dut.io.matrixAddress.peekInt())
 
-      //dut.io.forceDebug.poke(true.B)
       dut.io.readDebug.poke(true.B)
       println(dut.io.ready.peek())
       for (i <- 0 until dimension * dimension) {
@@ -189,16 +185,51 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         memoryValues2(i) = dut.io.debugMatrixMemory2(i).peekInt().toInt
         memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
       }
-      println("-- Memory contents @ address --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues1, dimension)))
-      println("-- Write port to memory --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues2, dimension)))
-      println("-- Result form systolic array --")
-      print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryValues3, dimension)))
+      println("-- inputs --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues1, dimension)))
+      println("-- weights --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues2, dimension)))
+      println("-- biases --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.poke(false.B)
+
+
+      val newBytesToSend = Array(
+        nextCalculatingOpcode
+      )
+
+      val newUartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(newBytesToSend)
+      println("Sending bit vector: " + newUartBitsToSend)
+      newUartBitsToSend.foreach(bit => {
+        val bitAsBigInt = BigInt(bit - 48)
+        dut.io.rxd.poke(bitAsBigInt.U(1.W))
+        dut.clock.step(cyclesPerSerialBit)
+      })
+
+      println("Evaluated into:")
+      println(dut.io.address.peekInt())
+      println(dut.io.matrixAddress.peekInt())
+
+      dut.io.readDebug.poke(true.B)
+      println(dut.io.ready.peek())
+      for (i <- 0 until dimension * dimension) {
+        memoryValues1(i) = dut.io.debugMatrixMemory1(i).peekInt().toInt
+        memoryValues2(i) = dut.io.debugMatrixMemory2(i).peekInt().toInt
+        memoryValues3(i) = dut.io.debugMatrixMemory3(i).peekInt().toInt
+      }
+      println("-- inputs --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues1, dimension)))
+      println("-- weights --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues2, dimension)))
+      println("-- biases --")
+      print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
+      dut.io.readDebug.poke(false.B)
+
       println("-------")
       println("TEST 2 DONE")
       println("-------")
+
+
     }
   }
 }
