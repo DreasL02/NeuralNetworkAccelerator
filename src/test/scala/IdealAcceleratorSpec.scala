@@ -9,7 +9,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val frequency = 100
   val baudRate = 1
   val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
-
+  val w = 8
   /*
   val dimension = 3
 
@@ -41,7 +41,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f, 0.0f))
   val signL2: Int = 0
   val fixedPointL2: Int = 2
-  
+
   val inputs: Array[Array[Array[Int]]] = Array(
     Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1),
     Configuration.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2)
@@ -69,7 +69,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val incrementAddressOpcode = 4.toByte
 
   "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
-    test(new IdealAccelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints)) { dut =>
+    test(new IdealAccelerator(w, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -133,7 +133,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   }
   "Should start the calculation" in {
-    test(new IdealAccelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints)) { dut =>
+    test(new IdealAccelerator(w, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 

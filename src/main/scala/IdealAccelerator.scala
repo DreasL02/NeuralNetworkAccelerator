@@ -24,6 +24,16 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
     val matrixAddress = Output(UInt(log2Ceil(initialInputsMemoryState.length).W))
   })
 
+  def mapResultToInput(result: Vec[Vec[UInt]]): Vec[Vec[UInt]] = {
+    val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
+    for (i <- 0 until dimension) {
+      for (j <- 0 until dimension) {
+        matrix(i)(j) := result(i)(dimension - 1 - j)
+      }
+    }
+    matrix
+  }
+
   def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = {
     val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
     for (i <- 0 until dimension) {
@@ -46,7 +56,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, 8))
 
-  val communicator = Module(new Communicator(dimension * dimension * (w / 8), frequency, baudRate))
+  val communicator = Module(new Communicator(dimension * dimension * (w.toFloat / 8.0f).ceil.toInt, frequency, baudRate))
 
   val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
@@ -88,7 +98,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
     memories.io.inputsWrite := communicator.io.dataOut
   }.otherwise(
     when(layerFSM.io.writeMemory) {
-      memories.io.inputsWrite := convertMatrixToVec(layerCalculator.io.result)
+      memories.io.inputsWrite := convertMatrixToVec(mapResultToInput(layerCalculator.io.result))
     }
   )
 
