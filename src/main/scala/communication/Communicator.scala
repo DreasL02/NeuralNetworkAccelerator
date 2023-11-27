@@ -37,11 +37,16 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.uartTxPin := uartTx.io.txd
 
   val bufferedOpcodeInput = Module(new DeSerializingByteBuffer(1))
+  val bufferedReadyOutput = Module(new SerializingByteBuffer(1))
+
   val bufferedDataInput = Module(new DeSerializingByteBuffer(matrixByteSize))
   val bufferedDataOutput = Module(new SerializingByteBuffer(matrixByteSize))
 
   uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
   uartRx.io.outputChannel <> bufferedOpcodeInput.io.inputChannel
+
+  bufferedReadyOutput.io.inputChannel.bits := Opcodes.okResponse
+  bufferedReadyOutput.io.inputChannel.valid := false.B
 
   bufferedOpcodeInput.io.outputChannel.ready := false.B
   bufferedDataOutput.io.inputChannel.valid := false.B
@@ -87,14 +92,18 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(respondingWithOKSignal) {
-      // TODO: Send OK signal through the uart to indicate job done.
-      // TODO: When done sending OK signal, go to receiving opcodes.
-      state := receivingOpcodes
+      bufferedReadyOutput.io.inputChannel.valid := true.B
+      uartTx.io.inputChannel <> bufferedReadyOutput.io.outputChannel
+      when(bufferedReadyOutput.io.outputChannel.valid) {
+        // We are done sending the OK signal.
+        // Go to receiving opcodes (idle state).
+        state := receivingOpcodes
+      }
     }
 
     is(incrementingAddress) {
       io.incrementAddress := true.B
-      state := receivingOpcodes //TODO : This should be respondingWithOKSignal.
+      state := respondingWithOKSignal
     }
 
     is(receivingData) {
@@ -103,10 +112,8 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
       when(bufferedDataInput.io.outputChannel.valid) {
         // We are done receiving data.
         // Go to sending OK signal.
-        // TODO: Where does the data go?
-        // TODO: Map the data to memory.
         io.writeEnable := true.B
-        state := receivingOpcodes // TODO: This should be respondingWithOKSignal.
+        state := respondingWithOKSignal
       }
     }
 
@@ -125,7 +132,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     is(waitForExternalCalculation) {
       io.startCalculation := true.B // start the calculation of the layer through the layer FSM, may also increment the address
 
-      when(io.calculationDone) { //wait until layer is done calculating
+      when(io.calculationDone) { // wait until layer is done calculating
         state := respondingWithOKSignal
       }
     }

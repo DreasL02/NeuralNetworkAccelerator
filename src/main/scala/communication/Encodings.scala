@@ -18,5 +18,6 @@ object Encodings {
     val nextTransmitting = "b010".U(opcodeWidth.W)
     val nextCalculating = "b011".U(opcodeWidth.W)
     val nextAddress = "b100".U(opcodeWidth.W)
+    val okResponse = "b101".U(opcodeWidth.W)
   }
 }
