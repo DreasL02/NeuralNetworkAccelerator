@@ -16,9 +16,6 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     val result = Output(Vec(dimension, Vec(dimension, UInt(w.W)))) // result of layer
   })
 
-  // TODO: look at perhaps disabling the rectifier and accumulator when not needed (i.e. when valid is false)
-  // Save power (tm)
-
   val CYCLES_UNTIL_VALID: Int = dimension * dimension + 1 // TODO: explain why not -1
 
   def timer(max: Int, reset: Bool) = {

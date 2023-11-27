@@ -3,6 +3,8 @@ import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
+import scala.collection.mutable.ListBuffer
+
 class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val clockTimeout = 200_000_000
@@ -24,6 +26,8 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   var mappedInputs = Configuration.mapInputs(inputs)
 
   val nextInputsOpcode = 1.toByte
+  val nextTransmittingOpcode = 2.toByte
+  val nextCalculatingOpcode = 3.toByte
   val incrementAddressOpcode = 4.toByte
 
   "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
@@ -198,5 +202,47 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "Should transmit memory contents." in {
+    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs)) { dut =>
+
+      dut.clock.setTimeout(clockTimeout)
+
+      dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
+      dut.clock.step(100)
+
+      val bytesToSend = Array(
+        nextTransmittingOpcode
+      )
+
+      val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
+
+      println("Sending bit vector: " + uartBitsToSend)
+      var c = 0
+      val uartOutput = ListBuffer[BigInt]()
+      uartBitsToSend.foreach(bit => {
+        uartOutput.append(dut.io.txd.peekInt())
+        val bitAsBigInt = BigInt(bit - 48)
+        dut.io.rxd.poke(bitAsBigInt.U(1.W))
+        dut.clock.step(cyclesPerSerialBit)
+      })
+
+      for (j <- 0 until dimension * dimension + 30) {
+
+        for (i <- 0 until 11) {
+          uartOutput.append(dut.io.txd.peekInt())
+          dut.clock.step(cyclesPerSerialBit)
+        }
+        //print("Message " + j + ": ")
+
+        //val bytesFromEmittedUartFrames = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+        //
+        //println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
+      }
+      println("uartOutput: " + uartOutput.mkString)
+      val bytesFromEmittedUartFrames = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+      println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
+
+    }
+  }
 
 }

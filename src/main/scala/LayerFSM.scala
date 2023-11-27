@@ -64,8 +64,6 @@ class LayerFSM extends Module {
       io.readMemory := true.B
       io.loadBuffers := true.B
       io.incrementAddress := true.B
-      // TODO: See if increment address is a good idea, as it would lead to storing in the next layers
-      // TODO: input but could cause issues with timing?
     }
     is(calculating) {
       // Perform computation with systolic array, addition and rectifier

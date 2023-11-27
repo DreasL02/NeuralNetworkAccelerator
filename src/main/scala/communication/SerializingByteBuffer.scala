@@ -28,11 +28,13 @@ class SerializingByteBuffer(bufferByteSize: Int) extends Module {
 
   io.debugCounterOutput := byteIndexCounter
 
-  when (byteIndexCounter === bufferByteSize.U) {
+  when(byteIndexCounter === bufferByteSize.U) {
     // We have outputted all the bytes. The output is no longer valid. We are ready to receive new bytes.
     outputValidReg := false.B
+    io.outputChannel.valid := false.B
+
     inputReadyReg := true.B
-  }.elsewhen (io.outputChannel.ready) {
+  }.elsewhen(io.outputChannel.ready) {
     // We have not outputted all bytes yet, but output is ready. We output the next byte.
     io.outputChannel.bits := byteBuffer(byteIndexCounter)
     byteIndexCounter := byteIndexCounter + 1.U

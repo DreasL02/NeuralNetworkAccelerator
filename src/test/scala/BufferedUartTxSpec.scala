@@ -8,8 +8,8 @@ import scala.collection.mutable.ListBuffer
 class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val clockTimeout = 200_000_000
-  val frequency = 100
-  val baudRate = 1
+  val frequency = 5000 * 2
+  val baudRate = 10
   val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
   val uartFrameSize = 11
@@ -96,6 +96,87 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+  "Should support a nine byte buffer" in {
+    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 10)) { dut =>
+      println("THIS TEST --- ----- ")
+      dut.clock.setTimeout(clockTimeout)
+
+      dut.io.inputChannel.ready.expect(true.B)
+
+      val testValue1 = 48
+      val testValue2 = 37
+      val testValue3 = 16
+      val testValue4 = 96
+      val testValue5 = 81
+      val testValue6 = 64
+      val testValue7 = 144
+      val testValue8 = 138
+      val testValue9 = 112
+      val testValue10 = 0
+
+      dut.io.inputChannel.bits(0).poke(testValue1.U(8.W))
+      dut.io.inputChannel.bits(1).poke(testValue2.U(8.W))
+      dut.io.inputChannel.bits(2).poke(testValue3.U(8.W))
+      dut.io.inputChannel.bits(3).poke(testValue4.U(8.W))
+      dut.io.inputChannel.bits(4).poke(testValue5.U(8.W))
+      dut.io.inputChannel.bits(5).poke(testValue6.U(8.W))
+      dut.io.inputChannel.bits(6).poke(testValue7.U(8.W))
+      dut.io.inputChannel.bits(7).poke(testValue8.U(8.W))
+      dut.io.inputChannel.bits(9).poke(testValue9.U(8.W))
+      dut.io.inputChannel.bits(8).poke(testValue10.U(8.W))
+
+      dut.io.inputChannel.valid.poke(true.B)
+      dut.clock.step()
+
+      var bufferContents = ListBuffer[BigInt]()
+      for (i <- 0 until 10) {
+        bufferContents.append(dut.io.debug(i).peekInt())
+      }
+      print("counter contents: " + dut.io.debugCounter.peekInt() + " ")
+      print("input contents: " + dut.io.outputBuffer.peekInt() + " ")
+      println("buffer contents: " + bufferContents.mkString(", "))
+
+      //dut.io.inputChannel.bits(0).poke(0.U(8.W))
+      //dut.io.inputChannel.bits(1).poke(0.U(8.W))
+
+
+      //dut.io.inputChannel.valid.poke(false.B)
+
+      val uartOutput = ListBuffer[BigInt]()
+
+      for (i <- 0 until 15 * uartFrameSize) {
+        uartOutput.append(dut.io.txd.peekInt())
+        dut.clock.step(cyclesPerSerialBit)
+        bufferContents = ListBuffer[BigInt]()
+        for (i <- 0 until 10) {
+          bufferContents.append(dut.io.debug(i).peekInt())
+        }
+        print("counter contents: " + dut.io.debugCounter.peekInt() + " ")
+        print("input contents: " + dut.io.outputBuffer.peekInt() + " ")
+        println("buffer contents: " + bufferContents.mkString(", "))
+      }
+
+      println("uartOutput: " + uartOutput.mkString)
+
+      val bytesFromEmittedUartFrames = Utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+      println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
+      //assert(bytesFromEmittedUartFrames.length == 2)
+      //assert(bytesFromEmittedUartFrames(0) == testValue1)
+      //assert(bytesFromEmittedUartFrames(1) == testValue2)
+
+      dut.clock.step(cyclesPerSerialBit)
+
+      // Check that the output remains idle
+      for (i <- 0 until tenSeconds) {
+        //dut.io.txd.expect(high)
+        dut.clock.step()
+      }
+      println("END--- ----- ")
+
+    }
+  }
+
 
   "Should support refilling a two byte buffer" in {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
