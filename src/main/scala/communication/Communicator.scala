@@ -41,34 +41,34 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
   val bufferedDataInput = Module(new DeSerializingByteBuffer(matrixByteSize))
   val bufferedDataOutput = Module(new SerializingByteBuffer(matrixByteSize))
+  val decoder = Module(new Decoder)
 
+  // default connections
   uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
   uartRx.io.outputChannel <> bufferedOpcodeInput.io.inputChannel
 
-  bufferedReadyOutput.io.inputChannel.bits := Opcodes.okResponse
-  bufferedReadyOutput.io.inputChannel.valid := false.B
-
   bufferedOpcodeInput.io.outputChannel.ready := false.B
-  bufferedDataOutput.io.inputChannel.valid := false.B
+  decoder.io.opcode := bufferedOpcodeInput.io.outputChannel.bits(0)
+
+  bufferedReadyOutput.io.inputChannel.bits := VecInit(Seq(Opcodes.okResponse))
+  bufferedReadyOutput.io.inputChannel.valid := false.B
+  bufferedReadyOutput.io.outputChannel.ready := false.B
 
   bufferedDataInput.io.inputChannel.bits := 0.U
   bufferedDataInput.io.inputChannel.valid := false.B
   bufferedDataInput.io.outputChannel.ready := false.B
+  io.dataOut := bufferedDataInput.io.outputChannel.bits
 
   bufferedDataOutput.io.inputChannel.bits := io.dataIn
+  bufferedDataOutput.io.inputChannel.valid := false.B
 
-  io.dataOut := bufferedDataInput.io.outputChannel.bits
 
   // Initially, we are receiving opcodes.
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
   val state = RegInit(receivingOpcodes)
 
-  val decoder = Module(new Decoder)
-
-  decoder.io.opcode := bufferedOpcodeInput.io.outputChannel.bits(0)
 
   switch(state) {
-
     is(receivingOpcodes) {
       bufferedOpcodeInput.io.outputChannel.ready := true.B
       io.ready := true.B
@@ -130,7 +130,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(waitForExternalCalculation) {
-      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, may also increment the address
+      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
 
       when(io.calculationDone) { // wait until layer is done calculating
         state := respondingWithOKSignal
