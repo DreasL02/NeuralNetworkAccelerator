@@ -103,7 +103,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     is(incrementingAddress) {
       io.incrementAddress := true.B
-      state := respondingWithOKSignal
+      state := receivingOpcodes
     }
 
     is(receivingData) {
@@ -113,7 +113,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
         // We are done receiving data.
         // Go to sending OK signal.
         io.writeEnable := true.B
-        state := respondingWithOKSignal
+        state := receivingOpcodes
       }
     }
 
@@ -125,7 +125,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
         // Go to sending OK signal.
-        state := respondingWithOKSignal
+        state := receivingOpcodes
       }
     }
 
@@ -133,7 +133,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
       io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
 
       when(io.calculationDone) { // wait until layer is done calculating
-        state := respondingWithOKSignal
+        state := receivingOpcodes
       }
     }
   }

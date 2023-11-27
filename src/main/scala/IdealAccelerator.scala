@@ -67,6 +67,9 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   val layerCalculator = Module(new LayerCalculator(w, dimension))
 
+  val byteIntoVectorCollector = Module(new ByteIntoVectorCollector(w, dimension))
+  val vectorIntoByteSplitter = Module(new VectorIntoByteSplitter(w, dimension))
+
   communicator.io.uartRxPin := io.rxd
   io.txd := communicator.io.uartTxPin
 
@@ -97,16 +100,18 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   memories.io.inputsWrite := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
   when(communicator.io.writeEnable) {
-    memories.io.inputsWrite := communicator.io.dataOut
+    byteIntoVectorCollector.io.input := communicator.io.dataOut
+    memories.io.inputsWrite := byteIntoVectorCollector.io.output
   }.otherwise(
     when(layerFSM.io.writeMemory) {
       memories.io.inputsWrite := convertMatrixToVec(mapResultToInput(layerCalculator.io.result))
     }
   )
-  communicator.io.dataIn := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
+  vectorIntoByteSplitter.io.input := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
   when(communicator.io.readEnable) {
-    communicator.io.dataIn := memories.io.inputsRead
+    vectorIntoByteSplitter.io.input := memories.io.inputsRead
   }
+  communicator.io.dataIn := vectorIntoByteSplitter.io.output
 
 
   io.debugMatrixMemory1 := memories.io.inputsRead

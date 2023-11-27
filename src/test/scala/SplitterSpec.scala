@@ -68,4 +68,30 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.output.expect(21323227.U)
     }
   }
+
+  "Should split 16-bit vector into 2 bytes each" in {
+    test(new VectorIntoByteSplitter(16, 2)) { dut =>
+      val input = Seq(7.U, 2132.U, 227.U, 1.U)
+      dut.io.input.zip(input).foreach { case (pin, value) => pin.poke(value) }
+      dut.io.output(0).expect(7) // lsb in first byte
+      dut.io.output(1).expect(0) // msb in second byte
+      dut.io.output(2).expect(84) // lsb in first byte
+      dut.io.output(3).expect(8) // msb in second byte
+      dut.io.output(4).expect(227) // lsb in first byte
+      dut.io.output(5).expect(0) // msb in second byte
+      dut.io.output(6).expect(1) // lsb in first byte
+      dut.io.output(7).expect(0) // msb in second byte
+    }
+  }
+
+  "Should collect 2 bytes each into a 16-bit vector" in {
+    test(new ByteIntoVectorCollector(16, 2)) { dut =>
+      val input = Seq(7.U, 0.U, 84.U, 8.U, 227.U, 0.U, 1.U, 0.U)
+      dut.io.input.zip(input).foreach { case (pin, value) => pin.poke(value) }
+      dut.io.output(0).expect(7) // two first bytes (7, 0)
+      dut.io.output(1).expect(2132) // two next bytes (84, 8)
+      dut.io.output(2).expect(227) // two next bytes (227, 0)
+      dut.io.output(3).expect(1) // two next bytes (1, 0)
+    }
+  }
 }
