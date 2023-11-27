@@ -3,27 +3,32 @@ import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
 
+
 class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
                        initialInputsMemoryState: Array[Int],
                        initialWeightsMemoryState: Array[Int],
                        initialBiasMemoryState: Array[Int],
                        initialSignsMemoryState: Array[Int],
-                       initialFixedPointsMemoryState: Array[Int]
+                       initialFixedPointsMemoryState: Array[Int],
+                       enableDebuggingIO: Boolean = true
                       ) extends Module {
+  private def optional[T](enable: Boolean, value: T): Option[T] = {
+    if (enable) Some(value) else None
+  }
+
   val io = IO(new Bundle {
     // all but rxd and txd are debug signals
     // ready could be mapped to a LED perhaps?
     val rxd = Input(Bool())
-    val readDebug = Input(Bool())
-    val forceDebug = Input(Bool())
+    val readDebug = optional(enableDebuggingIO, Input(Bool()))
 
     val txd = Output(Bool())
     val ready = Output(Bool())
-    val debugMatrixMemory1 = Output(Vec(dimension * dimension, UInt(w.W)))
-    val debugMatrixMemory2 = Output(Vec(dimension * dimension, UInt(w.W)))
-    val debugMatrixMemory3 = Output(Vec(dimension * dimension, UInt(w.W)))
-    val address = Output(UInt(8.W))
-    val matrixAddress = Output(UInt(log2Ceil(initialInputsMemoryState.length).W))
+    val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
+    val debugMatrixMemory2 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
+    val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
+    val address = optional(enableDebuggingIO, Output(UInt(8.W)))
+    val matrixAddress = optional(enableDebuggingIO, Output(UInt(log2Ceil(initialInputsMemoryState.length).W)))
   })
 
   def mapResultToInput(result: Vec[Vec[UInt]]): Vec[Vec[UInt]] = {
@@ -75,11 +80,12 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   addressManager.io.incrementAddress := communicator.io.incrementAddress || layerFSM.io.incrementAddress
 
-  //memories.io.writeEnable := communicator.io.writeEnable || layerFSM.io.writeMemory || io.forceDebug
-  memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
-  memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug
+  byteIntoVectorCollector.io.input := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
 
-  io.address := addressManager.io.vectorAddress
+  memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
+  memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug.getOrElse(false.B)
+
+  io.address.get := addressManager.io.vectorAddress
   io.ready := communicator.io.ready
 
   // layerFSM and communicator
@@ -114,12 +120,14 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   communicator.io.dataIn := vectorIntoByteSplitter.io.output
 
 
-  io.debugMatrixMemory1 := memories.io.inputsRead
-  io.debugMatrixMemory2 := memories.io.weightsRead
+  io.debugMatrixMemory1.get := memories.io.inputsRead
+  io.debugMatrixMemory2.get := memories.io.weightsRead
   //io.debugMatrixMemory2 := memories.io.inputsWrite
-  io.debugMatrixMemory3 := memories.io.biasRead
+  io.debugMatrixMemory3.get := memories.io.biasRead
   //io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
-  io.matrixAddress := addressManager.io.matrixAddress
+  io.matrixAddress.get := addressManager.io.matrixAddress
+
+
 
   // Address and memories
   memories.io.matrixAddress := addressManager.io.matrixAddress
