@@ -12,16 +12,24 @@ class LayerFSM extends Module {
 
     // To layer calculator
     val calculatingDone = Input(Bool())
-    val incrementAddress = Output(Bool())
     val loadBuffers = Output(Bool())
     val readMemory = Output(Bool())
     val writeMemory = Output(Bool())
+
+    // To address
+    val incrementAddress = Output(Bool())
   })
 
   val state = RegInit(idle)
   state := state //default to keep current state
 
-  // FSM state logic
+  // Default outputs
+  io.incrementAddress := false.B
+  io.loadBuffers := false.B
+  io.readMemory := false.B
+  io.writeMemory := false.B
+  io.finished := false.B
+
   switch(state) {
     is(idle) {
       when(io.start) {
@@ -31,6 +39,9 @@ class LayerFSM extends Module {
     is(reading) {
       // should take 1 cycle with register memory
       state := calculating
+      io.readMemory := true.B
+      io.loadBuffers := true.B
+      io.incrementAddress := true.B
     }
     is(calculating) {
       when(io.calculatingDone) {
@@ -40,39 +51,10 @@ class LayerFSM extends Module {
     is(writing) {
       // should take 1 cycle with register memory
       state := finished
-
-    }
-    is(finished) {
-      state := idle
-    }
-  }
-
-  // Default outputs
-  io.incrementAddress := false.B
-  io.loadBuffers := false.B
-  io.readMemory := false.B
-  io.writeMemory := false.B
-  io.finished := false.B
-
-  // FSM output logic
-  switch(state) {
-    is(idle) {
-
-    }
-    is(reading) {
-      // Copy data at address in memories (single layer) to buffers
-      io.readMemory := true.B
-      io.loadBuffers := true.B
-      io.incrementAddress := true.B
-    }
-    is(calculating) {
-      // Perform computation with systolic array, addition and rectifier
-    }
-    is(writing) {
-      // Store resulting data at address in memories (single layer)
       io.writeMemory := true.B
     }
     is(finished) {
+      state := idle
       io.finished := true.B
     }
   }

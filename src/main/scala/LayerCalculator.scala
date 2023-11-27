@@ -16,15 +16,12 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     val result = Output(Vec(dimension, Vec(dimension, UInt(w.W)))) // result of layer
   })
 
-  val CYCLES_UNTIL_VALID: Int = dimension * dimension + 1 // TODO: explain why not -1
+  val CYCLES_UNTIL_VALID: Int = dimension * dimension - 1
 
   def timer(max: Int, reset: Bool) = {
     val x = RegInit(0.U(log2Ceil(max + 1).W))
-    when(reset) {
-      x := 0.U
-    }
     val done = x === max.U
-    x := Mux(done, 0.U, x + 1.U)
+    x := Mux(done || reset, 0.U, x + 1.U)
     done
   }
 
@@ -52,52 +49,38 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     systolicArray.io.b(i) := weightsBuffers(i).io.output
   }
 
-  val fixedPoint = Wire(UInt(log2Ceil(w).W))
   val fixedPointReg = RegInit(0.U(log2Ceil(w).W))
-  fixedPoint := fixedPointReg
   when(io.load) {
-    fixedPoint := io.fixedPoint
     fixedPointReg := io.fixedPoint
   }
 
-  systolicArray.io.fixedPoint := fixedPoint
-
-  val biases = VecInit.fill(dimension, dimension)(RegInit(0.U))
-
-  for (i <- 0 until dimension) {
-    for (j <- 0 until dimension) {
-      val bias = Wire(UInt(w.W))
-      val biasReg = RegInit(0.U(w.W))
-      bias := biasReg
-      when(io.load) {
-        bias := io.biases(i)(j)
-        biasReg := io.biases(i)(j)
-      }
-      biases(i)(j) := bias
-    }
-  }
-
+  systolicArray.io.fixedPoint := fixedPointReg
   systolicArray.io.clear := io.load
 
+  // Addition of biases
   val accumulator = Module(new Accumulator(w, dimension))
   for (i <- 0 until dimension) {
     for (j <- 0 until dimension) {
+      // values from systolic array
       accumulator.io.values(i)(j) := systolicArray.io.c(j)(i)
+
+      // biases stored in regs
+      val biasReg = RegInit(0.U(w.W))
+      when(io.load) {
+        biasReg := io.biases(i)(j)
+      }
+      accumulator.io.biases(i)(j) := biasReg
     }
   }
-  accumulator.io.biases := biases
 
   val rectifier = Module(new Rectifier(w, dimension))
   rectifier.io.values := accumulator.io.result
 
-  val signed = Wire(Bool())
   val signedReg = RegInit(false.B)
-  signed := signedReg
   when(io.load) {
-    signed := io.signed
     signedReg := io.signed
   }
-  rectifier.io.signed := signed
+  rectifier.io.signed := signedReg
 
   io.result := rectifier.io.result
   io.valid := timer(CYCLES_UNTIL_VALID, io.load)

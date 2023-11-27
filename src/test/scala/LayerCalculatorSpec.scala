@@ -7,17 +7,17 @@ import org.scalatest.freespec.AnyFreeSpec
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
-    val dimension = 4 //=3
+    val dimension = 3 //4 //=3
     test(new LayerCalculator(w = 8, dimension = dimension)) { dut =>
       /*
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
       var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))*/
-      var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f, 1.0f), Array(0.9f, 3.4f, 0.9f, 2.2f), Array(2.2f, 1.2f, 0.9f, 1.2f), Array(2.2f, 1.2f, 0.9f, 1.2f))
-      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f, 0.2f), Array(4.9f, 0.4f, 4.8f, 4.2f), Array(2.2f, 1.2f, 0.9f, 1.2f), Array(2.2f, 1.2f, 0.9f, 1.2f))
-      var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f, 1.0f))
+      var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
+      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      var biasesFloat = Array(Array(2.0f, 2.0f, 1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
 
-      val fixedPoint = 2
+      val fixedPoint = 0
       val signed = 0
 
       var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
@@ -48,7 +48,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       // Setup the dut
       dut.io.load.poke(true.B)
-
       dut.io.signed.poke(signed.asUInt)
       dut.io.fixedPoint.poke(fixedPoint)
       for (i <- inputsFixed.indices) {
@@ -59,13 +58,16 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
+      // All values should now be loaded
+      dut.clock.step()
+      dut.io.load.poke(false.B)
+      dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
+      dut.io.signed.poke(1.U) // should be ignored when load is false
+
       var cycles = 0
       while (!dut.io.valid.peekBoolean()) {
-        dut.clock.step()
         cycles = cycles + 1
-        dut.io.load.poke(false.B)
-        dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
-        dut.io.signed.poke(1.U) // should be ignored when load is false
+        dut.clock.step()
       }
 
 

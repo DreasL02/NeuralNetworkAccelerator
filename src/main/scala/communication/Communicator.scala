@@ -94,7 +94,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     is(respondingWithOKSignal) {
       bufferedReadyOutput.io.inputChannel.valid := true.B
       uartTx.io.inputChannel <> bufferedReadyOutput.io.outputChannel
-      when(bufferedReadyOutput.io.outputChannel.valid) {
+      when(bufferedReadyOutput.io.inputChannel.ready) {
         // We are done sending the OK signal.
         // Go to receiving opcodes (idle state).
         state := receivingOpcodes
