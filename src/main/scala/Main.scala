@@ -6,7 +6,7 @@ import systolic_array.SystolicArray
 object Main extends App {
   val frequency = 50000000 * 2
   val baudRate = 115200
-  val w = 8
+  val w = 16
 
   val dimension = 3
 
@@ -16,13 +16,13 @@ object Main extends App {
   val signL1: Int = 0
   val fixedPointL1: Int = 0
 
-  val inputsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
+  val inputsL2: Array[Array[Float]] = Array(Array(9.0f, 8.0f, 7.0f), Array(6.0f, 5.0f, 4.0f), Array(3.0f, 2.0f, 1.0f))
   val weightsL2: Array[Array[Float]] = Array(Array(1.0f, 0.9f, 0.8f), Array(0.7f, 0.6f, 0.4f), Array(0.3f, 0.2f, 0.1f))
   val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
   val signL2: Int = 0
   val fixedPointL2: Int = 0
 
-  val inputsL3: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
+  val inputsL3: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(0.0f, 0.0f, 0.0f), Array(1.0f, 1.0f, 1.0f))
   val weightsL3: Array[Array[Float]] = Array(Array(1.0f, 0.9f, 0.8f), Array(0.7f, 2f, 0.4f), Array(3f, 0.2f, 0.1f))
   val biasesL3: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 0.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
   val signL3: Int = 0

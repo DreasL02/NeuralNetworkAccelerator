@@ -11,11 +11,13 @@ class ByteSplitter(w: Int = 8) extends Module {
   // splits in order: (0) is lsb, (numberOfBytes - 1) is msb
   var bitsNotGoneThrough = w
   for (i <- 0 until numberOfBytes) {
+    val byte = WireInit(0.U(8.W))
     if (bitsNotGoneThrough < 8) {
-      io.output(i) := io.input(i * 8 + (bitsNotGoneThrough - 1), i * 8)
+      byte := io.input(i * 8 + (bitsNotGoneThrough - 1), i * 8)
     } else {
-      io.output(i) := io.input(i * 8 + 7, i * 8)
+      byte := io.input(i * 8 + 7, i * 8)
     }
+    io.output(i) := byte
     bitsNotGoneThrough = bitsNotGoneThrough - 8
   }
 }
