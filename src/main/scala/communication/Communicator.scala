@@ -14,7 +14,8 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val incrementAddress = Output(Bool())
     val readEnable = Output(Bool())
     val writeEnable = Output(Bool())
-    val ready = Output(Bool())
+
+    val states = Output(Vec(6, Bool()))
 
     val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
@@ -25,7 +26,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
   io.incrementAddress := false.B
   io.writeEnable := false.B
-  io.ready := false.B
+  io.states := VecInit(Seq.fill(6)(false.B))
   io.startCalculation := false.B
   io.readEnable := false.B
   val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
@@ -71,7 +72,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   switch(state) {
     is(receivingOpcodes) {
       bufferedOpcodeInput.io.outputChannel.ready := true.B
-      io.ready := true.B
+      io.states(0) := true.B
       when(bufferedOpcodeInput.io.outputChannel.valid) {
         // We have loaded the opcode into the buffer and decoded it.
         switch(decoder.io.decodingCode) {
@@ -92,8 +93,9 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(respondingWithOKSignal) {
-      bufferedReadyOutput.io.inputChannel.valid := true.B
+      io.states(1) := true.B
       uartTx.io.inputChannel <> bufferedReadyOutput.io.outputChannel
+      bufferedReadyOutput.io.inputChannel.valid := true.B
       when(bufferedReadyOutput.io.inputChannel.ready) {
         // We are done sending the OK signal.
         // Go to receiving opcodes (idle state).
@@ -102,11 +104,13 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(incrementingAddress) {
+      io.states(2) := true.B
       io.incrementAddress := true.B
-      state := receivingOpcodes
+      state := receivingOpcodes // send affirmative signal
     }
 
     is(receivingData) {
+      io.states(3) := true.B
       uartRx.io.outputChannel <> bufferedDataInput.io.inputChannel
       bufferedDataInput.io.outputChannel.ready := true.B
       when(bufferedDataInput.io.outputChannel.valid) {
@@ -118,22 +122,24 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(sendingData) {
+      io.states(4) := true.B
       uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
       bufferedDataOutput.io.inputChannel.valid := true.B
       io.readEnable := true.B
       when(bufferedDataOutput.io.inputChannel.ready) {
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
-        // Go to sending OK signal.
+        // Go to receiving opcodes (idle state).
         state := receivingOpcodes
       }
     }
 
     is(waitForExternalCalculation) {
+      io.states(5) := true.B
       io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
 
       when(io.calculationDone) { // wait until layer is done calculating
-        state := receivingOpcodes
+        state := receivingOpcodes // send affirmative signal
       }
     }
   }

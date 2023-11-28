@@ -23,7 +23,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
     val readDebug = optional(enableDebuggingIO, Input(Bool()))
 
     val txd = Output(Bool())
-    val ready = Output(Bool())
+    val states = Output(Vec(6, Bool()))
     val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
     val debugMatrixMemory2 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
     val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
@@ -88,7 +88,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
   memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug.getOrElse(false.B)
 
-  io.ready := communicator.io.ready
+  io.states := communicator.io.states
 
   // layerFSM and communicator
   layerFSM.io.start := communicator.io.startCalculation
