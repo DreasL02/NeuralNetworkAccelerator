@@ -40,7 +40,7 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
         processingElements(column)(row).bIn := processingElements(column)(row - 1).bOut
       }
 
-      // map outputs
+      // map outputs, NB: emitted in column-major order
       io.c(column)(row) := processingElements(column)(row).cOut
 
       processingElements(column)(row).fixedPoint := io.fixedPoint
