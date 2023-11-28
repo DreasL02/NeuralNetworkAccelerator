@@ -190,7 +190,17 @@ It can found described in the
 
 ### Rectifier
 
-- Kom måske ind på at vi ikke normalizer da det kræver division.
+Following the accumulation we reach the activation function, where currently only the ReLU function is implemented.
+This is done in the
+[`Rectifier`](src/main/scala/Rectifier.scala) module.
+This module utilizes the fact that the ReLU function readmits the input if it is positive, i.e., if the input is not
+signed then the output is the same as the input.
+If the input is signed, then a negative inputs sign bit is set to 1, and the sign bit is always the most significant
+bit.
+Therefore, the module simply checks the most significant bit and sets the output to 0 if it is 0.
+
+Normally the next step would be to normalize the result, but this is not implemented in the accelerator as this would
+require division, which is a very expensive operation in hardware and would therefore best be left to the CPU.
 
 ### Memory & Encodings
 
