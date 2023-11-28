@@ -294,7 +294,7 @@ The FSM has the following five states:
 
 - Idle
 - Load
-- Calculate
+- Calculating
 - Write
 - Finished
 
@@ -304,7 +304,7 @@ When the start signal is asserted, the FSM will transition to the Load state, wh
 and biases into the buffers from the memories. Various values within the datapath will also be
 reset to accommodate the incoming values.
 
-When the loading is finished after a clock cycle, the FSM will transition to the Calculate state, where it will start
+When the loading is finished after a clock cycle, the FSM will transition to the Calculating state, where it will start
 the systolic array and accumulator. After NxN - 1 cycles it the datapath will be finished calculating the result
 and a 'valid' signal will be asserted.
 
