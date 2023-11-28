@@ -3,16 +3,18 @@ import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
 
-
-class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
-                  initialInputsMemoryState: Array[Int],
-                  initialWeightsMemoryState: Array[Int],
-                  initialBiasMemoryState: Array[Int],
-                  initialSignsMemoryState: Array[Int],
-                  initialFixedPointsMemoryState: Array[Int],
-                  enableDebuggingIO: Boolean = true
+// Top level module for the accelerator
+class Accelerator(w: Int = 8,  // width of the data
+                  dimension: Int = 4,  // dimension of the matrices
+                  frequency: Int,  // frequency of the uart
+                  baudRate: Int,   // baud rate of the uart
+                  initialInputsMemoryState: Array[Int], // initial state of the input memory
+                  initialWeightsMemoryState: Array[Int], // state of the weights memory
+                  initialBiasMemoryState: Array[Int], // state of the bias memory
+                  initialSignsMemoryState: Array[Int], // state of the signs memory
+                  initialFixedPointsMemoryState: Array[Int], // state of the fixed points memory
+                  enableDebuggingIO: Boolean = true // enable debug signals for testing
                       ) extends Module {
-  // Top level module for the accelerator
 
   private def optional[T](enable: Boolean, value: T): Option[T] = { // for optional debug signals, https://groups.google.com/g/chisel-users/c/8XUcalmRp8M
     if (enable) Some(value) else None
@@ -22,10 +24,12 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
     // all but rxd, txd and states are debug signals
     // states can be mapped to LEDs to indicate the current state.
     val rxd = Input(Bool())
-    val readDebug = optional(enableDebuggingIO, Input(Bool()))
 
     val txd = Output(Bool())
     val states = Output(Vec(6, Bool()))
+
+    val readDebug = optional(enableDebuggingIO, Input(Bool()))
+
     val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
     val debugMatrixMemory2 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
     val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
