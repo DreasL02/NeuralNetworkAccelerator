@@ -9,7 +9,7 @@ class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVect
     val incrementAddress = Input(Bool())
   })
 
-  val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W))
+  val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W)) // incrments
   val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W))
 
   when(io.incrementAddress) {

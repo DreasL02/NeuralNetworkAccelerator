@@ -12,13 +12,15 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
                   initialFixedPointsMemoryState: Array[Int],
                   enableDebuggingIO: Boolean = true
                       ) extends Module {
-  private def optional[T](enable: Boolean, value: T): Option[T] = {
+  // Top level module for the accelerator
+
+  private def optional[T](enable: Boolean, value: T): Option[T] = { // for optional debug signals, https://groups.google.com/g/chisel-users/c/8XUcalmRp8M
     if (enable) Some(value) else None
   }
 
   val io = IO(new Bundle {
-    // all but rxd and txd are debug signals
-    // ready could be mapped to a LED perhaps?
+    // all but rxd, txd and states are debug signals
+    // states can be mapped to LEDs to indicate the current state.
     val rxd = Input(Bool())
     val readDebug = optional(enableDebuggingIO, Input(Bool()))
 
