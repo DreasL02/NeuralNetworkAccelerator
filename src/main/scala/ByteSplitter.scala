@@ -9,8 +9,14 @@ class ByteSplitter(w: Int = 8) extends Module {
     val output = Output(Vec(numberOfBytes, UInt(8.W)))
   })
   // splits in order: (0) is lsb, (numberOfBytes - 1) is msb
+  var bitsNotGoneThrough = w
   for (i <- 0 until numberOfBytes) {
-    io.output(i) := io.input(i * 8 + 7, i * 8)
+    if (bitsNotGoneThrough < 8) {
+      io.output(i) := io.input(i * 8 + (bitsNotGoneThrough - 1), i * 8)
+    } else {
+      io.output(i) := io.input(i * 8 + 7, i * 8)
+    }
+    bitsNotGoneThrough = bitsNotGoneThrough - 8
   }
 }
 
