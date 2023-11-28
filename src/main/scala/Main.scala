@@ -51,7 +51,7 @@ object Main extends App {
   var mappedWeights = Configuration.mapWeights(weights)
   var mappedBiases = Configuration.mapBiases(biases)
 
-  emitVerilog(new IdealAccelerator(w, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, false))
+  emitVerilog(new Accelerator(w, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, false))
 }
 
 

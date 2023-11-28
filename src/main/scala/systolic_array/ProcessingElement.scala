@@ -3,7 +3,11 @@ package systolic_array
 import chisel3._
 import chisel3.util.log2Ceil
 
-//http://ecelabs.njit.edu/ece459/lab3.php
+// Inspired by:
+// https://github.com/kazutomo/Chisel-MatMul/tree/master
+// and
+// http://ecelabs.njit.edu/ece459/lab3.php
+
 class ProcessingElement(w: Int = 8) extends Module {
   val io = IO(new Bundle {
     val aIn = Input(UInt(w.W))
@@ -30,9 +34,9 @@ class ProcessingElement(w: Int = 8) extends Module {
   io.aOut := aReg
   io.bOut := bReg
 
-  rounder.io.input := cReg
+  rounder.io.input := cReg     // in 2*w bits
   rounder.io.fixedPoint := io.fixedPoint
-  io.cOut := rounder.io.output
+  io.cOut := rounder.io.output // round to w bits
 
   when(io.clear) {
     aReg := 0.U

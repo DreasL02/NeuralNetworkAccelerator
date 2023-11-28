@@ -15,6 +15,8 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
 
   // Inspired by:
   // https://github.com/kazutomo/Chisel-MatMul/tree/master
+  // and
+  // http://ecelabs.njit.edu/ece459/lab3.php
 
   val processingElements = VecInit.fill(dimension, dimension)(Module(new ProcessingElement(w)))
 
@@ -39,7 +41,7 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
 
       // map outputs
       io.c(column)(row) := processingElements(column)(row).io.cOut
-      
+
       processingElements(column)(row).io.fixedPoint := io.fixedPoint
       processingElements(column)(row).io.clear := io.clear
     }
