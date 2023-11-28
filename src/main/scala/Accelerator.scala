@@ -41,7 +41,7 @@ class Accelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate: Int,
   }
 
   io.address := addressManager.io.vectorAddress
-  io.ready := communicator.io.ready
+  io.ready := communicator.io.states(0)
 
   for (i <- 0 until dimension * dimension) {
     io.matrixMemory(i) := memory(addressManager.io.matrixAddress + i.U)

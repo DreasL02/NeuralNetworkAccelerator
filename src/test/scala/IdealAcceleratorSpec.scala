@@ -170,7 +170,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println(dut.io.matrixAddress.get.peekInt())
 
       dut.io.readDebug.get.poke(true.B)
-      println(dut.io.ready.peek())
+      println(dut.io.states.peek())
       for (i <- 0 until dimension * dimension) {
         memoryValues1(i) = dut.io.debugMatrixMemory1.get(i).peekInt().toInt
         memoryValues2(i) = dut.io.debugMatrixMemory2.get(i).peekInt().toInt
@@ -202,7 +202,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println(dut.io.matrixAddress.get.peekInt())
 
       dut.io.readDebug.get.poke(true.B)
-      println(dut.io.ready.peek())
+      println(dut.io.states.peek())
       for (i <- 0 until dimension * dimension) {
         memoryValues1(i) = dut.io.debugMatrixMemory1.get(i).peekInt().toInt
         memoryValues2(i) = dut.io.debugMatrixMemory2.get(i).peekInt().toInt
@@ -228,7 +228,7 @@ class IdealAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println(dut.io.matrixAddress.get.peekInt())
 
       dut.io.readDebug.get.poke(true.B)
-      println(dut.io.ready.peek())
+      println(dut.io.states.peek())
       for (i <- 0 until dimension * dimension) {
         memoryValues1(i) = dut.io.debugMatrixMemory1.get(i).peekInt().toInt
         memoryValues2(i) = dut.io.debugMatrixMemory2.get(i).peekInt().toInt

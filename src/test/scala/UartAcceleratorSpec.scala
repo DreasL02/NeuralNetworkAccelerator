@@ -198,6 +198,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println("Current memory state (should match newMemoryBytesToSend):")
       print(MatrixUtils.matrixToString(MatrixUtils.convertMappedMatrixToMatrix(memoryStateAfterData, dimension)))
       assert(memoryStateAfterData sameElements newMemoryBytesToSend)
+      println(dut.io.ready.peek())
       dut.io.address.expect(0.U)
     }
   }
@@ -226,7 +227,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step(cyclesPerSerialBit)
       })
 
-      for (j <- 0 until dimension * dimension + 30) {
+      for (j <- 0 until dimension * dimension) {
 
         for (i <- 0 until 11) {
           uartOutput.append(dut.io.txd.peekInt())
