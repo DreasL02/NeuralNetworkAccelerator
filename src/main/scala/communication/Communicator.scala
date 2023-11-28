@@ -37,6 +37,11 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   uartRx.io.rxd := io.uartRxPin
   io.uartTxPin := uartTx.io.txd
 
+  uartRx.io.outputChannel.ready := false.B
+
+  uartTx.io.inputChannel.valid := false.B
+  uartTx.io.inputChannel.bits := 0.U
+
   val bufferedOpcodeInput = Module(new DeSerializingByteBuffer(1))
   val bufferedReadyOutput = Module(new SerializingByteBuffer(1))
 
@@ -44,35 +49,37 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   val bufferedDataOutput = Module(new SerializingByteBuffer(matrixByteSize))
   val decoder = Module(new Decoder)
 
-  // default connections
-  uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
-  uartRx.io.outputChannel <> bufferedOpcodeInput.io.inputChannel
-
-  bufferedOpcodeInput.io.outputChannel.ready := false.B
   decoder.io.opcode := bufferedOpcodeInput.io.outputChannel.bits(0)
 
-  bufferedReadyOutput.io.inputChannel.bits := VecInit(Seq(Opcodes.okResponse))
-  bufferedReadyOutput.io.inputChannel.valid := false.B
+  bufferedOpcodeInput.io.outputChannel.ready := false.B
+  bufferedOpcodeInput.io.inputChannel.valid := false.B
+  bufferedOpcodeInput.io.inputChannel.bits := 0.U
+
   bufferedReadyOutput.io.outputChannel.ready := false.B
+  bufferedReadyOutput.io.inputChannel.valid := false.B
+  bufferedReadyOutput.io.inputChannel.bits := VecInit(Seq(Opcodes.okResponse))
 
-  bufferedDataInput.io.inputChannel.bits := 0.U
-  bufferedDataInput.io.inputChannel.valid := false.B
-  bufferedDataInput.io.outputChannel.ready := false.B
-  io.dataOut := bufferedDataInput.io.outputChannel.bits
-
-  bufferedDataOutput.io.inputChannel.bits := io.dataIn
+  bufferedDataOutput.io.outputChannel.ready := false.B
   bufferedDataOutput.io.inputChannel.valid := false.B
+  bufferedDataOutput.io.inputChannel.bits := io.dataIn
 
+  bufferedDataInput.io.outputChannel.ready := false.B
+  bufferedDataInput.io.inputChannel.valid := false.B
+  bufferedDataInput.io.inputChannel.bits := 0.U
+
+  io.dataOut := bufferedDataInput.io.outputChannel.bits
 
   // Initially, we are receiving opcodes.
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
   val state = RegInit(receivingOpcodes)
 
-
   switch(state) {
     is(receivingOpcodes) {
-      bufferedOpcodeInput.io.outputChannel.ready := true.B
       io.states(0) := true.B
+
+      uartRx.io.outputChannel <> bufferedOpcodeInput.io.inputChannel
+      bufferedOpcodeInput.io.outputChannel.ready := true.B
+
       when(bufferedOpcodeInput.io.outputChannel.valid) {
         // We have loaded the opcode into the buffer and decoded it.
         switch(decoder.io.decodingCode) {
@@ -94,8 +101,9 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     is(respondingWithOKSignal) {
       io.states(1) := true.B
-      uartTx.io.inputChannel <> bufferedReadyOutput.io.outputChannel
       bufferedReadyOutput.io.inputChannel.valid := true.B
+      uartTx.io.inputChannel <> bufferedReadyOutput.io.outputChannel
+
       when(bufferedReadyOutput.io.inputChannel.ready) {
         // We are done sending the OK signal.
         // Go to receiving opcodes (idle state).
@@ -123,9 +131,10 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     is(sendingData) {
       io.states(4) := true.B
+      io.readEnable := true.B
       uartTx.io.inputChannel <> bufferedDataOutput.io.outputChannel
       bufferedDataOutput.io.inputChannel.valid := true.B
-      io.readEnable := true.B
+
       when(bufferedDataOutput.io.inputChannel.ready) {
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
