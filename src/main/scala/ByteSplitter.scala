@@ -3,7 +3,7 @@ import chisel3.util.Cat
 
 // Scalable byte splitter of a w bit input into a Vec of 8 bit outputs
 class ByteSplitter(w: Int = 8) extends Module {
-  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
+  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
 
   val io = IO(new Bundle {
     val input = Input(UInt(w.W))
@@ -27,7 +27,7 @@ class ByteSplitter(w: Int = 8) extends Module {
 
 // Scalable byte splitter of a Vec of w bit inputs into a Vec of 8 bit outputs
 class VectorIntoByteSplitter(w: Int, dimension: Int) extends Module {
-  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
+  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
 
   val io = IO(new Bundle {
     val input = Input(Vec(dimension * dimension, UInt(w.W)))
@@ -45,7 +45,7 @@ class VectorIntoByteSplitter(w: Int, dimension: Int) extends Module {
 
 // Scalable byte collector of a Vec of 8 bit inputs into a w bit output
 class ByteCollector(w: Int = 8) extends Module {
-  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
+  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
   val io = IO(new Bundle {
     // in order: (0) is lsb, (numberOfBytes - 1) is msb
     val input = Input(Vec(numberOfBytes, UInt(8.W)))
@@ -57,7 +57,7 @@ class ByteCollector(w: Int = 8) extends Module {
 
 // Scalable byte collector of a Vec of 8 bit inputs into a Vec of w bit outputs
 class ByteIntoVectorCollector(w: Int, dimension: Int) extends Module {
-  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
+  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
 
   val io = IO(new Bundle {
     val input = Input(Vec(dimension * dimension * numberOfBytes, UInt(8.W)))
