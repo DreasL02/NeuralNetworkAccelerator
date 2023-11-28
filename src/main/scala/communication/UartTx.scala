@@ -13,6 +13,9 @@ package chisel.lib.uart
 import chisel3._
 import chisel3.util._
 
+// Refactored version of:
+// https://github.com/freechipsproject/ip-contributions/blob/master/src/main/scala/chisel/lib/uart/Uart.scala
+
 class UartTx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val txd = Output(UInt(1.W))

@@ -44,7 +44,7 @@ class LayerFSM extends Module {
       io.incrementAddress := true.B
     }
     is(calculating) {
-      when(io.calculatingDone) {
+      when(io.calculatingDone) { //should take NxN - 1 cycles to be asserted
         state := writing
       }
     }

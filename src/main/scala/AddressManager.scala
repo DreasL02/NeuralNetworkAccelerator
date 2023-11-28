@@ -1,6 +1,6 @@
 import chisel3._
 import chisel3.util.log2Ceil
-
+// Holds the addresses for the matrix and vector memories and increments them when told to.
 class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVectorMemory: Int) extends Module {
   val io = IO(new Bundle {
     val matrixAddress = Output(UInt(log2Ceil(lengthOfMatrixMemory).W))
@@ -9,8 +9,8 @@ class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVect
     val incrementAddress = Input(Bool())
   })
 
-  val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W)) // incrments
-  val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W))
+  val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W)) // increments by dimension * dimension
+  val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W)) // increments by 1
 
   when(io.incrementAddress) {
     matrixAddressReg := matrixAddressReg + dimension.U * dimension.U
