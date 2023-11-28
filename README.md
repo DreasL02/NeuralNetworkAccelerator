@@ -3,6 +3,8 @@ Hardware Accelerator for Neural Networks in Chisel
 This repository documents a Neural Network Accelerator architecture and its implementation.\
 It is written in Chisel 5.0 and targets the Basys3 FPGA board.
 
+Made as part of a Special Course at DTU
+
 ### Authors
 
 Andreas Lildballe (s214387) \
