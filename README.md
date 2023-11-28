@@ -10,19 +10,18 @@ Ivan Hansgaard Hansen (s214378)
 
 ## Motivation
 
-<!---
-Rewrite
--->
 Moore's law is coming to a halt and computing requirements are ever-increasing.
 To accommodate these requirements domain-specific architectures (DSA) are positioned to become more important in the
 future.
 
 One area of increasing computing requirements is within the field of neural network inference.
-This is done through time expensive matrix multiplications.
+This is done through matrix multiplications that are highly expensive in terms of computing power and memory access.
 
-By implementing a hardware accelerator for neural networks, we can offload the matrix multiplications from the CPU to
-the FPGA, which can be made more efficient at these types of operations, mainly by reducing the amount of memory access.
-The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar CPU.
+By implementing a hardware accelerator for neural networks in an FPGA, we can offload the matrix multiplications from
+the CPU to
+an FPGA, which can be tailored to be more efficient at these types of operations, mainly by reducing the amount of
+memory access.
+The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar.
 By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive.
 This is especially true for large matrices, which are common in neural networks (see below).
 
@@ -71,7 +70,7 @@ Where Y is the output of the layer, f is the activation function,
 W is the weight matrix, X is the input matrix and B is the bias matrix.
 Examples of activation functions are the sigmoid function and the rectified linear unit (ReLU) function.
 
-The ReLU function is the most commonly used activation function, and
+The ReLU function is the most commonly used, and
 is defined as:
 
 ```
@@ -83,7 +82,11 @@ f(x) = max(0, x)
 Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
 their hardware friendliness.
 The precision of the fixed point number can often
-vary between layers, and even within a layer, though the latter is not implemented in this project.
+vary between layers, and even within a layer.
+
+The accelerator currently supports a predefined fixed point format that is the same for all layers.
+The infrastructure for differing between layers is half implemented, but not used.
+If desired the accelerator can also operate on pure integers.
 
 ## Design & Implementation
 
@@ -102,11 +105,11 @@ c = a * b + c
 
 Where a and b are the scalar inputs to the PE and c is a stored value alongside the final result.
 
-Notably the design handles varying fixed point numbers, and multiplication must therefore be handled with care,
-to ensure that the result is representable in the fixed point format. E.g, a multiplication of an
+Notably the design handles fixed point numbers, and multiplication must therefore be handled with care,
+to ensure that the result is correctly represented in the defined fixed point format. E.g, a multiplication of an
 input and a weight both in (4,4) fixed point format should result in a (4,4) fixed point format as opposed to a
 (8,8) fixed point format.
-This is done through a rounding algorithm that rounds up to nearest with round up on tie using shifting.
+This is done through a rounding algorithm that rounds up to nearest with round up on tie and implemented using shifting.
 
 Each clock cycle the PE passes on a and b in opposite directions, while c is stored locally.
 If the values inputted into the array are formatted correctly, the result of the matrix multiplication
@@ -150,15 +153,16 @@ This datapath is designed to interface with a memory component and a control com
 which in turn can interface with a communication module, which
 currently is implemented as a UART module.
 
+Below we will go through the different components of the datapath.
+
 ### Shifted Buffers
 
-The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part a series of
+The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part through a
+series of
 [`ShiftedBuffer`](src/main/scala/ShiftedBuffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
-The values loaded from the memory have to follow a certain format.
-
-This is described in more detail in the
+The values loaded from the memory have to follow a certain format, that is described in more detail in the
 [`Memory & Encodings`](#memory--encodings) section.
 
 A visual example of the three instances of buffers with different shifts can be seen below:
@@ -231,10 +235,19 @@ Similarly, the weight memory is encoded for the example as:
 When transcribed to the buffers and systolic array, the computation is then valid and would result
 in the following format:
 
-The bias memory
+The bias memory is therefore encoded as:
+<figure>
+    <p align = "center">
+        <img src="docs/figures/bias_mem.png" alt="weight_mem" width="800" />
+        <figcaption>
+            (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
-The weight and bias memories are implemented as real-only-memories encoded through values given in synthesis,
-while the renaming are implemented as a read-write-memories, to be changed during operation.
+TODO: fixed point and signed config
+
+The input memory is implemented as a read-write memory, while the remaining memories are implemented as read-only
 
 All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
 implementation.
@@ -245,7 +258,11 @@ The memories are described in
 ### Layer Calculator (Accelerator Datapath)
 
 With all of the above components, we can now assemble the layer function, which is the core of the accelerator.
+This is implemented as a datapath that can be controlled by a finite state machine (FSM).
+The description of the datapath is found in the
+[`LayerCalculator`](src/main/scala/LayerCalculator.scala) module.
 
+TODO: update drawing
 <figure>
     <p align = "center">
         <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
@@ -256,6 +273,39 @@ With all of the above components, we can now assemble the layer function, which 
 </figure>
 
 ### Datapath Controller
+
+The controller of the datapath, called LayerFSM, is implemented as a FSM in the
+[`LayerFSM`](src/main/scala/LayerFSM.scala) module.
+
+The FSM is implemented as a Moore machine, which means that the
+output of the FSM is only dependent on the current state.
+
+The FSM has the following five states:
+
+- Idle
+- Load
+- Calculate
+- Write
+- Finished
+
+The FSM is initialized in the Idle state, and will stay in this state until the start signal is asserted.
+
+When the start signal is asserted, the FSM will transition to the Load state, where it will load the input, weights
+and biases into the buffers from the memories. Various values within the datapath will also be
+reset to accommodate the incoming values.
+
+When the loading is finished after a clock cycle, the FSM will transition to the Calculate state, where it will start
+the systolic array and accumulator. After NxN - 1 cycles it the datapath will be finished calculating the result
+and a 'valid' signal will be asserted.
+
+When the 'valid' signal is asserted, the FSM will transition to the Write state, where it will
+write the result to the output memory.
+
+When the writing is finished, currently after one cycle due to the register memory, the FSM will transition to the
+Finished state, where it will assert a 'finished' signal to the component that asserted the start signal.
+
+After a clock cycle, the FSM will transition back to the Idle state, where it will stay until the start signal is
+reasserted.
 
 ### Communication
 

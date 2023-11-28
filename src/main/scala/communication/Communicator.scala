@@ -57,7 +57,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
   val state = RegInit(receivingOpcodes)
 
-
   switch(state) {
     is(receivingOpcodes) {
       io.states(0) := true.B
