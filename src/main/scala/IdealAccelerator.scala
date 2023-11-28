@@ -61,9 +61,11 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
     vector
   }
 
+  val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt
+
   val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, initialFixedPointsMemoryState.length))
 
-  val communicator = Module(new Communicator(dimension * dimension * (w.toFloat / 8.0f).ceil.toInt, frequency, baudRate))
+  val communicator = Module(new Communicator(dimension * dimension * numberOfBytes, frequency, baudRate))
 
   val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
@@ -72,6 +74,7 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   val layerCalculator = Module(new LayerCalculator(w, dimension))
 
+  // for mapping between w and byte in the interface between memories and communicator
   val byteIntoVectorCollector = Module(new ByteIntoVectorCollector(w, dimension))
   val vectorIntoByteSplitter = Module(new VectorIntoByteSplitter(w, dimension))
 
@@ -80,12 +83,11 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
 
   addressManager.io.incrementAddress := communicator.io.incrementAddress || layerFSM.io.incrementAddress
 
-  byteIntoVectorCollector.io.input := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
+  byteIntoVectorCollector.io.input := VecInit(Seq.fill(dimension * dimension * numberOfBytes)(0.U(8.W)))
 
   memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
   memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug.getOrElse(false.B)
 
-  io.address.get := addressManager.io.vectorAddress
   io.ready := communicator.io.ready
 
   // layerFSM and communicator
@@ -119,15 +121,15 @@ class IdealAccelerator(w: Int = 8, dimension: Int = 4, frequency: Int, baudRate:
   }
   communicator.io.dataIn := vectorIntoByteSplitter.io.output
 
-
-  io.debugMatrixMemory1.get := memories.io.inputsRead
-  io.debugMatrixMemory2.get := memories.io.weightsRead
-  //io.debugMatrixMemory2 := memories.io.inputsWrite
-  io.debugMatrixMemory3.get := memories.io.biasRead
-  //io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
-  io.matrixAddress.get := addressManager.io.matrixAddress
-
-
+  if (enableDebuggingIO) {
+    io.address.get := addressManager.io.vectorAddress
+    io.debugMatrixMemory1.get := memories.io.inputsRead
+    io.debugMatrixMemory2.get := memories.io.weightsRead
+    //io.debugMatrixMemory2 := memories.io.inputsWrite
+    io.debugMatrixMemory3.get := memories.io.biasRead
+    //io.debugMatrixMemory3 := convertMatrixToVec(layerCalculator.io.result)
+    io.matrixAddress.get := addressManager.io.matrixAddress
+  }
 
   // Address and memories
   memories.io.matrixAddress := addressManager.io.matrixAddress

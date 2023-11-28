@@ -6,7 +6,7 @@ import systolic_array.SystolicArray
 object Main extends App {
   val frequency = 50000000 * 2
   val baudRate = 115200
-  val w = 8
+  val w = 16
 
   val dimension = 3
 
