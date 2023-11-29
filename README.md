@@ -12,6 +12,7 @@ Ivan Hansgaard Hansen (s214378)
 
 ## Repository Structure
 
+
 ## Motivation
 
 Moore's law is coming to a halt and computing requirements are ever-increasing.
@@ -357,9 +358,16 @@ with the possibility of easily matrix dimensions and fixed point format.
 It automatically compares the result of the systolic array to the result of a matrix multiplication in software, 
 both in fixed point and inferred to floating point.
 - A test of the entire layer function datapath, with the same functionality as the systolic array test.
-- A test of the shifted buffer module, confirming its correct behavior.
-- 
+- A test of the shifted buffer module, confirming its behavior.
+- Various tests of the byte buffers.
+- A test for the Accelerator module transmitting commands through the UART,
+and then inspecting the internal state of the accelerator.
+
+Testing though UART commands proved to be a quite cumbersome process, 
+as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
+
 ## Synthesis
+
 
 ## Interfacing
 
