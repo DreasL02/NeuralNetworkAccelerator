@@ -367,9 +367,31 @@ Testing though UART commands proved to be a quite cumbersome process,
 as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
 
 ## Synthesis
+Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
+The xdc file used for the target board can found [here](Basys3_Master.xdc).
 
+The utilization of the FPGA resources varies depending on the configuration of the accelerator.
+Below is a table of the utilization of the FPGA resources for different configurations:
+
+| Dimensions | Bit width | LUTs | FFs | DSPs | BRAMs |
+|------------|-----------|------|-----|------|-------|
+| 3x3        | 4         |  1   |  1  |  0   |  0    |
+| 3x3        | 8         |  1   |  1  |  0   |  0    |
+| 3x3        | 13        |  1   |  1  |  0   |  0    |
+| 3x3        | 16        |  1   |  1  |  0   |  0    |
+| 3x3        | 32        |  1   |  1  |  0   |  0    |
+| 5x5        | 16        |  1   |  1  |  0   |  0    |
+ 
 
 ## Interfacing
+To interface with the accelerator an easy way to send commands and receive data though UART is needed. 
+For this purpose a C# application was written, which can be found in the [Interface](Interface) folder.
+
+C# was chosen due to our familiarity with the language, and good support for serial communication.
+
+The application is a simple console application, which allows the user to send commands to the accelerator,
+and receive data from the accelerator.
+
 
 ## References
 
