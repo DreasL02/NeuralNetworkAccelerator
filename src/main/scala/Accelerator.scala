@@ -47,7 +47,7 @@ class Accelerator(w: Int = 8,  // width of the data
     matrix
   }
 
-  def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = { // converts a vector to a matrix
+  def convertVecToMatrix(vector: Vec[UInt]): Vec[Vec[UInt]] = { // converts a vector to a matrix in hardware
     val matrix = VecInit(Seq.fill(dimension)(VecInit(Seq.fill(dimension)(0.U(w.W)))))
     for (i <- 0 until dimension) {
       for (j <- 0 until dimension) {
@@ -57,7 +57,7 @@ class Accelerator(w: Int = 8,  // width of the data
     matrix
   }
 
-  def convertMatrixToVec(matrix: Vec[Vec[UInt]]): Vec[UInt] = { // converts a matrix to a vector
+  def convertMatrixToVec(matrix: Vec[Vec[UInt]]): Vec[UInt] = { // converts a matrix to a vector in hardware
     val vector = VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
     for (i <- 0 until dimension) {
       for (j <- 0 until dimension) {
