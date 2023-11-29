@@ -345,7 +345,20 @@ This module functions as the top-level module of the accelerator.
 It provides a series of debug signals to allow for inspection of the internal state of the accelerator.
 
 ## Unit Tests and Verification
+To verify the functionality of the accelerator, a series of unit tests have been written.
+These can be found in the [`test`](src/test/scala) folder.
 
+The tests roughly corresponds to the different modules in the design.
+
+A subset of the tests are listed below:
+- A test of the systolic array, which tests the 
+functionality of the systolic array and the rounder, 
+with the possibility of easily matrix dimensions and fixed point format.
+It automatically compares the result of the systolic array to the result of a matrix multiplication in software, 
+both in fixed point and inferred to floating point.
+- A test of the entire layer function datapath, with the same functionality as the systolic array test.
+- A test of the shifted buffer module, confirming its correct behavior.
+- 
 ## Synthesis
 
 ## Interfacing
