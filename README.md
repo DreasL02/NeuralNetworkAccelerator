@@ -371,17 +371,22 @@ Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
 The xdc file used for the target board can found [here](Basys3_Master.xdc).
 
 The utilization of the FPGA resources varies depending on the configuration of the accelerator.
-Below is a table of the utilization of the FPGA resources for different configurations:
+Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled:
 
-| Dimensions | Bit width | LUTs | FFs | DSPs | BRAMs |
-|------------|-----------|------|-----|------|-------|
-| 3x3        | 4         |  1   |  1  |  0   |  0    |
-| 3x3        | 8         |  1   |  1  |  0   |  0    |
-| 3x3        | 13        |  1   |  1  |  0   |  0    |
-| 3x3        | 16        |  1   |  1  |  0   |  0    |
-| 3x3        | 32        |  1   |  1  |  0   |  0    |
-| 5x5        | 16        |  1   |  1  |  0   |  0    |
- 
+| Dimensions of matrix | Bit width | Slice LUTs <br/>(20800 total) | Slice Registers <br/>(41600 total) | DSPs <br/>(90 total) |
+|----------------------|-----------|-------------------------------|------------------------------------|----------------------|
+| 3x3                  | 4         | 1005                          | 453                                | 0                    |
+| 3x3                  | 8         | 1928                          | 751                                | 0                    |
+| 3x3                  | 13        | 2818                          | 900                                | 9                    |
+| 3x3                  | 16        | 3463                          | 1078                               | 9                    |
+| 3x3                  | 32        | 7094                          | 2313                               | 27                   |
+| 3x3                  | 64        | 16017                         | 4534                               | 82                   |
+| 5x5                  | 8         | 12122                         | 1873                               | 0                    |
+| 5x5                  | 16        | 21493                         | 2962                               | 25                   |
+| 6x6                  | 8         | 34929                         | 3321                               | 0                    |
+| 7x7                  | 1         | 7602                          | 728                                | 0                    |
+| 7x7                  | 8         | 43729                         | 3642                               | 0                    |
+
 
 ## Interfacing
 To interface with the accelerator an easy way to send commands and receive data though UART is needed. 
