@@ -389,8 +389,8 @@ For this purpose a C# application was written, which can be found in the [Interf
 
 C# was chosen due to our familiarity with the language, and good support for serial communication.
 
-The application is a simple console application, which allows the user to send commands to the accelerator,
-and receive data from the accelerator.
+The application is a simple console application, which couples up to an instance of an Interface class.
+This allows for simple commands such as `transmit`, `calculate` etc.
 
 
 ## References
