@@ -160,8 +160,6 @@ will be stored across all c values after N * N - 1 clock cycles.
 A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the animated GIF below
 or as a PDF [`here`](docs/systolic_array_example.pdf).
 
-<!---
-Remove comment in final version
 <figure>
     <p align = "center">
         <img src="docs/figures/systolic_example.gif" alt="3x3 Systolic Array" width="800" />
@@ -170,7 +168,6 @@ Remove comment in final version
         </figcaption>
     </p>
 </figure>
--->
 
 The PE and the Systolic Array are implemented in the
 [`ProcessingElement`](src/main/scala/systolic_array/ProcessingElement.scala)
@@ -258,7 +255,7 @@ Below is an example of how the input memory is encoded for a 3x3 matrix with thr
     <p align = "center">
         <img src="docs/figures/input_mem.png" alt="input_mem" width="800" />
         <figcaption>
-            (figure self produced).
+            Inputs encoded in memory for a 3x3 matrix with three layers (figure self produced).
         </figcaption>
     </p>
 </figure>
@@ -269,7 +266,7 @@ Similarly, the weight memory is encoded for the example as:
     <p align = "center">
         <img src="docs/figures/weights_mem.png" alt="weight_mem" width="800" />
         <figcaption>
-            (figure self produced).
+            Weights encoded in memory for a 3x3 matrix with three layers (figure self produced).
         </figcaption>
     </p>
 </figure>
@@ -278,7 +275,7 @@ When transcribed to the buffers and systolic array, the computation is then vali
 in the following format:
 <figure>
     <p align = "center">
-        <img src="docs/figures/matrix_after.png" alt="Result" width="100" />
+        <img src="docs/figures/matrix_after.png" alt="Result" width="300" />
     </p>
 </figure>
 
@@ -287,14 +284,33 @@ The bias memory is therefore encoded as:
     <p align = "center">
         <img src="docs/figures/bias_mem.png" alt="weight_mem" width="800" />
         <figcaption>
-            (figure self produced).
+            Biases encoded in memory fra 3x3 matrix with three layers (figure self produced).
+        </figcaption>
+    </p>
+</figure>
+So adding the biases can easily be described.
+
+The configuration memories are encoded as follows for respectively the fixed point format and signed configuration:
+<figure>
+    <p align = "center">
+        <img src="docs/figures/fixed_mem.png" alt="weight_mem" width="800" />
+        <figcaption>
+            Fixed point encoded in memory for 3x3 matrix with three layers and a bit width of 16 (figure self produced).
         </figcaption>
     </p>
 </figure>
 
-TODO: fixed point and signed config
+<figure>
+    <p align = "center">
+        <img src="docs/figures/signed_mem.png" alt="weight_mem" width="800" />
+        <figcaption>
+            Sign encoded in memory for 3x3 matrix with three layers (figure self produced).
+        </figcaption>
+    </p>
+</figure>
 
 The input memory is implemented as a read-write memory, while the remaining memories are implemented as read-only
+
 
 All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
 implementation.
