@@ -359,12 +359,25 @@ Once all bytes have been transmitted, the buffer asserts the `ready` signal.
 
 ## Protocol
 
+Communication with the accelerator is done through a simple protocol. The protocol is based on a series of commands, which are sent from the host computer to the FPGA. The FPGA then responds with either an OK signal or the requested data.
+
+The commands are:
+- `NextInputs`: Load the next inputs into the input buffer.
+- `NextTransmitting`: Start transmitting.
+- `NextCalculating`: Start calculating.
+- `ǸextAddress`: Increment the address counter by one.
 
 ## Communication FSM
 
+The communication FSM is implemented in the [`Communicator`](src/main/scala/communicatation/Communicator.scala) module.
 
-
-
+The FSM has the following states:
+- `receivingOpcodes`: Waiting for an opcode. This is the default and idle state.
+- `respondingWithOKSignal`: Responding with an OK signal. This state is entered when an opcode has been processed.
+- `incrementingAddress`: Incrementing the address counter. This state is entered when the `NextAddress` command is received.
+- `receivingData`: Waiting for data. This state is entered when the `NextInputs` opcode is received.
+- `sendingData`: Transmitting data. This state is entered when the `NextTransmitting` command is received.
+- `waitForExternalCalculation`: Calculating. This state is entered when the `NextCalculating` command is received. This state waits for calculation to finish, and then returns to the `respondingWithOKSignal` state.
 
 <figure>
     <p align = "center">
