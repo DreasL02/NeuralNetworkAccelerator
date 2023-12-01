@@ -276,6 +276,11 @@ Similarly, the weight memory is encoded for the example as:
 
 When transcribed to the buffers and systolic array, the computation is then valid and would result
 in the following format:
+<figure>
+    <p align = "center">
+        <img src="docs/figures/matrix_after.png" alt="Result" width="100" />
+    </p>
+</figure>
 
 The bias memory is therefore encoded as:
 <figure>
