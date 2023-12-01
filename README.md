@@ -387,6 +387,9 @@ Below is a table of the utilization of the FPGA resources as reported by Vivado 
 | 7x7                  | 1         | 7602                          | 728                                | 0                    |
 | 7x7                  | 8         | 43729                         | 3642                               | 0                    |
 
+From this table we can see that the design quickly becomes resource intensive.
+The lut count and register count seems to scale linearly with the bit width.
+The DSP utilization seems to kick in.
 
 ## Interfacing
 To interface with the accelerator an easy way to send commands and receive data though UART is needed. 
@@ -400,5 +403,5 @@ This allows for simple commands such as `transmit`, `calculate` etc.
 
 ## References
 
-    [1]: Patterson, David A., and John L. Hennessy. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4. 
+    [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4. 
     [2]: 
