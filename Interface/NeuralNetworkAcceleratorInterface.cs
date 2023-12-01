@@ -45,7 +45,7 @@ class NeuralNetworkAcceleratorInterface
     }
 
     public void Transmit() {
-        Console.WriteLine("TRANSMIT");
+        Console.WriteLine("TRANSMIT FROM FPGA");
 		for (int i = 0; i < Dimension * Dimension * numberOfBytesPerValue; i++)
         {
             SendHeader(Header.NextTransmittingHeader);
@@ -59,7 +59,7 @@ class NeuralNetworkAcceleratorInterface
 
     public void Send(Byte[] matrixOutArray)
     {
-        Console.WriteLine("ARRAY SEND");
+        Console.WriteLine("FOLLOWING ARRAY SENT TO FPGA");
         var length = Dimension * Dimension * numberOfBytesPerValue;
         if (matrixOutArray.Length != length) {
             throw new ArgumentException(System.String.Format("Array must have a length of {0}", length), "length");
