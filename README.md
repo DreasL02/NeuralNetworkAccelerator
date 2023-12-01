@@ -1,7 +1,7 @@
 Hardware Accelerator for Neural Networks in Chisel
 =======================
 This repository documents a Neural Network Accelerator architecture and its implementation.\
-It is written in Chisel 5.0 and targets the Basys3 FPGA board.
+It is written in Chisel 5.0 and targets the Basys3 FPGA board featuring an Artix 7 FPGA.
 
 The project is part of a Special Course at the Technical University of Denmark (DTU).
 
@@ -176,7 +176,7 @@ A visual example of the three instances of buffers with different shifts can be 
     <p align = "center">
         <img src="docs/figures/3_buffers.png" alt="input_mem" width="800" />
         <figcaption>
-          Three instances of buffers with different shifts. Orange registers are initialized to 0. 
+          Three instances of buffers with different shifts. Orange registers are initialized to 0.
           Blue registers are initialized to values from memory (figure self produced).
         </figcaption>
     </p>
@@ -324,11 +324,37 @@ reasserted.
 
 ### Communication
 
+
+
+
 #### UART Protocol
+
+To facilitate communication with the accelerator, a UART interface has been implemented.
+
+UART is a serial communication protocol. Data frames are composed of (in order):
+- Start bit (logic 0)
+- `n` data bits
+- Stop bit(s) (logic 1)
+
+We have chosen to use 8 data bits and 2 stop bits, a so called `8N2` configuration.
+
+It may be tempting to arbitrarily increase the number of data bits to increase the throughput of the communication. However, this is not viable in practice, as clock skew between the transmitting and receiving device will cause the bits to become misaligned with time.
+
+Instead, we implement buffering on both the transmitting and receiving side. This allows us to transmit and receive data in larger chunks, while still maintaining synchronization between the FPGA and the host computer.
+
+#### DecoupledIO
+
+Since I/O is slow and unpredictable, we use the `DecoupledIO` interface to communicate between the I/O and the rest of the accelerator.
+
+DecoupledIO is esentially a channel with a ready-valid interface. This allows the consuming end of the channel to signal when it is ready to receive data, and the producing end to signal when it has data available - this allows the two ends to operate at different speeds. When both ends are ready, data is transferred.
 
 #### Receiver
 
+The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When the vector is full, the buffer asserts the `valid` signal.
+
 #### Transmitter
+
+The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately. When the UART is ready to transmit, it asserts the `ready` signal. Once all bytes have been transmitted, the buffer asserts the `ready` signal.
 
 <figure>
     <p align = "center">
@@ -342,7 +368,7 @@ reasserted.
 ### Top-level
 The communication module is then connected to the datapath, its controller and the memories in the
 [`Accelerator`](src/main/scala/Accelerator.scala) module.
-This module functions as the top-level module of the accelerator. 
+This module functions as the top-level module of the accelerator.
 It provides a series of debug signals to allow for inspection of the internal state of the accelerator.
 
 ## Unit Tests and Verification
@@ -352,10 +378,10 @@ These can be found in the [`test`](src/test/scala) folder.
 The tests roughly corresponds to the different modules in the design.
 
 A subset of the tests are listed below:
-- A test of the systolic array, which tests the 
-functionality of the systolic array and the rounder, 
+- A test of the systolic array, which tests the
+functionality of the systolic array and the rounder,
 with the possibility of easily matrix dimensions and fixed point format.
-It automatically compares the result of the systolic array to the result of a matrix multiplication in software, 
+It automatically compares the result of the systolic array to the result of a matrix multiplication in software,
 both in fixed point and inferred to floating point.
 - A test of the entire layer function datapath, with the same functionality as the systolic array test.
 - A test of the shifted buffer module, confirming its behavior.
@@ -363,7 +389,7 @@ both in fixed point and inferred to floating point.
 - A test for the Accelerator module transmitting commands through the UART,
 and then inspecting the internal state of the accelerator.
 
-Testing though UART commands proved to be a quite cumbersome process, 
+Testing though UART commands proved to be a quite cumbersome process,
 as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
 
 ## Synthesis
@@ -392,7 +418,7 @@ The lut count and register count seems to scale linearly with the bit width.
 The DSP utilization seems to kick in.
 
 ## Interfacing
-To interface with the accelerator an easy way to send commands and receive data though UART is needed. 
+To interface with the accelerator an easy way to send commands and receive data though UART is needed.
 For this purpose a C# application was written, which can be found in the [Interface](Interface) folder.
 
 C# was chosen due to our familiarity with the language, and good support for serial communication.
