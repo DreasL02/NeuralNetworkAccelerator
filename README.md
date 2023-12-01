@@ -352,9 +352,13 @@ DecoupledIO is esentially a channel with a ready-valid interface. This allows th
 
 The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When the vector is full, the buffer asserts the `valid` signal.
 
+Then, when the consumer is ready to receive data, it asserts the `ready` signal. When both `ready` and `valid` are asserted, the buffer transfers the data to the consumer, and the buffer is reset.
+
 #### Transmitter
 
-The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately. When the UART is ready to transmit, it asserts the `ready` signal. Once all bytes have been transmitted, the buffer asserts the `ready` signal.
+The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately when `valid` is asserted on the buffer input. When the UART is ready to transmit, it asserts the `ready` signal, moving on to the next byte.
+
+Once all bytes have been transmitted, the buffer asserts the `ready` signal.
 
 <figure>
     <p align = "center">
@@ -387,14 +391,14 @@ both in fixed point and inferred to floating point.
 - A test of the shifted buffer module, confirming its behavior.
 - Various tests of the byte buffers.
 - A test for the Accelerator module transmitting commands through the UART,
-and then inspecting the internal state of the accelerator.
+and then inspecting the internal state of the accelerator. A custom UART encoder/decoder was written in Scala for this purpose.
 
 Testing though UART commands proved to be a quite cumbersome process,
 as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
 
 ## Synthesis
 Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
-The xdc file used for the target board can found [here](Basys3_Master.xdc).
+The XDC file used for the target board can found [here](Basys3_Master.xdc).
 
 The utilization of the FPGA resources varies depending on the configuration of the accelerator.
 Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled:
@@ -414,7 +418,8 @@ Below is a table of the utilization of the FPGA resources as reported by Vivado 
 | 7x7                  | 8         | 43729                         | 3642                               | 0                    |
 
 From this table we can see that the design quickly becomes resource intensive.
-The lut count and register count seems to scale linearly with the bit width.
+
+The LUT count and register count seems to scale linearly with the bit width.
 The DSP utilization seems to kick in.
 
 ## Interfacing
@@ -429,5 +434,5 @@ This allows for simple commands such as `transmit`, `calculate` etc.
 
 ## References
 
-    [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4. 
-    [2]: 
+    [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4.
+    [2]:
