@@ -13,6 +13,28 @@ Ivan Hansgaard Hansen (s214378)
 ## Repository Structure
 
 
+## Running and testing the project
+
+To run the entire test suite:
+
+`sbt test`
+
+To test a single spec:
+
+`sbt "testOnly SystolicSpec"`
+
+To compile and emit SystemVerilog (`Accelerator.sv`):
+
+`sbt run`
+
+The [Basys3_Master.xdc](Basys3_Master.xdc) XDC file can be used to target the Basys3 board.
+
+### The software interface
+
+The software interface is implemented in C# and can be found in the [Interface](Interface) folder.
+
+The interface can be run via `dotnet run`. This requires the .NET SDK to be installed.
+
 ## Motivation
 
 Moore's law is coming to a halt and computing requirements are ever-increasing.
