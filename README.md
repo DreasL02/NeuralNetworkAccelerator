@@ -299,7 +299,6 @@ This is implemented as a datapath that can be controlled by a finite state machi
 The description of the datapath is found in the
 [`LayerCalculator`](src/main/scala/LayerCalculator.scala) module.
 
-TODO: update drawing
 <figure>
     <p align = "center">
         <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
@@ -442,7 +441,12 @@ Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
 The XDC file used for the target board can found [here](Basys3_Master.xdc).
 
 The utilization of the FPGA resources varies depending on the configuration of the accelerator.
-Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled:
+
+An interesting resource available in the Basys3 board is the DSP48E1 module, which is a dedicated DSP module that can be used to implement MAC operations.
+The module is capable of performing a 25x18 bit multiplication and a 48 bit addition in a single clock cycle [2].
+It is therefore perfect for implementing the MAC operation in the PE, when remaining below the bit width limit of 18.
+
+Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled and the values are unsigned:
 
 | Dimensions of matrix | Bit width | Slice LUTs <br/>(20800 total) | Slice Registers <br/>(41600 total) | DSPs <br/>(90 total) |
 |----------------------|-----------|-------------------------------|------------------------------------|----------------------|
@@ -461,7 +465,9 @@ Below is a table of the utilization of the FPGA resources as reported by Vivado 
 From this table we can see that the design quickly becomes resource intensive.
 
 The LUT count and register count seems to scale linearly with the bit width.
-The DSP utilization seems to kick in.
+The DSP utilization seems to kick in when using 13 bit or more. 
+The utilization is identical with the number of PEs in the systolic array.
+For the examined bit widths higher than 16, the DSP utilization seems to scale rapidly.
 
 ## Interfacing
 To interface with the accelerator an easy way to send commands and receive data though UART is needed.
@@ -476,4 +482,4 @@ This allows for simple commands such as `transmit`, `calculate` etc.
 ## References
 
     [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4.
-    [2]:
+    [2]: https://docs.xilinx.com/v/u/en-US/ug479_7Series_DSP48E1
