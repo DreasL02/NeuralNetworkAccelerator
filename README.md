@@ -410,11 +410,13 @@ The commands are:
 - `NextInputs`: Load the next inputs into the input buffer.
 - `NextTransmitting`: Start transmitting.
 - `NextCalculating`: Start calculating.
-- `ǸextAddress`: Increment the address counter by one.
+- `NextAddress`: Increment the address counter by one.
 
 #### Communication FSM
 
 The communication FSM is implemented in the [`Communicator`](src/main/scala/communicatation/Communicator.scala) module.
+
+The Communicator serves as a bridge between the UART and the accelerator. As the UART operates in bytes, the Communicator is responsible for parsing the bytes into either commands or data. As the accelerator operates on a configurable bit width, special care must be taken to pack/unpack the bytes into the correct format.
 
 The FSM has the following states:
 - `receivingOpcodes`: Waiting for an opcode. This is the default and idle state.
