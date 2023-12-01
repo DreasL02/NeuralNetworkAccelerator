@@ -55,22 +55,5 @@ class Program
         Console.ReadKey();
         nna.Transmit();
         Console.ReadKey();
-
-        /*
-        nna.Address();
-        nna.Address();
-        nna.Transmit();
-        nna.Send([1, 0, 23, 10, 12, 
-                  0, 0, 1, 0, 2, 
-                  1, 2, 4, 2, 1,
-                  2, 12, 1
-            ]);
-        nna.Transmit();
-        nna.Address();
-        nna.Transmit();
-        nna.Calculate();
-        nna.Calculate();
-        nna.Transmit();
-        */
     }
 }
