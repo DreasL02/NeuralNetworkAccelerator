@@ -322,12 +322,9 @@ Finished state, where it will assert a 'finished' signal to the component that a
 After a clock cycle, the FSM will transition back to the Idle state, where it will stay until the start signal is
 reasserted.
 
-### Communication
+# Communication
 
-
-
-
-#### UART Protocol
+## UART Protocol
 
 To facilitate communication with the accelerator, a UART interface has been implemented.
 
@@ -336,25 +333,38 @@ UART is a serial communication protocol. Data frames are composed of (in order):
 - `n` data bits
 - Stop bit(s) (logic 1)
 
-We have chosen to use 8 data bits and 2 stop bits, a so called `8N2` configuration.
+Support for the raw UART protocol support is provided via a slightly modified version of the [`UART`](https://github.com/freechipsproject/ip-contributions/blob/master/src/main/scala/chisel/lib/uart/Uart.scala) Rx and Tx modules by Martin Schoeberl. These modules implement UART using 8 data bits and 2 stop bits, a so called `8N2` configuration.
 
 It may be tempting to arbitrarily increase the number of data bits to increase the throughput of the communication. However, this is not viable in practice, as clock skew between the transmitting and receiving device will cause the bits to become misaligned with time.
 
 Instead, we implement buffering on both the transmitting and receiving side. This allows us to transmit and receive data in larger chunks, while still maintaining synchronization between the FPGA and the host computer.
 
-#### DecoupledIO
+## DecoupledIO
 
 Since I/O is slow and unpredictable, we use the `DecoupledIO` interface to communicate between the I/O and the rest of the accelerator.
 
 DecoupledIO is esentially a channel with a ready-valid interface. This allows the consuming end of the channel to signal when it is ready to receive data, and the producing end to signal when it has data available - this allows the two ends to operate at different speeds. When both ends are ready, data is transferred.
 
-#### Receiver
+## Receiver
 
 The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When the vector is full, the buffer asserts the `valid` signal.
 
-#### Transmitter
+Then, when the consumer is ready to receive data, it asserts the `ready` signal. When both `ready` and `valid` are asserted, the buffer transfers the data to the consumer, and the buffer is reset.
 
-The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately. When the UART is ready to transmit, it asserts the `ready` signal. Once all bytes have been transmitted, the buffer asserts the `ready` signal.
+## Transmitter
+
+The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately when `valid` is asserted on the buffer input. When the UART is ready to transmit, it asserts the `ready` signal, moving on to the next byte.
+
+Once all bytes have been transmitted, the buffer asserts the `ready` signal.
+
+## Protocol
+
+
+## Communication FSM
+
+
+
+
 
 <figure>
     <p align = "center">
@@ -387,14 +397,14 @@ both in fixed point and inferred to floating point.
 - A test of the shifted buffer module, confirming its behavior.
 - Various tests of the byte buffers.
 - A test for the Accelerator module transmitting commands through the UART,
-and then inspecting the internal state of the accelerator.
+and then inspecting the internal state of the accelerator. A custom UART encoder/decoder was written in Scala for this purpose.
 
 Testing though UART commands proved to be a quite cumbersome process,
 as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
 
 ## Synthesis
 Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
-The xdc file used for the target board can found [here](Basys3_Master.xdc).
+The XDC file used for the target board can found [here](Basys3_Master.xdc).
 
 The utilization of the FPGA resources varies depending on the configuration of the accelerator.
 Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled:
@@ -414,7 +424,8 @@ Below is a table of the utilization of the FPGA resources as reported by Vivado 
 | 7x7                  | 8         | 43729                         | 3642                               | 0                    |
 
 From this table we can see that the design quickly becomes resource intensive.
-The lut count and register count seems to scale linearly with the bit width.
+
+The LUT count and register count seems to scale linearly with the bit width.
 The DSP utilization seems to kick in.
 
 ## Interfacing
@@ -429,5 +440,5 @@ This allows for simple commands such as `transmit`, `calculate` etc.
 
 ## References
 
-    [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4. 
-    [2]: 
+    [1]: Patterson, David A., and Hennessy, John L.. Computer Architecture: A Quantitative Approach, Sixth Edition (2019). Chapter 7.4.
+    [2]:
