@@ -400,6 +400,8 @@ The commands are:
 
 The communication FSM is implemented in the [`Communicator`](src/main/scala/communicatation/Communicator.scala) module.
 
+The Communicator serves as a bridge between the UART and the accelerator. As the UART operates in bytes, the Communicator is responsible for parsing the bytes into either commands or data. As the accelerator operates on a configurable bit width, special care must be taken to pack/unpack the bytes into the correct format.
+
 The FSM has the following states:
 - `receivingOpcodes`: Waiting for an opcode. This is the default and idle state.
 - `respondingWithOKSignal`: Responding with an OK signal. This state is entered when an opcode has been processed.
