@@ -1,11 +1,11 @@
-Hardware Accelerator for Neural Networks in Chisel
-=======================
+# Hardware Accelerator for Neural Networks in Chisel
+
 This repository documents a Neural Network Accelerator architecture and its implementation.\
 It is written in Chisel 5.0 and targets the Basys3 FPGA board featuring an Artix 7 FPGA.
 
 The project is part of a Special Course at the Technical University of Denmark (DTU).
 
-### Authors
+## Authors
 
 Andreas Lildballe (s214387) \
 Ivan Hansgaard Hansen (s214378)
@@ -73,7 +73,7 @@ result.
 The activation function is typically a non-linear function, which allows the network to learn non-linear functions.
 The biases allow the network to learn the offset of the activation function.
 
-#### Training
+### Training
 
 The process of computing the weights and biases is known as training, but this is not implemented in the
 accelerator. The networks are often trained using a framework such as [PyTorch](https://pytorch.org/)
@@ -82,7 +82,7 @@ and then stored in a format such as [ONNX](https://github.com/onnx/onnx)
 or [TensorFlow Lite](https://www.tensorflow.org/lite).
 We will treat the weights and biases as constants, and only implement the inference part of the network.
 
-#### Inference
+### Inference
 
 Inference is the process of computing the output of the network given an input. This is covered below.
 
@@ -109,7 +109,7 @@ is defined as:
 f(x) = max(0, x)
 ```
 
-#### Number representation
+### Number representation
 
 Neural networks can be implemented with varying number representations, but fixed point numbers are often used due to
 their hardware friendliness.
@@ -146,7 +146,6 @@ This is done through a rounding algorithm that rounds up to nearest with round u
 Each clock cycle the PE passes on a and b in opposite directions, while c is stored locally.
 If the values inputted into the array are formatted correctly, the result of the matrix multiplication
 will be stored across all c values after N * N - 1 clock cycles.
-
 
 <figure>
     <p align = "center">
@@ -368,9 +367,9 @@ Finished state, where it will assert a 'finished' signal to the component that a
 After a clock cycle, the FSM will transition back to the Idle state, where it will stay until the start signal is
 reasserted.
 
-# Communication
+### Communication
 
-## UART Protocol
+#### UART Protocol
 
 To facilitate communication with the accelerator, a UART interface has been implemented.
 
@@ -385,25 +384,25 @@ It may be tempting to arbitrarily increase the number of data bits to increase t
 
 Instead, we implement buffering on both the transmitting and receiving side. This allows us to transmit and receive data in larger chunks, while still maintaining synchronization between the FPGA and the host computer.
 
-## DecoupledIO
+#### DecoupledIO
 
 Since I/O is slow and unpredictable, we use the `DecoupledIO` interface to communicate between the I/O and the rest of the accelerator.
 
 DecoupledIO is esentially a channel with a ready-valid interface. This allows the consuming end of the channel to signal when it is ready to receive data, and the producing end to signal when it has data available - this allows the two ends to operate at different speeds. When both ends are ready, data is transferred.
 
-## Receiver
+#### Receiver
 
 The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When the vector is full, the buffer asserts the `valid` signal.
 
 Then, when the consumer is ready to receive data, it asserts the `ready` signal. When both `ready` and `valid` are asserted, the buffer transfers the data to the consumer, and the buffer is reset.
 
-## Transmitter
+#### Transmitter
 
 The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately when `valid` is asserted on the buffer input. When the UART is ready to transmit, it asserts the `ready` signal, moving on to the next byte.
 
 Once all bytes have been transmitted, the buffer asserts the `ready` signal.
 
-## Protocol
+#### Protocol
 
 Communication with the accelerator is done through a simple protocol. The protocol is based on a series of commands, which are sent from the host computer to the FPGA. The FPGA then responds with either an OK signal or the requested data.
 
@@ -413,7 +412,7 @@ The commands are:
 - `NextCalculating`: Start calculating.
 - `ǸextAddress`: Increment the address counter by one.
 
-## Communication FSM
+#### Communication FSM
 
 The communication FSM is implemented in the [`Communicator`](src/main/scala/communicatation/Communicator.scala) module.
 
@@ -490,7 +489,7 @@ Below is a table of the utilization of the FPGA resources as reported by Vivado 
 From this table we can see that the design quickly becomes resource intensive.
 
 The LUT count and register count seems to scale linearly with the bit width.
-The DSP utilization seems to kick in when using 13 bit or more. 
+The DSP utilization seems to kick in when using 13 bit or more.
 The utilization is identical with the number of PEs in the systolic array.
 For the examined bit widths higher than 16, the DSP utilization seems to scale rapidly.
 
