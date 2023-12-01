@@ -43,7 +43,7 @@ The interface can be run via `dotnet run`. This requires the .NET SDK to be inst
 ## Motivation
 
 Moore's law is coming to a halt and computing requirements are ever-increasing.
-To accommodate these requirements domain-specific architectures (DSA) are positioned to become more important in the
+To accommodate these requirements, domain-specific architectures (DSA) are positioned to become more important in the
 future.
 
 One area of increasing computing requirements is within the field of neural network inference.
@@ -54,7 +54,7 @@ the CPU to
 an FPGA, which can be tailored to be more efficient at these types of operations, mainly by reducing the amount of
 memory access.
 The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar.
-By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive.
+By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive operation.
 This is especially true for large matrices, which are common in neural networks (see below).
 
 By making a scalable design in the FPGA, the performance costs can as well be fitted to the requirements of the Neural
@@ -129,7 +129,7 @@ which is a scalable and pipelined algorithm for fast matrix
 multiplication,
 also seen on Googles TPU [1]. It allows us to perform the W * X operation in the layers efficiently.
 The array consists of NxN processing elements (PE).
-Each PE function as a multiplier and accumulator (MAC) unit implementing the following operation:
+Each PE functions as a multiplier and accumulator (MAC) unit implementing the following operation:
 
 ```
 c = a * b + c
@@ -157,8 +157,8 @@ will be stored across all c values after N * N - 1 clock cycles.
     </p>
 </figure>
 
-A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the gif below
-or as a pdf [`here`](docs/systolic_array_example.pdf).
+A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the animated GIF below
+or as a PDF [`here`](docs/systolic_array_example.pdf).
 
 <!---
 Remove comment in final version
@@ -225,7 +225,7 @@ It can found described in the
 Following the accumulation we reach the activation function, where currently only the ReLU function is implemented.
 This is done in the
 [`Rectifier`](src/main/scala/Rectifier.scala) module.
-This module utilizes the fact that the ReLU function readmits the input if it is positive, i.e., if the input is not
+This module utilizes the fact that the ReLU function re-emits the input if it is positive, i.e., if the input is not
 signed then the output is the same as the input.
 If the input is signed, then a negative inputs sign bit is set to 1, and the sign bit is always the most significant
 bit.
@@ -341,8 +341,7 @@ and biases into the buffers from the memories. Various values within the datapat
 reset to accommodate the incoming values.
 
 When the loading is finished after a clock cycle, the FSM will transition to the Calculating state, where it will start
-the systolic array and accumulator. After NxN - 1 cycles it the datapath will be finished calculating the result
-and a 'valid' signal will be asserted.
+the systolic array and accumulator. After NxN - 1 cycles, the datapath will be finished calculating the result and a 'valid' signal will be asserted.
 
 When the 'valid' signal is asserted, the FSM will transition to the Write state, where it will
 write the result to the output memory.
@@ -425,7 +424,7 @@ The communication module is then connected to the datapath, its controller and t
 This module functions as the top-level module of the accelerator.
 It provides a series of debug signals to allow for inspection of the internal state of the accelerator.
 
-## Unit Tests and Verification
+## Unit Tests
 To verify the functionality of the accelerator, a series of unit tests have been written.
 These can be found in the [`test`](src/test/scala) folder.
 
@@ -440,7 +439,7 @@ both in fixed point and inferred to floating point.
 - A test of the entire layer function datapath, with the same functionality as the systolic array test.
 - A test of the shifted buffer module, confirming its behavior.
 - Various tests of the byte buffers.
-- A test for the Accelerator module transmitting commands through the UART,
+- A test for the entire Accelerator transmitting commands through the UART,
 and then inspecting the internal state of the accelerator. A custom UART encoder/decoder was written in Scala for this purpose.
 
 Testing though UART commands proved to be a quite cumbersome process,
