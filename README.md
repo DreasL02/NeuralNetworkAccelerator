@@ -410,7 +410,7 @@ The commands are:
 - `NextInputs`: Load the next inputs into the input buffer.
 - `NextTransmitting`: Start transmitting.
 - `NextCalculating`: Start calculating.
-- `ǸextAddress`: Increment the address counter by one.
+- `NextAddress`: Increment the address counter by one.
 
 #### Communication FSM
 
