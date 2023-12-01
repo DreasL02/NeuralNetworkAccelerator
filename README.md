@@ -12,8 +12,13 @@ Ivan Hansgaard Hansen (s214378)
 
 ## Repository Structure
 
+The project is split into two main parts:
+- The hardware accelerator, implemented in Chisel. Can be found in the [src](src) folder.
+- The software interface, implemented in C#. Can be found in the [Interface](Interface) folder.
 
 ## Running and testing the project
+
+### The hardware accelerator
 
 To run the entire test suite:
 
