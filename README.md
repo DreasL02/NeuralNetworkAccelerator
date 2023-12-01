@@ -275,6 +275,11 @@ Similarly, the weight memory is encoded for the example as:
 
 When transcribed to the buffers and systolic array, the computation is then valid and would result
 in the following format:
+<figure>
+    <p align = "center">
+        <img src="docs/figures/matrix_after.png" alt="Result" width="100" />
+    </p>
+</figure>
 
 The bias memory is therefore encoded as:
 <figure>
@@ -471,6 +476,11 @@ The LUT count and register count seems to scale linearly with the bit width.
 The DSP utilization seems to kick in when using 13 bit or more.
 The utilization is identical with the number of PEs in the systolic array.
 For the examined bit widths higher than 16, the DSP utilization seems to scale rapidly.
+
+The design seems to quickly use up the available LUTs.
+When examining the split of LUTs on different components, surprisingly the address counter uses a large amount of LUTs.
+This could perhaps be removed by switching to a non-register memory, but this would require a redesign of the memory.
+
 
 ## Interfacing
 To interface with the accelerator an easy way to send commands and receive data though UART is needed.
