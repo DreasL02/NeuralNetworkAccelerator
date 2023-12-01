@@ -60,9 +60,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        incrementAddressOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(incrementAddressOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
@@ -88,11 +86,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        incrementAddressOpcode,
-        incrementAddressOpcode,
-        incrementAddressOpcode
-      )
+      val bytesToSend = Array.fill(3 * dimension * dimension)(incrementAddressOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
@@ -124,9 +118,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        incrementAddressOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(incrementAddressOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
@@ -168,9 +160,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        nextInputsOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(nextInputsOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
@@ -231,9 +221,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        nextTransmittingOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(nextTransmittingOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 

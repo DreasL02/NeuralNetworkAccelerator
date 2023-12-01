@@ -88,9 +88,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        incrementAddressOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(incrementAddressOpcode)
 
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
 
@@ -152,9 +150,8 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
       dut.clock.step(100)
 
-      val bytesToSend = Array(
-        nextCalculatingOpcode
-      )
+      val bytesToSend = Array.fill(dimension * dimension)(nextCalculatingOpcode)
+
       val uartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(bytesToSend)
       println("Sending bit vector: " + uartBitsToSend)
       uartBitsToSend.foreach(bit => {
@@ -184,10 +181,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       print(matrixToString(convertMappedMatrixToMatrix(memoryValues3, dimension)))
       dut.io.readDebug.get.poke(false.B)
 
-
-      val newBytesToSend = Array(
-        nextCalculatingOpcode
-      )
+      val newBytesToSend = Array.fill(dimension * dimension)(nextCalculatingOpcode)
 
       val newUartBitsToSend = Utils.UartCoding.encodeBytesToUartBits(newBytesToSend)
       println("Sending bit vector: " + newUartBitsToSend)
