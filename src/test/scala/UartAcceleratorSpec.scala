@@ -51,7 +51,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val incrementAddressOpcode = 4.toByte
 
   "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
-    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
+    test(new Top(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -79,7 +79,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should initially set address to 0, then increment to 3 after three increment messages via UART." in {
-    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
+    test(new Top(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -109,7 +109,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should read from memory" in {
-    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
+    test(new Top(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -149,7 +149,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should write and then read from memory" in {
-    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
+    test(new Top(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
 
       println("Test: Should write and then read from memory")
 
@@ -224,7 +224,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should transmit memory contents." in {
-    test(new Accelerator(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
+    test(new Top(8, dimension, frequency, baudRate, mappedInputs, mappedWeights,mappedBiases, signs, fixedPoints)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 

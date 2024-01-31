@@ -62,6 +62,19 @@ object MatrixUtils {
     m
   }
 
+  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int, w : Int): Array[Array[Int]] = {
+    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
+    for (i <- mf.indices) {
+      for (j <- mf(0).indices) {
+        m(i)(j) = FixedPointConverter.floatToFixed(mf(i)(j), fixedPointFractionBits).toInt
+        if(mf(i)(j) < 0 && m(i)(j) <= 0){
+          m(i)(j) = Math.pow(2, w).toInt + m(i)(j)
+        }
+      }
+    }
+    m
+  }
+
   def convertFixedMatrixToFloatMatrix(m: Array[Array[Int]], fixedPointFractionBits: Int): Array[Array[Float]] = {
     val mf: Array[Array[Float]] = Array.fill(m.length, m(0).length)(0)
     for (i <- m.indices) {

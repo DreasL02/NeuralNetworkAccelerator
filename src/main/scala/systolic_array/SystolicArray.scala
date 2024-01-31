@@ -10,6 +10,7 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
     val c = Output(Vec(dimension, Vec(dimension, UInt(w.W))))
 
     val fixedPoint = Input(UInt(log2Ceil(w).W))
+    val signed = Input(Bool())
     val clear = Input(Bool()) // clears all registers in the PEs
   })
 
@@ -44,6 +45,7 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
       io.c(column)(row) := processingElements(column)(row).cOut
 
       processingElements(column)(row).fixedPoint := io.fixedPoint
+      processingElements(column)(row).signed := io.signed
       processingElements(column)(row).clear := io.clear
     }
   }

@@ -437,7 +437,7 @@ The FSM has the following states:
 
 ### Top-level
 The communication module is then connected to the datapath, its controller and the memories in the
-[`Accelerator`](src/main/scala/Accelerator.scala) module.
+[`Accelerator`](src/main/scala/Top.scala) module.
 This module functions as the top-level module of the accelerator.
 It provides a series of debug signals to allow for inspection of the internal state of the accelerator.
 

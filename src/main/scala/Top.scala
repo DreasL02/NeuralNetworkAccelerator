@@ -4,32 +4,30 @@ import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
 
 // Top level module for the accelerator
-class Accelerator(w: Int = 8, // width of the data
+class Top(w: Int = 8, // width of the data
           dimension: Int = 4, // dimension of the matrices
+          frequency: Int, // frequency of the uart
+          baudRate: Int, // baud rate of the uart
           initialInputsMemoryState: Array[Int], // initial state of the input memory
           initialWeightsMemoryState: Array[Int], // state of the weights memory
           initialBiasMemoryState: Array[Int], // state of the bias memory
           initialSignsMemoryState: Array[Int], // state of the signs memory
           initialFixedPointsMemoryState: Array[Int], // state of the fixed points memory
           enableDebuggingIO: Boolean = true // enable debug signals for testing
-         ) extends Module {
+                      ) extends Module {
 
   private def optional[T](enable: Boolean, value: T): Option[T] = { // for optional debug signals, https://groups.google.com/g/chisel-users/c/8XUcalmRp8M
     if (enable) Some(value) else None
   }
 
   val io = IO(new Bundle {
-    val incrementAddress = Input(Bool())
-    val readEnable = Input(Bool())
-    val writeEnable = Input(Bool())
-
-    val dataOutW = Output(Vec(dimension*dimension, UInt(w.W)))
-    val dataInW = Input(Vec(dimension*dimension, UInt(w.W)))
-
-    val startCalculation = Input(Bool())
-    val calculationDone = Output(Bool())
-
     // all but rxd, txd and states are debug signals
+    // states can be mapped to LEDs to indicate the current state.
+    val rxd = Input(Bool())
+
+    val txd = Output(Bool())
+    val states = Output(Vec(6, Bool()))
+
     val readDebug = optional(enableDebuggingIO, Input(Bool()))
 
     val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(dimension * dimension, UInt(w.W))))
@@ -73,6 +71,8 @@ class Accelerator(w: Int = 8, // width of the data
 
   val addressManager = Module(new AddressManager(dimension, initialInputsMemoryState.length, initialFixedPointsMemoryState.length))
 
+  val communicator = Module(new Communicator(dimension * dimension * numberOfBytes, frequency, baudRate))
+
   val memories = Module(new Memories(w, dimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
 
@@ -80,22 +80,33 @@ class Accelerator(w: Int = 8, // width of the data
 
   val layerCalculator = Module(new LayerCalculator(w, dimension))
 
+  // for mapping between w and byte in the interface between memories and communicator
+  val byteIntoVectorCollector = Module(new ByteIntoVectorCollector(w, dimension))
+  val vectorIntoByteSplitter = Module(new VectorIntoByteSplitter(w, dimension))
+
+  // Pass on UART pints
+  communicator.io.uartRxPin := io.rxd
+  io.txd := communicator.io.uartTxPin
+
   // Determine if address should be incremented (if either of the FSM say so)
-  addressManager.io.incrementAddress := io.incrementAddress || layerFSM.io.incrementAddress
+  addressManager.io.incrementAddress := communicator.io.incrementAddress || layerFSM.io.incrementAddress
 
   // Connect memories to address
   memories.io.matrixAddress := addressManager.io.matrixAddress
   memories.io.vectorAddress := addressManager.io.vectorAddress
 
   // Determine if memories should be written to (if either of the FSM say so)
-  memories.io.writeEnable := layerFSM.io.writeMemory || io.writeEnable
+  memories.io.writeEnable := layerFSM.io.writeMemory || communicator.io.writeEnable
 
   // Determine if memories should be read from (if either of the FSM say so or a debug signal is set)
-  memories.io.readEnable := layerFSM.io.readMemory || io.readEnable || io.readDebug.getOrElse(false.B)
+  memories.io.readEnable := layerFSM.io.readMemory || communicator.io.readEnable || io.readDebug.getOrElse(false.B)
+
+  // Emit the states in the communicator FSM
+  io.states := communicator.io.states
 
   // Connect up the two FSMs
-  layerFSM.io.start := io.startCalculation
-  io.calculationDone := layerFSM.io.finished
+  layerFSM.io.start := communicator.io.startCalculation
+  communicator.io.calculationDone := layerFSM.io.finished
 
   // Connect up the Layer FSM and the Layer Calculator
   layerCalculator.io.load := layerFSM.io.loadBuffers
@@ -109,21 +120,24 @@ class Accelerator(w: Int = 8, // width of the data
   layerCalculator.io.fixedPoint := memories.io.fixedPointRead // pass on the fixed point value
 
   // Default values for writing to input memory
+  byteIntoVectorCollector.io.input := VecInit(Seq.fill(dimension * dimension * numberOfBytes)(0.U(8.W)))
   memories.io.inputsWrite := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
 
-  when(io.writeEnable) { // the communicator is writing to the memories
-    memories.io.inputsWrite := io.dataInW // write the w vectors to the memories
+  when(communicator.io.writeEnable) { // the communicator is writing to the memories
+    byteIntoVectorCollector.io.input := communicator.io.dataOut  // map the byte vectors from the communicator to w vectors for the memories
+    memories.io.inputsWrite := byteIntoVectorCollector.io.output // write the w vectors to the memories
   }.otherwise(
     when(layerFSM.io.writeMemory) { // the layer calculator is writing to the memories
       memories.io.inputsWrite := convertMatrixToVec(mapResultToInput(layerCalculator.io.result)) // map from matrix to vector, as the memories expect a vector. Also reorder the result from the calculator to match the memory layout
     }
   )
 
-  io.dataOutW := VecInit(Seq.fill(dimension * dimension)(0.U(w.W))) // pass on the byte vectors to the communicator
   // Default values for reading from input memory
-  when(io.readEnable) { // the communicator is reading from the memories
-    io.dataOutW := memories.io.inputsRead // map the w vectors from the memories to byte vectors for the communicator
+  vectorIntoByteSplitter.io.input := VecInit(Seq.fill(dimension * dimension)(0.U(w.W)))
+  when(communicator.io.readEnable) { // the communicator is reading from the memories
+    vectorIntoByteSplitter.io.input := memories.io.inputsRead // map the w vectors from the memories to byte vectors for the communicator
   }
+  communicator.io.dataIn := vectorIntoByteSplitter.io.output // pass on the byte vectors to the communicator
 
   // Debug signals
   if (enableDebuggingIO) {

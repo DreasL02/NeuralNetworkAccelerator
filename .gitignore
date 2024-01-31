@@ -447,3 +447,8 @@ $RECYCLE.BIN/
 *.lnk
 *.sln
 *.f
+*.cpp
+*.mk
+*.h
+*.d
+*.dat

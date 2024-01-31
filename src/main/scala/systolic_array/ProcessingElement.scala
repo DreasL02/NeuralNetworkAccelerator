@@ -18,6 +18,7 @@ class ProcessingElement(w: Int = 8) extends Module {
     val cOut = Output(UInt(w.W))
 
     val fixedPoint = Input(UInt(log2Ceil(w).W))
+    val signed = Input(Bool())
     val clear = Input(Bool())
   })
 
@@ -29,7 +30,12 @@ class ProcessingElement(w: Int = 8) extends Module {
 
   aReg := io.aIn
   bReg := io.bIn
-  cReg := io.aIn * io.bIn + cReg
+
+  when (io.signed){
+    cReg := (io.aIn.asSInt * io.bIn.asSInt).asUInt + cReg
+  }.otherwise(
+    cReg := io.aIn * io.bIn + cReg
+  )
 
   io.aOut := aReg
   io.bOut := bReg

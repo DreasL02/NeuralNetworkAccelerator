@@ -49,6 +49,12 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     systolicArray.io.b(i) := weightsBuffers(i).io.output
   }
 
+  // Continuously emit signed value
+  val signedReg = RegInit(false.B)
+  when(io.load) {
+    signedReg := io.signed // replace signed value
+  }
+
   // Continuously emit fixed point value
   val fixedPointReg = RegInit(0.U(log2Ceil(w).W))
   when(io.load) {
@@ -56,6 +62,7 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   }
 
   systolicArray.io.fixedPoint := fixedPointReg // connect fixed point value
+  systolicArray.io.signed := signedReg // connect signed value
   systolicArray.io.clear := io.load // clear systolic array when load is asserted
 
   // Addition of biases
@@ -77,12 +84,6 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   // ReLU
   val rectifier = Module(new Rectifier(w, dimension))
   rectifier.io.values := accumulator.io.result // connect accumulator output to rectifier input
-
-  // Continuously emit signed value
-  val signedReg = RegInit(false.B)
-  when(io.load) {
-    signedReg := io.signed // replace signed value
-  }
   rectifier.io.signed := signedReg
 
   // Result of computations
