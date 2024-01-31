@@ -86,6 +86,13 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
   rectifier.io.values := accumulator.io.result // connect accumulator output to rectifier input
   rectifier.io.signed := signedReg
 
+  // Add quantization step here
+  // val quantizer = Module(new Quantizer(w, dimension))
+  // quantizer.io.values := rectifier.io.result
+  // quantizer.io.fixedPoint := fixedPointTargetReg
+  // quantizer.io.signed := signedTargetReg
+  // io.result := quantizer.io.result
+
   // Result of computations
   io.result := rectifier.io.result
 
