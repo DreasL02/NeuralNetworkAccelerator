@@ -1,33 +1,27 @@
 import chisel3._
 import chisel3.util.log2Ceil
-// Holds the addresses for the matrix and vector memories and increments them when told to.
-class AddressManager(dimension: Int = 4, lengthOfMatrixMemory: Int, lengthOfVectorMemory: Int) extends Module {
+
+// Holds the addresses for the memories and increments them when needed and wraps around when the last address is reached
+class AddressManager(numberOfLayers: Int = 4) extends Module {
   val io = IO(new Bundle {
-    val matrixAddress = Output(UInt(log2Ceil(lengthOfMatrixMemory).W))
-    val vectorAddress = Output(UInt(log2Ceil(lengthOfVectorMemory).W))
+    val address = Output(UInt(log2Ceil(numberOfLayers).W))
 
     val incrementAddress = Input(Bool())
   })
 
-  val matrixAddressReg = RegInit(0.U(log2Ceil(lengthOfMatrixMemory).W)) // increments by dimension * dimension
-  val vectorAddressReg = RegInit(0.U(log2Ceil(lengthOfVectorMemory).W)) // increments by 1
+  val addressReg = RegInit(0.U(log2Ceil(numberOfLayers).W))
 
   when(io.incrementAddress) {
-    matrixAddressReg := matrixAddressReg + dimension.U * dimension.U
+    addressReg := addressReg + 1.U
   }
 
-  when(io.incrementAddress) {
-    vectorAddressReg := vectorAddressReg + 1.U
+  when(addressReg === numberOfLayers.U) {
+    addressReg := 0.U
   }
 
-  when(matrixAddressReg === lengthOfMatrixMemory.U) {
-    matrixAddressReg := 0.U
+  when(addressReg === numberOfLayers.U) {
+    addressReg := 0.U
   }
 
-  when(vectorAddressReg === lengthOfVectorMemory.U) {
-    vectorAddressReg := 0.U
-  }
-
-  io.matrixAddress := matrixAddressReg
-  io.vectorAddress := vectorAddressReg
+  io.address := addressReg
 }

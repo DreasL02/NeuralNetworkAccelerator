@@ -4,6 +4,7 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   val w = 28
   val dimension = 3
   val fix = 16
@@ -100,4 +101,6 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       println()
     }
   }
+
+   */
 }

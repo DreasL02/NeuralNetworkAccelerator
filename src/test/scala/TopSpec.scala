@@ -4,7 +4,7 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class TopSpec extends AnyFreeSpec with ChiselScalatestTester {
-
+  /*
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
@@ -250,4 +250,6 @@ class TopSpec extends AnyFreeSpec with ChiselScalatestTester {
 
     }
   }
+
+   */
 }

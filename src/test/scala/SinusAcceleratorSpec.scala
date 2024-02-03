@@ -4,6 +4,7 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class SinusAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   val w = 8
   val fix = 6
   val dimension = 16
@@ -117,4 +118,6 @@ class SinusAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+   */
 }

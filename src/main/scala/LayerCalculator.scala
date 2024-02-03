@@ -2,21 +2,21 @@ import chisel3._
 import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
 
-class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
+class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
 
-    val inputs = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
-    val biases = Input(Vec(dimension, Vec(dimension, UInt(w.W)))) // should only be used when load is true
+    val inputs = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
+    val weights = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
+    val biases = Input(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))) // should only be used when load is true
     val signed = Input(Bool()) // should only be used when load is true
     val fixedPoint = Input(UInt(log2Ceil(w).W)) // should only be used when load is true
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
-    val result = Output(Vec(dimension, Vec(dimension, UInt(w.W)))) // result of layer
+    val result = Output(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // result of layer
   })
 
-  val CYCLES_UNTIL_VALID: Int = dimension * dimension - 1 // number of cycles until the systolic array is done and the result is valid
+  val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
 
   def timer(max: Int, reset: Bool) = { // timer that counts up to max and then resets, can also be reset manually by asserting reset
     val x = RegInit(0.U(log2Ceil(max + 1).W))
@@ -25,27 +25,30 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     done
   }
 
-  val inputsBuffers = for (i <- 0 until dimension) yield { // create array of buffers for inputs
-    val buffer = Module(new ShiftedBuffer(w, dimension, i)) // shift each buffer by i to create systolic effect
+  //TODO check if correct
+  val inputsBuffers = for (i <- 0 until xDimension) yield { // create array of buffers for inputs
+    val buffer = Module(new ShiftedBuffer(w, xDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
-  val weightsBuffers = for (i <- 0 until dimension) yield { // create array of buffers for weights
-    val buffer = Module(new ShiftedBuffer(w, dimension, i)) // shift each buffer by i to create systolic effect
+  //TODO check if correct
+  val weightsBuffers = for (i <- 0 until yDimension) yield { // create array of buffers for weights
+    val buffer = Module(new ShiftedBuffer(w, yDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
-  val systolicArray = Module(new SystolicArray(w, dimension))
+  val systolicArray = Module(new SystolicArray(w, wStore, xDimension, yDimension))
 
   // Connect buffers to signals
-  for (i <- 0 until dimension) {
+  for (i <- 0 until xDimension) {
     inputsBuffers(i).io.load := io.load
-    weightsBuffers(i).io.load := io.load
-
     inputsBuffers(i).io.data := io.inputs(i)
-    weightsBuffers(i).io.data := io.weights(i)
-
     systolicArray.io.a(i) := inputsBuffers(i).io.output
+  }
+
+  for (i <- 0 until yDimension) {
+    weightsBuffers(i).io.load := io.load
+    weightsBuffers(i).io.data := io.weights(i)
     systolicArray.io.b(i) := weightsBuffers(i).io.output
   }
 
@@ -61,19 +64,18 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     fixedPointReg := io.fixedPoint // replace fixed point value
   }
 
-  systolicArray.io.fixedPoint := fixedPointReg // connect fixed point value
   systolicArray.io.signed := signedReg // connect signed value
   systolicArray.io.clear := io.load // clear systolic array when load is asserted
 
   // Addition of biases
-  val accumulator = Module(new Accumulator(w, dimension))
-  for (i <- 0 until dimension) {
-    for (j <- 0 until dimension) {
+  val accumulator = Module(new Accumulator(wStore, xDimension, yDimension))
+  for (i <- 0 until xDimension) {
+    for (j <- 0 until yDimension) {
       // Map results from systolic array in column-major order to accumulator in row-major order
-      accumulator.io.values(i)(j) := systolicArray.io.c(j)(i)
+      accumulator.io.values(i)(j) := systolicArray.io.c(j)(i) //TODO: Handle this correctly in the systolic array
 
       // Continuously emit bias values
-      val biasReg = RegInit(0.U(w.W))
+      val biasReg = RegInit(0.U(wStore.W))
       when(io.load) {
         biasReg := io.biases(i)(j) // replace bias value
       }
@@ -81,10 +83,14 @@ class LayerCalculator(w: Int = 8, dimension: Int = 4) extends Module {
     }
   }
 
+  val rounder = Module(new Rounder(w, wStore, xDimension, yDimension))
+  rounder.io.fixedPoint := fixedPointReg
+  rounder.io.input := accumulator.io.result
+
   // ReLU
-  val rectifier = Module(new Rectifier(w, dimension))
-  rectifier.io.values := accumulator.io.result // connect accumulator output to rectifier input
+  val rectifier = Module(new Rectifier(w, xDimension, yDimension))
   rectifier.io.signed := signedReg
+  rectifier.io.values := rounder.io.output
 
   // Result of computations
   io.result := rectifier.io.result

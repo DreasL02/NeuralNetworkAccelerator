@@ -7,16 +7,18 @@ import systolic_array.SystolicArray
 //m = y-axis
 //m(0) = x-axis
 
-
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val enablePrintingInFirstTest = true
+  val w = 8
+  val dimension = 3
+  val fixedPoint = 3
+  val signed = true.B
+
   "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication with fixed point at 3 correctly" in {
-    test(new SystolicArray(w = 16, dimension = 3)) { dut =>
-      val w = 16
+    test(new SystolicArray(w, w * 4, dimension, dimension)) { dut =>
       var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var m2f = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-      val fixedPoint = 8
-      val signed = false.B
+
       // convert -1.2 to fixed point 3 bit, width = 16
       // 1111111111110110
 
@@ -44,7 +46,6 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       val mm1 = convertMatrixToMappedAMatrix(ms1)
       val mm2 = convertMatrixToMappedBMatrix(ms2)
 
-      dut.io.fixedPoint.poke(fixedPoint.asUInt)
       dut.io.signed.poke(signed)
 
       print(matrixToString(mm1))
@@ -81,7 +82,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint)
+      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2)
 
 
       if (enablePrintingInFirstTest) {
@@ -103,7 +104,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
     }
-
+    // 144 in 32-width binary is 0000 0000 0000 0000 0000 0000 1001 0000 (2's complement)
   }
 }
 

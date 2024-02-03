@@ -3,16 +3,17 @@ package systolic_array
 import chisel3._
 import chisel3.util.log2Ceil
 
-class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
+class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4) extends Module {
   val io = IO(new Bundle {
-    val a = Input(Vec(dimension, UInt(w.W)))
-    val b = Input(Vec(dimension, UInt(w.W)))
-    val c = Output(Vec(dimension, Vec(dimension, UInt(w.W))))
+    val a = Input(Vec(xDimension, UInt(w.W))) //TODO see if this is the correct map
+    val b = Input(Vec(yDimension, UInt(w.W)))
+    val c = Output(Vec(xDimension, Vec(yDimension, UInt(w.W))))
 
-    val fixedPoint = Input(UInt(log2Ceil(w).W))
     val signed = Input(Bool())
     val clear = Input(Bool()) // clears all registers in the PEs
   })
+
+  // Output stationary systolic array
 
   // Inspired by code from:
   // https://github.com/kazutomo/Chisel-MatMul/tree/master
@@ -20,10 +21,10 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
   // http://ecelabs.njit.edu/ece459/lab3.php
 
   // https://stackoverflow.com/questions/33621533/how-to-do-a-vector-of-modules
-  val processingElements = VecInit.fill(dimension, dimension)(Module(new ProcessingElement(w)).io)
+  val processingElements = VecInit.fill(xDimension, yDimension)(Module(new ProcessingElement(w, wStore)).io)
 
-  for (column <- 0 until dimension) {
-    for (row <- 0 until dimension) {
+  for (column <- 0 until xDimension) {
+    for (row <- 0 until yDimension) {
       //Vertical inputs
       if (column == 0) {
         //Take from buffer
@@ -44,7 +45,6 @@ class SystolicArray(w: Int = 8, dimension: Int = 4) extends Module {
       // map outputs, NB: emitted in column-major order
       io.c(column)(row) := processingElements(column)(row).cOut
 
-      processingElements(column)(row).fixedPoint := io.fixedPoint
       processingElements(column)(row).signed := io.signed
       processingElements(column)(row).clear := io.clear
     }

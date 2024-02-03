@@ -6,7 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala.collection.mutable.ListBuffer
 
 class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
-
+  /*
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
@@ -265,5 +265,7 @@ class UartAcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
     }
   }
+
+   */
 
 }

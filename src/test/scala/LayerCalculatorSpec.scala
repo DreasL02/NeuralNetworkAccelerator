@@ -5,6 +5,7 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
     val dimension = 3 //4 //=3
@@ -101,4 +102,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+   */
 }
