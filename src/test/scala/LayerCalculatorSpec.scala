@@ -5,11 +5,11 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  /*
+
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
     val dimension = 3 //4 //=3
-    test(new LayerCalculator(w = 8, dimension = dimension)) { dut =>
+    test(new LayerCalculator(w = 8, wStore = 8 * 4, xDimension = dimension, yDimension = dimension)) { dut =>
       /*
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
@@ -102,6 +102,4 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
-
-   */
 }
