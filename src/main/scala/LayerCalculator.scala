@@ -92,6 +92,13 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
   rectifier.io.signed := signedReg
   rectifier.io.values := rounder.io.output
 
+  // Add quantization step here
+  // val quantizer = Module(new Quantizer(w, dimension))
+  // quantizer.io.values := rectifier.io.result
+  // quantizer.io.fixedPoint := fixedPointTargetReg
+  // quantizer.io.signed := signedTargetReg
+  // io.result := quantizer.io.result
+
   // Result of computations
   io.result := rectifier.io.result
 
