@@ -25,14 +25,17 @@ class ProcessingElement(w: Int = 8, wStore: Int = 32) extends Module {
   val bReg = RegInit(0.U(w.W))
   val cReg = RegInit(0.U(wStore.W))
 
-  aReg := io.aIn
-  bReg := io.bIn
+  val multiplicationOperation = Wire(UInt((w + w).W))
 
   when(io.signed) {
-    cReg := (io.aIn.asSInt * io.bIn.asSInt).asUInt + cReg
+    multiplicationOperation := (io.aIn.asSInt * io.bIn.asSInt).asUInt
   }.otherwise(
-    cReg := io.aIn * io.bIn + cReg
+    multiplicationOperation := io.aIn * io.bIn
   )
+
+  aReg := io.aIn // stagger the inputs
+  bReg := io.bIn // stagger the inputs
+  cReg := multiplicationOperation + cReg // MAC operation
 
   io.aOut := aReg
   io.bOut := bReg

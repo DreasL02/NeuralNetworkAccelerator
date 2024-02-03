@@ -13,12 +13,6 @@ class ReadOnlyMemory(w: Int = 8, initialMemoryState: Array[Int]) extends Module 
     val dataRead = Output(UInt(w.W))
   })
 
-  // TODO: Use SyncReadMem instead of RegInit
-  // Look at different ways to initialize the memory
-  // We may have to use a external file to initialize the memory
-  // In which case we would have to refactor the code
-  // val memory = SyncReadMem(initialMemoryState.length, UInt(w.W))
-
   // Initialize memories using the vectorized initial states
   val memory = VecInit(initialMemoryState.toIndexedSeq.map(_.S(w.W).asUInt))
 

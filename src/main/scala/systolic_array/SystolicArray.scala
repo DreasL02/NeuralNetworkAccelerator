@@ -7,7 +7,7 @@ class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimensio
   val io = IO(new Bundle {
     val a = Input(Vec(xDimension, UInt(w.W))) //TODO see if this is the correct map
     val b = Input(Vec(yDimension, UInt(w.W)))
-    val c = Output(Vec(xDimension, Vec(yDimension, UInt(w.W))))
+    val c = Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W))))
 
     val signed = Input(Bool())
     val clear = Input(Bool()) // clears all registers in the PEs
