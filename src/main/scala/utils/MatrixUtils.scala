@@ -150,14 +150,14 @@ object MatrixUtils {
     1.0f
   }
 
-  def calculateMACResult(inputsFloat: Array[Array[Float]], weightsFloat: Array[Array[Float]], biasesFloat: Array[Array[Float]], fixedPoint: Int): Array[Array[Float]] = {
-    val inputsFixed = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint)
-    val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint)
-    val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint)
+  def calculateMACResult(inputsFloat: Array[Array[Float]], weightsFloat: Array[Array[Float]], biasesFloat: Array[Array[Float]], fixedPoint: Int, w : Int, signed : Boolean): Array[Array[Float]] = {
+    val inputsFixed = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed)
+    val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed)
+    val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed)
 
-    val inputsFloatAgain = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint)
-    val weightsFloatAgain = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint)
-    val biasesFloatAgain = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint)
+    val inputsFloatAgain = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed)
+    val weightsFloatAgain = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed)
+    val biasesFloatAgain = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint, w, signed)
 
     val multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
     val additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)

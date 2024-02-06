@@ -11,19 +11,19 @@ import utils.FixedPointConversion._
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val enablePrintingInFirstTest = true
-  val w = 8
+  val w = 16
   val wStore = 4 * w
   val dimension = 3
-  val fixedPoint = 3
+  val fixedPoint = 8
   val signed = true.B
 
   "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication with fixed point at 3 correctly" in {
     test(new SystolicArray(w, wStore, dimension, dimension)) { dut =>
       //var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-      //var m2f = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      //var m2f = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
 
-      var m1f = randomMatrix(dimension, dimension, 0.0f, 1.2f, 1000)
-      var m2f = randomMatrix(dimension, dimension, 0.0f, 1.2f, 1000)
+      var m1f = randomMatrix(dimension, dimension, -1.0f, 1.2f, 1000)
+      var m2f = randomMatrix(dimension, dimension, -1.0f, 1.2f, 1000)
       // convert -1.2 to fixed point 3 bit, width = 16
       // 1111111111110110
 
@@ -44,8 +44,10 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
       m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint, w, signed.litToBoolean)
       m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint, w, signed.litToBoolean)
       mrf = calculateMatrixMultiplication(m1f, m2f) // TODO: not rounded up when fixed point
-      if (enablePrintingInFirstTest)
+      if (enablePrintingInFirstTest) {
         printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
+        println("----")
+      }
 
       val mm1 = convertMatrixToMappedAMatrix(ms1)
       val mm2 = convertMatrixToMappedBMatrix(ms2)
@@ -54,6 +56,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       print(matrixToString(mm1))
       print(matrixToString(mm2))
+      println("----")
 
       val max_number_of_cycles = mm1.length * mm2(0).length
       for (cycle <- 0 until max_number_of_cycles) {
@@ -86,7 +89,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wStore, signed.litToBoolean)
+      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed.litToBoolean)
 
 
       if (enablePrintingInFirstTest) {

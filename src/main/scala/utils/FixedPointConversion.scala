@@ -6,13 +6,13 @@ object FixedPointConversion {
   }
 
   def fixedToFloat(fixedRepresentation: BigInt, fixedPointFractionalBits: Int, width: Int, signed: Boolean): Float = {
-    var scaledToFloat = fixedRepresentation.toFloat / (1 << fixedPointFractionalBits).toFloat
+    var scaledToFloat = fixedRepresentation
     if (signed) {
-      if (fixedRepresentation >= Math.pow(2, width).toInt / 2) {
+      while (scaledToFloat >= Math.pow(2, width - 1).toInt) {
         scaledToFloat = scaledToFloat - Math.pow(2, width).toInt
       }
     }
-    scaledToFloat
+    scaledToFloat.toFloat / (1 << fixedPointFractionalBits).toFloat
   }
 
   def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int, width: Int, signed: Boolean): BigInt = {
