@@ -15,13 +15,11 @@ class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int
         io.output(column)(row) := io.input(column)(row)
       }.otherwise {
         // Round to nearest with round up on a tie
-        //io.output := ((io.input + (1.U << (io.fixedPoint - 1.U)).asUInt) >> io.fixedPoint).asUInt
+        //io.output(column)(row) := ((io.input(column)(row) + (1.U << (io.fixedPoint - 1.U)).asUInt) >> io.fixedPoint).asUInt
 
         //If we want to just ceil and only use 1 shift use:
         io.output(column)(row) := io.input(column)(row) >> io.fixedPoint
       }
     }
   }
-
-
 }

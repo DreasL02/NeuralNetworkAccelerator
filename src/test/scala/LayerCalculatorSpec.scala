@@ -1,15 +1,17 @@
-import Utils.MatrixUtils._
-import Utils.FixedPointConverter._
+
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
+import utils.MatrixUtils._
+import utils.FixedPointConversion._
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
-
+  val dimension = 3 //4 //=3
+  val w = 8
+  val wStore = 4 * w
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
-    val dimension = 3 //4 //=3
-    test(new LayerCalculator(w = 8, wStore = 8 * 4, xDimension = dimension, yDimension = dimension)) { dut =>
+    test(new LayerCalculator(w = w, wStore = wStore, xDimension = dimension, yDimension = dimension)) { dut =>
       /*
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
@@ -27,9 +29,9 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       if (enablePrintingInFirstTest)
         printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
-      val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint)
-      val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint)
-      val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint)
+      val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed == 1)
+      val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed == 1)
+      val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, wStore, signed == 1)
 
       val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)
       val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixed)
@@ -37,9 +39,9 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       if (enablePrintingInFirstTest)
         printMatrixMAC(inputsFixed, weightsFixed, biasesFixed, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
 
-      inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint)
-      weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint)
-      biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint)
+      inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed == 1)
+      weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed == 1)
+      biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint, wStore, signed == 1)
 
       multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
       additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
@@ -79,7 +81,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint)
+      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint, w, signed == 1)
       if (enablePrintingInFirstTest) {
         println("DONE IN %d CYCLES".format(cycles))
         println("RESULT IN FLOATING POINT")

@@ -1,4 +1,6 @@
-object Configuration {
+package utils
+
+object Mapping {
 
   // Various functions to convert between different representations of the inputs, weights, and biases
 
@@ -56,51 +58,5 @@ object Configuration {
       }
     }
     mappedBiases
-  }
-
-
-  def fixedToFloat(fixedRepresentation: Int, fixedPointFractionalBits: Int): Float = {
-    fixedRepresentation.toFloat / (1 << fixedPointFractionalBits).toFloat
-  }
-
-  def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int): Int = {
-    val scaledToFixed = (floatRepresentation * (1 << fixedPointFractionalBits)).round
-    scaledToFixed
-  }
-
-  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Int]] = {
-    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
-    for (i <- mf.indices) {
-      for (j <- mf(0).indices) {
-        m(i)(j) = floatToFixed(mf(i)(j), fixedPointFractionBits)
-      }
-    }
-    m
-  }
-
-  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int, w: Int): Array[Array[Int]] = {
-    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
-    for (i <- mf.indices) {
-      for (j <- mf(0).indices) {
-        m(i)(j) = floatToFixed(mf(i)(j), fixedPointFractionBits)
-        if (mf(i)(j) < 0 && m(i)(j) <= 0) {
-          m(i)(j) = Math.pow(2, w).toInt + m(i)(j)
-          if (m(i)(j) >= Math.pow(2, w).toInt) {
-            m(i)(j) = 0
-          }
-        }
-      }
-    }
-    m
-  }
-
-  def convertFloatMatrixToFixedMatrixBytes(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Byte]] = {
-    val m: Array[Array[Byte]] = Array.fill(mf.length, mf(0).length)(0)
-    for (i <- mf.indices) {
-      for (j <- mf(0).indices) {
-        m(i)(j) = floatToFixed(mf(i)(j), fixedPointFractionBits).toByte
-      }
-    }
-    m
   }
 }

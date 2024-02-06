@@ -1,44 +1,48 @@
-import Utils.MatrixUtils._
+
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import systolic_array.SystolicArray
-
+import utils.RandomData._
+import utils.MatrixUtils._
+import utils.FixedPointConversion._
 //m = y-axis
 //m(0) = x-axis
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val enablePrintingInFirstTest = true
   val w = 8
+  val wStore = 4 * w
   val dimension = 3
   val fixedPoint = 3
   val signed = true.B
 
   "SystolicArray should calculate a 3x3 * 3x3 matrix multiplication with fixed point at 3 correctly" in {
-    test(new SystolicArray(w, w * 4, dimension, dimension)) { dut =>
-      var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-      var m2f = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+    test(new SystolicArray(w, wStore, dimension, dimension)) { dut =>
+      //var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
+      //var m2f = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
 
+      var m1f = randomMatrix(dimension, dimension, 0.0f, 1.2f, 1000)
+      var m2f = randomMatrix(dimension, dimension, 0.0f, 1.2f, 1000)
       // convert -1.2 to fixed point 3 bit, width = 16
       // 1111111111110110
-
 
       var mrf = calculateMatrixMultiplication(m1f, m2f)
       if (enablePrintingInFirstTest)
         printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
-      val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint)
-      val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint)
+      val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed.litToBoolean)
+      val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed.litToBoolean)
       val mr = calculateMatrixMultiplication(m1, m2)
 
-      val ms1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w)
-      val ms2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w)
+      val ms1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed.litToBoolean)
+      val ms2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed.litToBoolean)
 
       if (enablePrintingInFirstTest)
         printMatrixMultiplication(m1, m2, mr, "GOLDEN MODEL CALCULATION IN FIXED POINT")
 
-      m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint)
-      m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint)
+      m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint, w, signed.litToBoolean)
+      m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint, w, signed.litToBoolean)
       mrf = calculateMatrixMultiplication(m1f, m2f) // TODO: not rounded up when fixed point
       if (enablePrintingInFirstTest)
         printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
@@ -82,7 +86,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2)
+      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wStore, signed.litToBoolean)
 
 
       if (enablePrintingInFirstTest) {

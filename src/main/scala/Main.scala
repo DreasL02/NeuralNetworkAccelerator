@@ -1,12 +1,13 @@
+import utils.{FixedPointConversion, Mapping}
 import chisel3.emitVerilog
-import communication.chisel.lib.uart.{UartTx}
+import communication.chisel.lib.uart.UartTx
 import systolic_array.SystolicArray
-
 
 object Main extends App {
   val frequency = 50000000 * 2
   val baudRate = 115200
-  val w = 16
+  val w = 8
+  val wStore = w * 4
 
   val dimension = 3
 
@@ -29,27 +30,27 @@ object Main extends App {
   val fixedPointL3: Int = 0
 
   val inputs: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1),
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2),
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1, w, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2, w, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3, w, signL3 == 1)
   )
   val weights: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1),
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2),
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1, w, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2, w, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3, w, signL3 == 1)
   )
   val biases: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1),
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2),
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1, wStore, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2, wStore, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3, wStore, signL3 == 1)
   )
 
   val signs: Array[Int] = Array(signL1, signL2, signL3)
   val fixedPoints: Array[Int] = Array(fixedPointL1, fixedPointL2, fixedPointL3)
 
-  var mappedInputs = Configuration.mapInputs(inputs)
-  var mappedWeights = Configuration.mapWeights(weights)
-  var mappedBiases = Configuration.mapBiases(biases)
+  var mappedInputs = Mapping.mapInputs(inputs)
+  var mappedWeights = Mapping.mapWeights(weights)
+  var mappedBiases = Mapping.mapBiases(biases)
 
   //emitVerilog(new Top(w, dimension, frequency, baudRate, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, false)) //TODO reenable
 }

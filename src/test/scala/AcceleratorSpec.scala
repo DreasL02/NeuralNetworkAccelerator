@@ -1,13 +1,14 @@
-import Utils.MatrixUtils._
+
+import utils.{FixedPointConversion, Mapping}
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  val w = 8
+  val w = 16
   val wStore = 4 * w
   val dimension = 3
-  val fix = 0
+  val fix = 10
   val sign = 1
 
   val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
@@ -29,34 +30,34 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val fixedPointL3: Int = fix
 
   val inputs: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1, w),
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2, w),
-    Configuration.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3, w)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1, w, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2, w, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3, w, signL3 == 1)
   )
   val weights: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1, w),
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2, w),
-    Configuration.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3, w)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1, w, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2, w, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3, w, signL3 == 1)
   )
   val biases: Array[Array[Array[Int]]] = Array(
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1, wStore),
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2, wStore),
-    Configuration.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3, wStore)
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1, wStore, signL1 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2, wStore, signL2 == 1),
+    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3, wStore, signL3 == 1)
   )
 
   val signs: Array[Int] = Array(signL1, signL2, signL3)
   val fixedPoints: Array[Int] = Array(fixedPointL1, fixedPointL2, fixedPointL3)
 
-  var mappedInputs = Configuration.mapInputs(inputs)
-  var mappedWeights = Configuration.mapWeights(weights)
-  var mappedBiases = Configuration.mapBiases(biases)
+  var mappedInputs = Mapping.mapInputs(inputs)
+  var mappedWeights = Mapping.mapWeights(weights)
+  var mappedBiases = Mapping.mapBiases(biases)
 
   "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
     test(new Accelerator(w, wStore, dimension, dimension, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, true)) { dut =>
       dut.io.debugAddress.get.expect(0)
       dut.clock.step()
       for (i <- 0 until dimension * dimension) {
-        print(Configuration.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1).toString() + " ")
+        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
       }
       println()
       dut.io.startCalculation.poke(true.B)
@@ -68,7 +69,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.readEnable.poke(true.B)
       dut.clock.step()
       for (i <- 0 until dimension * dimension) {
-        print(Configuration.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1).toString() + " ")
+        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
       }
       println()
       dut.io.readEnable.poke(false.B)
@@ -82,7 +83,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.readEnable.poke(true.B)
       dut.clock.step()
       for (i <- 0 until dimension * dimension) {
-        print(Configuration.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL2).toString() + " ")
+        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
       }
       println()
       dut.io.readEnable.poke(false.B)
@@ -96,7 +97,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.readEnable.poke(true.B)
       dut.clock.step()
       for (i <- 0 until dimension * dimension) {
-        print(Configuration.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL3).toString() + " ")
+        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
       }
       println()
     }

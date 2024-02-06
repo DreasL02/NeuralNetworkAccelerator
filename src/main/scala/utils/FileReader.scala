@@ -1,4 +1,4 @@
-package Utils
+package utils
 
 object FileReader {
 
@@ -9,7 +9,7 @@ object FileReader {
     matrix
   }
 
-  def upscaleMatrixToDimension(mat : Array[Array[Float]], dimension: Int): Array[Array[Float]] = {
+  def upscaleMatrixToDimension(mat: Array[Array[Float]], dimension: Int): Array[Array[Float]] = {
     // Take a matrix and upscale it to a given dimension, setting all new values to 0
     val newMat = Array.ofDim[Float](dimension, dimension)
     for (i <- 0 until dimension) {

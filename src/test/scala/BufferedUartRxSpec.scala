@@ -8,7 +8,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
-  val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
+  val cyclesPerSerialBit = utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
 
   "Should support a single byte buffer" in {
@@ -18,7 +18,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val testValue = 113.toByte
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue))
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(Array(testValue))
       println("Sending bit vector: " + bitsToSend)
 
       dut.io.outputChannel.ready.poke(true.B)
@@ -52,7 +52,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
       val testValue1 = 113.toByte
       val testValue2 = 114.toByte
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2))
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2))
       println("Sending bit vector: " + bitsToSend)
 
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
@@ -92,7 +92,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
         7.toByte, 8.toByte, 21.toByte
       )
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(newMemoryBytesToSend)
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(newMemoryBytesToSend)
       println("Sending bit vector: " + bitsToSend)
 
       dut.io.outputChannel.ready.poke(true.B)
@@ -130,7 +130,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val testValue1 = 113.toByte
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue1))
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(Array(testValue1))
       println("Sending bit vector: " + bitsToSend)
 
       bitsToSend.foreach { bit =>
@@ -160,7 +160,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val testValue2 = 114.toByte
 
-      val bitsToSend2 = Utils.UartCoding.encodeBytesToUartBits(Array(testValue2))
+      val bitsToSend2 = utils.UartCoding.encodeBytesToUartBits(Array(testValue2))
       println("Sending bit vector: " + bitsToSend2)
 
       bitsToSend2.foreach { bit =>
@@ -194,7 +194,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
       val testValue1 = 113.toByte
       val testValue2 = 114.toByte
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2))
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(Array(testValue1, testValue2))
       println("Sending bit vector: " + bitsToSend)
 
       bitsToSend.foreach { bit =>
@@ -222,7 +222,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
       val testValue3 = 115.toByte
       val testValue4 = 116.toByte
 
-      val bitsToSend2 = Utils.UartCoding.encodeBytesToUartBits(Array(testValue3, testValue4))
+      val bitsToSend2 = utils.UartCoding.encodeBytesToUartBits(Array(testValue3, testValue4))
       println("Sending bit vector: " + bitsToSend2)
 
       bitsToSend2.foreach { bit =>

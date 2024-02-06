@@ -1,7 +1,8 @@
-package Utils
+package utils
+
+import FixedPointConversion._
 
 object MatrixUtils {
-
   def calculateMatrixMultiplication(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
     //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
     val mr: Array[Array[Float]] = Array.fill(m1.length, m2(0).length)(0)
@@ -52,38 +53,6 @@ object MatrixUtils {
     mr
   }
 
-  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int): Array[Array[Int]] = {
-    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
-    for (i <- mf.indices) {
-      for (j <- mf(0).indices) {
-        m(i)(j) = FixedPointConverter.floatToFixed(mf(i)(j), fixedPointFractionBits).toInt
-      }
-    }
-    m
-  }
-
-  def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int, w : Int): Array[Array[Int]] = {
-    val m: Array[Array[Int]] = Array.fill(mf.length, mf(0).length)(0)
-    for (i <- mf.indices) {
-      for (j <- mf(0).indices) {
-        m(i)(j) = FixedPointConverter.floatToFixed(mf(i)(j), fixedPointFractionBits).toInt
-        if(mf(i)(j) < 0 && m(i)(j) <= 0){
-          m(i)(j) = Math.pow(2, w).toInt + m(i)(j)
-        }
-      }
-    }
-    m
-  }
-
-  def convertFixedMatrixToFloatMatrix(m: Array[Array[Int]], fixedPointFractionBits: Int): Array[Array[Float]] = {
-    val mf: Array[Array[Float]] = Array.fill(m.length, m(0).length)(0)
-    for (i <- m.indices) {
-      for (j <- m(0).indices) {
-        mf(i)(j) = FixedPointConverter.fixedToFloat(m(i)(j), fixedPointFractionBits)
-      }
-    }
-    mf
-  }
 
   def convertMatrixToMappedAMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
     val m_a: Array[Array[Int]] = Array.fill(m(0).length, m.length * m.length)(0)
@@ -107,7 +76,6 @@ object MatrixUtils {
 
   def convertMappedMatrixToMatrix(m: Array[Int], dimension: Int): Array[Array[Int]] = {
     val m_r: Array[Array[Int]] = Array.fill(dimension, dimension)(0)
-
     for (i <- 0 until dimension) {
       for (j <- 0 until dimension) {
         m_r(i)(j) = m(i * dimension + j)
@@ -183,7 +151,7 @@ object MatrixUtils {
   }
 
   def calculateMACResult(inputsFloat: Array[Array[Float]], weightsFloat: Array[Array[Float]], biasesFloat: Array[Array[Float]], fixedPoint: Int): Array[Array[Float]] = {
-    val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint)
+    val inputsFixed = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint)
     val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint)
     val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint)
 

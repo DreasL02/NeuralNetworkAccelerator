@@ -10,7 +10,7 @@ class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
-  val cyclesPerSerialBit = Utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
+  val cyclesPerSerialBit = utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
 
   "UartRx should behave correctly" in {
@@ -18,7 +18,7 @@ class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val testValue = 113.toByte
 
-      val bitsToSend = Utils.UartCoding.encodeBytesToUartBits(Array(testValue))
+      val bitsToSend = utils.UartCoding.encodeBytesToUartBits(Array(testValue))
       println("Sending bit vector: " + bitsToSend)
 
       dut.io.rxd.poke(1.U(1.W)) // UART idle signal is high
