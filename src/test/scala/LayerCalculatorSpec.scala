@@ -9,6 +9,8 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val dimension = 3 //4 //=3
   val w = 8
   val wStore = 4 * w
+  val fixedPoint = 0
+  val signed = 1
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
     test(new LayerCalculator(w = w, wStore = wStore, xDimension = dimension, yDimension = dimension)) { dut =>
@@ -17,11 +19,8 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
       var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))*/
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-      var biasesFloat = Array(Array(2.0f, 2.0f, 1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
-
-      val fixedPoint = 0
-      val signed = 0
+      var weightsFloat = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      var biasesFloat = Array(Array(-2.0f, 2.0f, 1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
 
       var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
       var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
@@ -32,16 +31,17 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed == 1)
       val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed == 1)
       val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, wStore, signed == 1)
+      val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed == 1)
 
       val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)
-      val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixed)
+      val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixedForTesting)
 
       if (enablePrintingInFirstTest)
-        printMatrixMAC(inputsFixed, weightsFixed, biasesFixed, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
+        printMatrixMAC(inputsFixed, weightsFixed, biasesFixedForTesting, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
 
       inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed == 1)
       weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed == 1)
-      biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint, wStore, signed == 1)
+      biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixedForTesting, fixedPoint, w, signed == 1)
 
       multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
       additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
