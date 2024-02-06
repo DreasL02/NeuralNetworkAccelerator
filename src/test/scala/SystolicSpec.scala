@@ -7,8 +7,6 @@ import systolic_array.SystolicArray
 import utils.RandomData._
 import utils.MatrixUtils._
 import utils.FixedPointConversion._
-//m = y-axis
-//m(0) = x-axis
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
@@ -23,20 +21,26 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val max = 1.2f
   val min = -1.2f
 
-
   val printing = Array.fill(numberOfTests)(false)
+
   // We can enable printing for a specific test by setting the index to true
   printing(0) = true
+
+
+
+
+
 
   // ======= configure the test end =======
 
   // --- Rest should be left as is ---
   val seeds = Array.fill(numberOfTests)(0)
-  // increment seeds for each test
+  // increment seeds for each test to get different random numbers
   for (i <- 0 until numberOfTests) {
     seeds(i) = i
   }
 
+  // dimensions of the matrices to be multiplied are inferred from the dimensions of the systolic array
   val dimensionOfAMatrix = Array(yDimension, matrixCommonDimension)
   val dimensionOfBMatrix = Array(matrixCommonDimension, xDimension)
 
@@ -111,6 +115,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
+        // width and fixed point are doubled because the result is the sum of two fixed point numbers and no rounding is done
         val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed.litToBoolean)
 
 
@@ -126,7 +131,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
             val a = resultFloat(i)(j)
             val b = mrf(i)(j)
             var valid = false
-            if (a - 1 <= b && a + 1 >= b) { //within +-1 of golden model
+            if (a - 1 <= b && a + 1 >= b) { //with in +-1 of golden model
               valid = true
             }
             assert(valid, ": test (%d) : element at (%d,%d) did not match (got %f : expected %f)".format(testNum, i, j, a, b))
