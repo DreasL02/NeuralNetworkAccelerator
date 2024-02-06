@@ -7,20 +7,20 @@ import utils.FixedPointConversion._
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val dimension = 3 //4 //=3
-  val w = 8
-  val wStore = 4 * w
-  val fixedPoint = 0
+  val w = 14
+  val wStore = 2 * w
+  val fixedPoint = 8
   val signed = 1
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
-    test(new LayerCalculator(w = w, wStore = wStore, xDimension = dimension, yDimension = dimension)) { dut =>
+    test(new LayerCalculator(w = w, wStore = wStore, xDimension = dimension, yDimension = dimension, enableDebuggingIO = true)) { dut =>
       /*
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
       var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))*/
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-      var weightsFloat = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-      var biasesFloat = Array(Array(-2.0f, -2.0f, -1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
+      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      var biasesFloat = Array(Array(-2.0f, -2.0f, -1.0f), Array(0.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
 
       var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
       var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
@@ -69,6 +69,17 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       var cycles = 0
       while (!dut.io.valid.peekBoolean()) {
+        // print all debugBiases values
+        println("Cycle %d".format(cycles))
+        if (enablePrintingInFirstTest) {
+          for (i <- 0 until dimension) {
+            for (j <- 0 until dimension) {
+              print(dut.io.debugBiases.get(i)(j).peek().litValue.toInt)
+              print(" ")
+            }
+            println()
+          }
+        }
         cycles = cycles + 1
         dut.clock.step()
       }

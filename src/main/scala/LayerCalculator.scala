@@ -1,8 +1,10 @@
 import chisel3._
 import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
+import utils.Optional.optional
 
-class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4) extends Module {
+class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, enableDebuggingIO: Boolean = true // enable debug signals for testing
+                     ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
 
@@ -14,6 +16,9 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
     val result = Output(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // result of layer
+    val debugInputs = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W)))) // should only be used when load is true
+    val debugWeights = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W)))) // should only be used when load is true
+    val debugBiases = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W))))) // should only be used when load is true
   })
 
   val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
@@ -44,12 +49,14 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     inputsBuffers(i).io.load := io.load
     inputsBuffers(i).io.data := io.inputs(i)
     systolicArray.io.a(i) := inputsBuffers(i).io.output
+    io.debugInputs.get(i) := inputsBuffers(i).io.output
   }
 
   for (i <- 0 until yDimension) {
     weightsBuffers(i).io.load := io.load
     weightsBuffers(i).io.data := io.weights(i)
     systolicArray.io.b(i) := weightsBuffers(i).io.output
+    io.debugWeights.get(i) := weightsBuffers(i).io.output
   }
 
   // Continuously emit signed value
@@ -80,6 +87,7 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
         biasReg := io.biases(i)(j) // replace bias value
       }
       accumulator.io.biases(i)(j) := biasReg
+      io.debugBiases.get(i)(j) := biasReg
     }
   }
 

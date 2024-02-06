@@ -2,6 +2,7 @@ import communication.Encodings.Codes.none
 import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
+import utils.Optional.optional
 
 // Top level module for the accelerator
 class Accelerator(w: Int = 8, // width of the data
@@ -16,9 +17,6 @@ class Accelerator(w: Int = 8, // width of the data
                   enableDebuggingIO: Boolean = true // enable debug signals for testing
                  ) extends Module {
 
-  private def optional[T](enable: Boolean, value: T): Option[T] = { // for optional debug signals, https://groups.google.com/g/chisel-users/c/8XUcalmRp8M
-    if (enable) Some(value) else None
-  }
 
   val io = IO(new Bundle {
     val incrementAddress = Input(Bool())
