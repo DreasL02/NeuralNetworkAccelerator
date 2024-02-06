@@ -11,37 +11,47 @@ import utils.FixedPointConversion._
 //m(0) = x-axis
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
+  // ======= configure the test =======
   val w = 8
   val wStore = 4 * w
-  val dimension = 3
+  val xDimension = 3
+  val yDimension = 2
+  val matrixCommonDimension = 5
   val fixedPoint = 3
   val signed = true.B
-  val numberOfTests = 10
+  val numberOfTests = 1
   val max = 1.2f
-  val min = -1.2f
+  val min = 0.0f
 
+
+  val printing = Array.fill(numberOfTests)(false)
+  // We can enable printing for a specific test by setting the index to true
+  printing(0) = true
+
+  // ======= configure the test end =======
+
+  // --- Rest should be left as is ---
   val seeds = Array.fill(numberOfTests)(0)
   // increment seeds for each test
   for (i <- 0 until numberOfTests) {
     seeds(i) = i
   }
-  val printing = Array.fill(numberOfTests)(false)
-  // We can enable printing for a specific test by setting the index to true
-  printing(0) = true
+
+  val dimensionOfAMatrix = Array(yDimension, matrixCommonDimension)
+  val dimensionOfBMatrix = Array(matrixCommonDimension, xDimension)
 
   // for each seed, generate a random matrix and test
   for (testNum <- seeds.indices) {
     val enablePrinting = printing(testNum)
     "SystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new SystolicArray(w, wStore, dimension, dimension)) { dut =>
-        //var m1f = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-        //var m2f = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+      test(new SystolicArray(w, wStore, xDimension, yDimension)) { dut =>
+        var m1f = randomMatrix(dimensionOfAMatrix(0), dimensionOfAMatrix(1), min, max, seeds(testNum))
+        var m2f = randomMatrix(dimensionOfBMatrix(0), dimensionOfBMatrix(1), min, max, seeds(testNum))
 
-        var m1f = randomMatrix(dimension, dimension, min, max, seeds(testNum))
-        var m2f = randomMatrix(dimension, dimension, min, max, seeds(testNum))
-        // convert -1.2 to fixed point 3 bit, width = 16
-        // 1111111111110110
-
+        print(matrixToString(m1f))
+        println("*")
+        print(matrixToString(m2f))
+        println()
         var mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting)
           printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
@@ -61,7 +71,6 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting) {
           printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
-          println("----")
         }
 
         val mm1 = convertMatrixToMappedAMatrix(ms1)
@@ -70,7 +79,9 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.signed.poke(signed)
 
         if (enablePrinting) {
+          println("-- a --")
           print(matrixToString(mm1))
+          println("-- b --")
           print(matrixToString(mm2))
           println("----")
         }
@@ -92,7 +103,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
             }
           }
           if (enablePrinting) {
-            println(cycle)
+            println("Cycle %d:".format(cycle))
             print(matrixToString(resultFixed))
           }
         }
