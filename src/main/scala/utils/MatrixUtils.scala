@@ -8,7 +8,6 @@ object MatrixUtils {
     val n = m1.length
     val m = m1(0).length
     val p = m2(0).length
-    println("n: %d m: %d p: %d".format(n, m, p))
     val mr: Array[Array[Float]] = Array.fill(n, p)(0)
     for (i <- 0 until n) {
       for (j <- 0 until p) {

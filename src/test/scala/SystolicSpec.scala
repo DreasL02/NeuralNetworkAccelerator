@@ -16,12 +16,12 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val wStore = 4 * w
   val xDimension = 3
   val yDimension = 2
-  val matrixCommonDimension = 5
+  val matrixCommonDimension = 3
   val fixedPoint = 3
   val signed = true.B
-  val numberOfTests = 1
+  val numberOfTests = 10
   val max = 1.2f
-  val min = 0.0f
+  val min = -1.2f
 
 
   val printing = Array.fill(numberOfTests)(false)
@@ -48,10 +48,6 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         var m1f = randomMatrix(dimensionOfAMatrix(0), dimensionOfAMatrix(1), min, max, seeds(testNum))
         var m2f = randomMatrix(dimensionOfBMatrix(0), dimensionOfBMatrix(1), min, max, seeds(testNum))
 
-        print(matrixToString(m1f))
-        println("*")
-        print(matrixToString(m2f))
-        println()
         var mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting)
           printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
