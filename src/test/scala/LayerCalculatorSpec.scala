@@ -20,7 +20,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       var biasesFloat = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))*/
       var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
       var weightsFloat = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-      var biasesFloat = Array(Array(-2.0f, 2.0f, 1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
+      var biasesFloat = Array(Array(-2.0f, -2.0f, -1.0f), Array(2.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
 
       var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
       var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)

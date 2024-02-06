@@ -5,15 +5,15 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  val w = 16
+  val w = 8
   val wStore = 4 * w
   val dimension = 3
-  val fix = 10
+  val fix = 0
   val sign = 1
 
   val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-  val weightsL1: Array[Array[Float]] = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-  val biasesL1: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
+  val weightsL1: Array[Array[Float]] = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
+  val biasesL1: Array[Array[Float]] = Array(Array(-1.0f, -1.0f, -1.0f), Array(-1.0f, -1.0f, -1.0f), Array(-1.0f, -1.0f, -1.0f))
   val signL1: Int = sign
   val fixedPointL1: Int = fix
 
