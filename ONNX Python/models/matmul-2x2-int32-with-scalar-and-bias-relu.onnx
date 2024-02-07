@@ -1,0 +1,18 @@
+	onnx-example:ø
+5
+input
+constantmatmul-outputmatmul-node"MatMul
+6
+matmul-output
+constantbias-output	bias-node"Add
++
+bias-outputrelu-output	relu-node"Relu
+test-model**BconstantZ
+input
+
+
+b
+relu-output
+
+
+B
