@@ -9,11 +9,11 @@ class Accelerator(w: Int = 8, // width of the data
                   wStore: Int = 32,
                   xDimension: Int = 4, // dimension of the matrices
                   yDimension: Int = 4, // dimension of the matrices
-                  initialInputsMemoryState: Array[Array[Int]], // initial state of the input memory
-                  initialWeightsMemoryState: Array[Array[Int]], // state of the weights memory
-                  initialBiasMemoryState: Array[Array[Int]], // state of the bias memory
-                  initialSignsMemoryState: Array[Int], // state of the signs memory
-                  initialFixedPointsMemoryState: Array[Int], // state of the fixed points memory
+                  initialInputsMemoryState: Array[Array[BigInt]], // initial state of the input memory
+                  initialWeightsMemoryState: Array[Array[BigInt]], // state of the weights memory
+                  initialBiasMemoryState: Array[Array[BigInt]], // state of the bias memory
+                  initialSignsMemoryState: Array[BigInt], // state of the signs memory
+                  initialFixedPointsMemoryState: Array[BigInt], // state of the fixed points memory
                   enableDebuggingIO: Boolean = true // enable debug signals for testing
                  ) extends Module {
 

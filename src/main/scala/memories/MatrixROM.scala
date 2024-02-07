@@ -3,7 +3,7 @@ package memories
 import chisel3._
 import chisel3.util.log2Ceil
 
-class MatrixROM(w: Int = 8, xDimension: Int = 4, yDimension: Int = 4, initialMatrixMemoryState: Array[Array[Int]]) extends Module {
+class MatrixROM(w: Int = 8, xDimension: Int = 4, yDimension: Int = 4, initialMatrixMemoryState: Array[Array[BigInt]]) extends Module {
   val io = IO(new Bundle {
     val address = Input(UInt(log2Ceil(initialMatrixMemoryState(0).length).W))
 

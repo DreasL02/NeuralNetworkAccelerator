@@ -21,16 +21,16 @@ object MatrixUtils {
     mr
   }
 
-  def calculateMatrixMultiplication(m1: Array[Array[Int]], m2: Array[Array[Int]]): Array[Array[Int]] = {
+  def calculateMatrixMultiplication(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]]): Array[Array[BigInt]] = {
     //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
     val n = m1.length
     val m = m1(0).length
     val p = m2(0).length
 
-    val mr: Array[Array[Int]] = Array.fill(n, p)(0)
+    val mr: Array[Array[BigInt]] = Array.fill(n, p)(0)
     for (i <- 0 until n) {
       for (j <- 0 until p) {
-        var sum = 0
+        var sum: BigInt = 0
         for (k <- 0 until m) {
           sum = sum + m1(i)(k) * m2(k)(j)
         }
@@ -50,8 +50,8 @@ object MatrixUtils {
     mr
   }
 
-  def calculateMatrixAddition(m1: Array[Array[Int]], m2: Array[Array[Int]]): Array[Array[Int]] = {
-    val mr: Array[Array[Int]] = Array.fill(m1.length, m2(0).length)(0)
+  def calculateMatrixAddition(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]]): Array[Array[BigInt]] = {
+    val mr: Array[Array[BigInt]] = Array.fill(m1.length, m2(0).length)(0)
     for (i <- m1.indices) {
       for (j <- m2.indices) {
         mr(i)(j) = m1(i)(j) + m2(i)(j)
@@ -61,8 +61,8 @@ object MatrixUtils {
   }
 
 
-  def convertMatrixToMappedAMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
-    val m_a: Array[Array[Int]] = Array.fill(m.length, m(0).length * m(0).length)(0)
+  def convertMatrixToMappedAMatrix(m: Array[Array[BigInt]]): Array[Array[BigInt]] = {
+    val m_a: Array[Array[BigInt]] = Array.fill(m.length, m(0).length * m(0).length)(0)
     for (i <- m.indices) {
       for (j <- m(0).indices) {
         m_a(i)(m(0).length * m(0).length - 1 - i - j) = m(i)(m(0).length - 1 - j)
@@ -71,8 +71,8 @@ object MatrixUtils {
     m_a
   }
 
-  def convertMatrixToMappedBMatrix(m: Array[Array[Int]]): Array[Array[Int]] = {
-    val m_b: Array[Array[Int]] = Array.fill(m.length * m.length, m(0).length)(0)
+  def convertMatrixToMappedBMatrix(m: Array[Array[BigInt]]): Array[Array[BigInt]] = {
+    val m_b: Array[Array[BigInt]] = Array.fill(m.length * m.length, m(0).length)(0)
     for (i <- m.indices) {
       for (j <- m(0).indices) {
         m_b(m.length * m.length - 1 - i - j)(j) = m(m.length - 1 - i)(j)
@@ -81,8 +81,8 @@ object MatrixUtils {
     m_b
   }
 
-  def convertMappedMatrixToMatrix(m: Array[Int], dimension: Int): Array[Array[Int]] = {
-    val m_r: Array[Array[Int]] = Array.fill(dimension, dimension)(0)
+  def convertMappedMatrixToMatrix(m: Array[BigInt], dimension: Int): Array[Array[BigInt]] = {
+    val m_r: Array[Array[BigInt]] = Array.fill(dimension, dimension)(0)
     for (i <- 0 until dimension) {
       for (j <- 0 until dimension) {
         m_r(i)(j) = m(i * dimension + j)
@@ -103,7 +103,7 @@ object MatrixUtils {
     str
   }
 
-  def matrixToString(m: Array[Array[Int]]): String = {
+  def matrixToString(m: Array[Array[BigInt]]): String = {
     var str = ""
     for (i <- m.indices) {
       for (j <- m(0).indices) {
@@ -115,7 +115,7 @@ object MatrixUtils {
   }
 
 
-  def printMatrixMultiplication(m1: Array[Array[Int]], m2: Array[Array[Int]], mr: Array[Array[Int]], text: String): Unit = {
+  def printMatrixMultiplication(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]], mr: Array[Array[BigInt]], text: String): Unit = {
     println("--- %s ----".format(text))
     print(matrixToString(m1))
     println("*")
@@ -133,7 +133,7 @@ object MatrixUtils {
     print(matrixToString(mr))
   }
 
-  def printMatrixMAC(m1: Array[Array[Int]], m2: Array[Array[Int]], ma: Array[Array[Int]], mr: Array[Array[Int]], text: String): Int = {
+  def printMatrixMAC(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]], ma: Array[Array[BigInt]], mr: Array[Array[BigInt]], text: String): Int = {
     println("--- %s ----".format(text))
     print(matrixToString(m1))
     println("*")

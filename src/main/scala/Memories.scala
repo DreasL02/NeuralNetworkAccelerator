@@ -3,8 +3,16 @@ import chisel3.util.log2Ceil
 import memories._
 
 // Memory module that contains all the memories used for the accelerator
-class Memories(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, initialInputsMemoryState: Array[Array[Int]], initialWeightsMemoryState: Array[Array[Int]],
-               initialBiasMemoryState: Array[Array[Int]], initialSignsMemoryState: Array[Int], initialFixedPointMemoryState: Array[Int]) extends Module {
+class Memories(w: Int = 8,
+               wStore: Int = 32,
+               xDimension: Int = 4,
+               yDimension: Int = 4,
+               initialInputsMemoryState: Array[Array[BigInt]],
+               initialWeightsMemoryState: Array[Array[BigInt]],
+               initialBiasMemoryState: Array[Array[BigInt]],
+               initialSignsMemoryState: Array[BigInt],
+               initialFixedPointMemoryState: Array[BigInt]
+              ) extends Module {
   val io = IO(new Bundle {
     val address = Input(UInt(log2Ceil(initialFixedPointMemoryState.length).W))
 

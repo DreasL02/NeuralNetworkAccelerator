@@ -96,10 +96,10 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
           dut.clock.step()
 
-          val resultFixed = Array.fill(mm1.length, mm2(0).length)(0)
+          val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
           for (i <- mr.indices) {
             for (j <- mr(0).indices) {
-              resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue.toInt
+              resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
             }
           }
           if (enablePrinting) {
@@ -108,10 +108,10 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
-        val resultFixed = Array.fill(mm1.length, mm2(0).length)(0)
+        val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
         for (i <- mr.indices) {
           for (j <- mr(0).indices) {
-            resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue.toInt
+            resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
           }
         }
 

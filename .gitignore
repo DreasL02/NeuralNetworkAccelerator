@@ -415,6 +415,7 @@ hs_err_pid*
 *.sv
 project/
 target/
+test_run_dir/
 replay_pid*
 .idea/
 .bsp/
@@ -447,8 +448,4 @@ $RECYCLE.BIN/
 *.lnk
 *.sln
 *.f
-*.cpp
 *.mk
-*.h
-*.d
-*.dat

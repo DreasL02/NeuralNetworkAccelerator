@@ -29,24 +29,24 @@ object Main extends App {
   val signL3: Int = 0
   val fixedPointL3: Int = 0
 
-  val inputs: Array[Array[Array[Int]]] = Array(
+  val inputs: Array[Array[Array[BigInt]]] = Array(
     FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1, w, signL1 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2, w, signL2 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3, w, signL3 == 1)
   )
-  val weights: Array[Array[Array[Int]]] = Array(
+  val weights: Array[Array[Array[BigInt]]] = Array(
     FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1, w, signL1 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2, w, signL2 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3, w, signL3 == 1)
   )
-  val biases: Array[Array[Array[Int]]] = Array(
+  val biases: Array[Array[Array[BigInt]]] = Array(
     FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1, wStore, signL1 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2, wStore, signL2 == 1),
     FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3, wStore, signL3 == 1)
   )
 
-  val signs: Array[Int] = Array(signL1, signL2, signL3)
-  val fixedPoints: Array[Int] = Array(fixedPointL1, fixedPointL2, fixedPointL3)
+  val signs: Array[BigInt] = Array(signL1, signL2, signL3)
+  val fixedPoints: Array[BigInt] = Array(fixedPointL1, fixedPointL2, fixedPointL3)
 
   var mappedInputs = Mapping.mapInputs(inputs)
   var mappedWeights = Mapping.mapWeights(weights)

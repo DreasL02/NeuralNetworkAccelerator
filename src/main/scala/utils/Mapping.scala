@@ -18,8 +18,8 @@ object Mapping {
     mappedInputs
   }
 
-  def mapInputs(inputs: Array[Array[Array[Int]]]): Array[Array[Int]] = {
-    val mappedInputs = Array.ofDim[Int](inputs(0).length * inputs(0)(0).length, inputs.length)
+  def mapInputs(inputs: Array[Array[Array[BigInt]]]): Array[Array[BigInt]] = {
+    val mappedInputs = Array.ofDim[BigInt](inputs(0).length * inputs(0)(0).length, inputs.length)
     for (i <- inputs.indices) { //layer
       var address = 0
       for (j <- inputs(0).indices) { //row
@@ -32,8 +32,8 @@ object Mapping {
     mappedInputs
   }
 
-  def mapWeights(weights: Array[Array[Array[Int]]]): Array[Array[Int]] = {
-    val mappedWeights = Array.ofDim[Int](weights(0).length * weights(0)(0).length, weights.length)
+  def mapWeights(weights: Array[Array[Array[BigInt]]]): Array[Array[BigInt]] = {
+    val mappedWeights = Array.ofDim[BigInt](weights(0).length * weights(0)(0).length, weights.length)
     for (i <- weights.indices) { //layer
       var address = 0
       for (j <- weights(0).indices) { //row
@@ -46,8 +46,8 @@ object Mapping {
     mappedWeights
   }
 
-  def mapBiases(biases: Array[Array[Array[Int]]]): Array[Array[Int]] = {
-    val mappedBiases = Array.ofDim[Int](biases(0).length * biases(0)(0).length, biases.length)
+  def mapBiases(biases: Array[Array[Array[BigInt]]]): Array[Array[BigInt]] = {
+    val mappedBiases = Array.ofDim[BigInt](biases(0).length * biases(0)(0).length, biases.length)
     for (i <- biases.indices) { //layer
       var address = 0
       for (j <- biases(0).indices) { //row

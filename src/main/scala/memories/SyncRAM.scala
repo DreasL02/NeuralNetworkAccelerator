@@ -5,7 +5,7 @@ import chisel3.util.log2Ceil
 
 // https://www.chisel-lang.org/docs/explanations/memories#single-ported
 
-class SyncRAM(w: Int = 8, initialMemoryState: Array[Int]) extends Module {
+class SyncRAM(w: Int = 8, initialMemoryState: Array[BigInt]) extends Module {
   val io = IO(new Bundle {
     val address = Input(UInt(log2Ceil(initialMemoryState.length).W))
 
