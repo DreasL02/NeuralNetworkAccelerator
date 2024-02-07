@@ -2,9 +2,13 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import utils.FixedPointConversion.fixedToFloat
+import utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class EmptySpec extends AnyFreeSpec with ChiselScalatestTester {
-  val bob = fixedToFloat(254, 0, 16, true)
-  println(bob)
+
+  println(floatToFixed(1.0f, 0, 32, signed = true))
+  println(floatToFixed(0.0f, 0, 32, signed = true))
+  println(floatToFixed(-1.0f, 0, 32, signed = true))
+  println(floatToFixed(-2.0f, 0, 32, signed = true))
+  println(floatToFixed(-3.0f, 0, 32, signed = true))
 }

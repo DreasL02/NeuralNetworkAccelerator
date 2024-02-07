@@ -9,7 +9,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val dimension = 3 //4 //=3
   val w = 8
   val wStore = 4 * w
-  val fixedPoint = 0
+  val fixedPoint = 3
   val signed = 1
   val enablePrintingInFirstTest = true
   "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
@@ -28,6 +28,15 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed == 1)
       val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, wStore, signed == 1)
       val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed == 1)
+
+      println("Biases fixed")
+      for (i <- 0 until dimension) {
+        for (j <- 0 until dimension) {
+          print(biasesFixed(i)(j))
+          print(" ")
+        }
+        println()
+      }
 
       val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)
       val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixedForTesting)

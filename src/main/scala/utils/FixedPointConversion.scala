@@ -16,17 +16,18 @@ object FixedPointConversion {
   }
 
   def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int, width: Int, signed: Boolean): BigInt = {
-    var scaledToFixed = (floatRepresentation * (1 << fixedPointFractionalBits)).round
+    var scaledToFixed: BigInt = (floatRepresentation * (1 << fixedPointFractionalBits)).round
+    val max = BigDecimal.valueOf(Math.pow(2, width)).toBigInt
     if (signed) {
       if (floatRepresentation < 0 && scaledToFixed <= 0) {
-        scaledToFixed = Math.pow(2, width).toInt + scaledToFixed
+        scaledToFixed = max + scaledToFixed
       }
     }
     // If the number is too large, set it to 0
-    if (scaledToFixed >= Math.pow(2, width).toInt) {
+    if (scaledToFixed >= max) {
       scaledToFixed = 0
     }
-    BigDecimal.valueOf(scaledToFixed).toBigInt
+    scaledToFixed
   }
 
   def convertFloatMatrixToFixedMatrix(mf: Array[Array[Float]], fixedPointFractionBits: Int, width: Int, signed: Boolean): Array[Array[BigInt]] = {
