@@ -110,6 +110,7 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
   val rounder = Module(new Rounder(w, wStore, xDimension, yDimension))
   rounder.io.fixedPoint := fixedPointReg
+  rounder.io.signed := signedReg
   rounder.io.input := accumulator.io.result
 
   if (enableDebuggingIO) {
