@@ -26,7 +26,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed == 1)
       val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed == 1)
-      val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, wStore, signed == 1)
+      val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint * 2, wStore, signed == 1)
       val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed == 1)
 
       println("Biases fixed")
