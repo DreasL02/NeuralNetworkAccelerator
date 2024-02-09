@@ -13,12 +13,14 @@ class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int
   for (column <- 0 until xDimension) {
     for (row <- 0 until yDimension) {
       when(io.signed) {
-        val sign = io.input(column)(row) >> (wStore - 1).U
+        val sign = io.input(column)(row)(wStore - 1)
         when(io.fixedPoint === 0.U) {
-          io.output(column)(row) := sign ## io.input(column)(row)(w - 2, 0)
+          io.output(column)(row) := sign ## io.input(column)(row)(w - 1, 0)
         }.otherwise {
+          io.output(column)(row) := sign ## (io.input(column)(row) >> io.fixedPoint)(w - 1, 0).asUInt
+
           // Round to nearest with round up on a tie
-          io.output(column)(row) := sign ## ((io.input(column)(row) + (1.U << (io.fixedPoint - 1.U)).asUInt) >> io.fixedPoint)(w - 2, 0).asUInt
+          //io.output(column)(row) := sign ## ((io.input(column)(row) + (1.U << (io.fixedPoint - 1.U)).asUInt) >> io.fixedPoint)(w - 2, 0).asUInt
         }
 
 

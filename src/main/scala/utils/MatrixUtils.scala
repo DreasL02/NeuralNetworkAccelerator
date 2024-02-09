@@ -60,6 +60,20 @@ object MatrixUtils {
     mr
   }
 
+  def calculateMatrixReLU(m1: Array[Array[Float]], signed: Boolean): Array[Array[Float]] = {
+    val mr: Array[Array[Float]] = Array.fill(m1.length, m1(0).length)(0)
+    for (i <- m1.indices) {
+      for (j <- m1(0).indices) {
+        if (signed && m1(i)(j) < 0) {
+          mr(i)(j) = 0
+        } else {
+          mr(i)(j) = m1(i)(j)
+        }
+      }
+    }
+    mr
+  }
+
 
   def convertMatrixToMappedAMatrix(m: Array[Array[BigInt]]): Array[Array[BigInt]] = {
     val m_a: Array[Array[BigInt]] = Array.fill(m.length, m(0).length * m(0).length)(0)
@@ -142,10 +156,11 @@ object MatrixUtils {
     print(matrixToString(ma))
     println("=")
     print(matrixToString(mr))
+    // does not include ReLU
     1
   }
 
-  def printMatrixMAC(m1: Array[Array[Float]], m2: Array[Array[Float]], ma: Array[Array[Float]], mr: Array[Array[Float]], text: String): Float = {
+  def printMatrixMAC(m1: Array[Array[Float]], m2: Array[Array[Float]], ma: Array[Array[Float]], mr: Array[Array[Float]], mre: Array[Array[Float]], text: String): Float = {
     println("--- %s ----".format(text))
     print(matrixToString(m1))
     println("*")
@@ -154,6 +169,8 @@ object MatrixUtils {
     print(matrixToString(ma))
     println("=")
     print(matrixToString(mr))
+    println("ReLU:")
+    print(matrixToString(mre))
     1.0f
   }
 

@@ -4,144 +4,167 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import utils.MatrixUtils._
 import utils.FixedPointConversion._
+import utils.RandomData.randomMatrix
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  val dimension = 3 //4 //=3
+  // ======= configure the test =======
   val w = 8
   val wStore = 4 * w
-  val fixedPoint = 3
-  val signed = 1
-  val enablePrintingInFirstTest = true
-  "LayerCalculator should behave correctly when given a set of values (3x3 matrices, fixed point at 3)" in {
-    test(new LayerCalculator(w = w, wStore = wStore, xDimension = dimension, yDimension = dimension, enableDebuggingIO = true)) { dut =>
-      var inputsFloat = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-      var weightsFloat = Array(Array(2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-      var biasesFloat = Array(Array(-2.0f, -2.0f, -1.0f), Array(0.0f, 2.0f, 2.0f), Array(2.0f, 2.0f, 2.0f))
+  val xDimension = 3
+  val yDimension = 3
+  val matrixCommonDimension = 3
+  val fixedPoint = 1
+  val signed = true.B
+  val numberOfTests = 10
+  val max = 1.2f
+  val min = -1.2f //0.0f //
 
-      var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
-      var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
+  val printing = Array.fill(numberOfTests)(false)
 
-      if (enablePrintingInFirstTest)
-        printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
+  // We can enable printing for a specific test by setting the index to true
+  printing(0) = true
 
-      val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed == 1)
-      val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed == 1)
-      val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint * 2, wStore, signed == 1)
-      val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed == 1)
+  // ======= configure the test end =======
 
-      println("Biases fixed")
-      for (i <- 0 until dimension) {
-        for (j <- 0 until dimension) {
-          print(biasesFixed(i)(j))
-          print(" ")
+  // --- Rest should be left as is ---
+  val seeds = Array.fill(numberOfTests)(0)
+  // increment seeds for each test to get different random numbers
+  for (i <- 0 until numberOfTests) {
+    seeds(i) = i
+  }
+
+  // dimensions of the matrices to be multiplied are inferred from the dimensions of the systolic array
+  val dimensionOfInputMatrix = Array(yDimension, matrixCommonDimension)
+  val dimensionOfWeightMatrix = Array(matrixCommonDimension, xDimension)
+  val dimensionOfBiasMatrix = Array(xDimension, yDimension)
+
+  // for each seed, generate a random matrix and test
+  for (testNum <- seeds.indices) {
+    val enablePrinting = printing(testNum)
+
+    "LayerCalculator should calculate correctly for test %d".format(testNum) in {
+      test(new LayerCalculator(w = w, wStore = wStore, xDimension = xDimension, yDimension = yDimension, enableDebuggingIO = true)) { dut =>
+        var inputsFloat = randomMatrix(dimensionOfInputMatrix(0), dimensionOfInputMatrix(1), min, max, seeds(testNum))
+        var weightsFloat = randomMatrix(dimensionOfWeightMatrix(0), dimensionOfWeightMatrix(1), min, max, seeds(testNum))
+        var biasesFloat = randomMatrix(dimensionOfBiasMatrix(0), dimensionOfBiasMatrix(1), min, max, seeds(testNum))
+
+        var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
+        var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
+        var ReLUResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
+
+        if (enablePrinting)
+          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, ReLUResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
+
+        val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed.litToBoolean)
+        val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed.litToBoolean)
+        val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint * 2, wStore, signed.litToBoolean)
+        val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed.litToBoolean)
+
+        val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)
+        val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixedForTesting)
+
+        if (enablePrinting)
+          printMatrixMAC(inputsFixed, weightsFixed, biasesFixedForTesting, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
+
+        inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed.litToBoolean)
+        weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed.litToBoolean)
+        biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixedForTesting, fixedPoint, w, signed.litToBoolean)
+
+        multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
+        additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
+        ReLUResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
+
+        if (enablePrinting)
+          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, ReLUResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
+
+        // Setup the dut
+        dut.io.load.poke(true.B)
+        dut.io.signed.poke(signed.asUInt)
+        dut.io.fixedPoint.poke(fixedPoint)
+        for (i <- inputsFixed.indices) {
+          for (j <- inputsFixed(0).indices) {
+            dut.io.inputs(i)(j).poke(inputsFixed(i)(xDimension - 1 - j)) // correct format, reverse order in y
+            dut.io.weights(i)(j).poke(weightsFixed(yDimension - 1 - j)(i)) // correct format, reverse order in x
+            dut.io.biases(i)(j).poke(biasesFixed(i)(j))
+          }
         }
-        println()
-      }
 
-      val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)
-      val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixedForTesting)
-
-      if (enablePrintingInFirstTest)
-        printMatrixMAC(inputsFixed, weightsFixed, biasesFixedForTesting, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
-
-      inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed == 1)
-      weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed == 1)
-      biasesFloat = convertFixedMatrixToFloatMatrix(biasesFixedForTesting, fixedPoint, w, signed == 1)
-
-      multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
-      additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
-
-      if (enablePrintingInFirstTest)
-        printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
-
-      // Setup the dut
-      dut.io.load.poke(true.B)
-      dut.io.signed.poke(signed.asUInt)
-      dut.io.fixedPoint.poke(fixedPoint)
-      for (i <- inputsFixed.indices) {
-        for (j <- inputsFixed(0).indices) {
-          dut.io.inputs(i)(j).poke(inputsFixed(i)(dimension - 1 - j).asUInt) // correct format, reverse order in y
-          dut.io.weights(i)(j).poke(weightsFixed(dimension - 1 - j)(i).asUInt) // correct format, reverse order in x
-          dut.io.biases(i)(j).poke(biasesFixed(i)(j).asUInt)
-        }
-      }
-
-      // All values should now be loaded
-      dut.clock.step()
-      dut.io.load.poke(false.B)
-      dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
-      dut.io.signed.poke(1.U) // should be ignored when load is false
-
-      var cycles = 0
-      while (!dut.io.valid.peekBoolean()) {
-        // print all debugBiases values
-        println("Cycle %d".format(cycles))
-        if (enablePrintingInFirstTest) {
-          println("DEBUG SYSTOLIC ARRAY RESULTS")
-          for (i <- 0 until dimension) {
-            for (j <- 0 until dimension) {
-              print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
-              print(" ")
-            }
-            println()
-          }
-          println("DEBUG BIASES")
-          for (i <- 0 until dimension) {
-            for (j <- 0 until dimension) {
-              print(dut.io.debugBiases.get(i)(j).peek().litValue)
-              print(" ")
-            }
-            println()
-          }
-          println("ROUNDER INPUTS")
-          for (i <- 0 until dimension) {
-            for (j <- 0 until dimension) {
-              print(dut.io.debugRounderInputs.get(i)(j).peek().litValue)
-              print(" ")
-            }
-            println()
-          }
-          println("ReLU INPUTS")
-          for (i <- 0 until dimension) {
-            for (j <- 0 until dimension) {
-              print(dut.io.debugReLUInputs.get(i)(j).peek().litValue)
-              print(" ")
-            }
-            println()
-          }
-          println()
-        }
-        cycles = cycles + 1
+        // All values should now be loaded
         dut.clock.step()
-      }
+        dut.io.load.poke(false.B)
+        dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
+        dut.io.signed.poke(1.U) // should be ignored when load is false
 
-
-      val resultFixed: Array[Array[BigInt]] = Array.fill(additionResultFixed.length, additionResultFixed(0).length)(0)
-      for (i <- additionResultFixed.indices) {
-        for (j <- additionResultFixed(0).indices) {
-          resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
-        }
-      }
-
-      val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint, w, signed == 1)
-      if (enablePrintingInFirstTest) {
-        println("DONE IN %d CYCLES".format(cycles))
-        println("RESULT IN FLOATING POINT")
-        print(matrixToString(resultFloat))
-        println("RESULT IN FIXED POINT")
-        print(matrixToString(resultFixed))
-      }
-
-      // Evaluate
-      for (i <- additionResultFloat.indices) {
-        for (j <- additionResultFloat(0).indices) {
-          val a = resultFloat(i)(j)
-          val b = additionResultFloat(i)(j)
-          var valid = false
-          if (a - 1 <= b && a + 1 >= b) { //within +-1 of golden model
-            valid = true
+        var cycles = 0
+        while (!dut.io.valid.peekBoolean()) {
+          if (enablePrinting) {
+            println("Cycle %d".format(cycles))
+            println("DEBUG SYSTOLIC ARRAY RESULTS")
+            for (i <- 0 until xDimension) {
+              for (j <- 0 until yDimension) {
+                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
+                print(" ")
+              }
+              println()
+            }
+            println("DEBUG BIASES")
+            for (i <- 0 until xDimension) {
+              for (j <- 0 until yDimension) {
+                print(dut.io.debugBiases.get(i)(j).peek().litValue)
+                print(" ")
+              }
+              println()
+            }
+            println("ROUNDER INPUTS")
+            for (i <- 0 until xDimension) {
+              for (j <- 0 until yDimension) {
+                print(dut.io.debugRounderInputs.get(i)(j).peek().litValue)
+                print(" ")
+              }
+              println()
+            }
+            println("ReLU INPUTS")
+            for (i <- 0 until xDimension) {
+              for (j <- 0 until yDimension) {
+                print(dut.io.debugReLUInputs.get(i)(j).peek().litValue)
+                print(" ")
+              }
+              println()
+            }
+            println()
           }
-          assert(valid, ": element at (%d,%d) did not match (got %f : expected %f)".format(i, j, a, b))
+          cycles = cycles + 1
+          dut.clock.step()
+        }
+
+
+        val resultFixed: Array[Array[BigInt]] = Array.fill(additionResultFixed.length, additionResultFixed(0).length)(0)
+        for (i <- additionResultFixed.indices) {
+          for (j <- additionResultFixed(0).indices) {
+            resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
+          }
+        }
+
+        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint, w, signed.litToBoolean)
+        if (enablePrinting) {
+          println("DONE IN %d CYCLES".format(cycles))
+          println("RESULT IN FLOATING POINT")
+          print(matrixToString(resultFloat))
+          println("RESULT IN FIXED POINT")
+          print(matrixToString(resultFixed))
+        }
+
+        // Evaluate
+        for (i <- ReLUResultFloat.indices) {
+          for (j <- ReLUResultFloat(0).indices) {
+            val a = resultFloat(i)(j)
+            val b = ReLUResultFloat(i)(j)
+            var valid = false
+            if (a - 1 <= b && a + 1 >= b) { //within +-1 of golden model
+              valid = true
+            }
+            assert(valid, ": element at (%d,%d) did not match (got %f : expected %f)".format(i, j, a, b))
+          }
         }
       }
     }
