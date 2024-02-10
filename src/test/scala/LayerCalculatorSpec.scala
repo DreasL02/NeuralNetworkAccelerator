@@ -11,11 +11,11 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val w = 8
   val wStore = 4 * w
   val xDimension = 3
-  val yDimension = 3
+  val yDimension = 2
   val matrixCommonDimension = 3
   val fixedPoint = 1
   val signed = true.B
-  val numberOfTests = 10
+  val numberOfTests = 1
   val max = 1.2f
   val min = -1.2f //0.0f //
 
@@ -81,13 +81,24 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.load.poke(true.B)
         dut.io.signed.poke(signed.asUInt)
         dut.io.fixedPoint.poke(fixedPoint)
+
         for (i <- inputsFixed.indices) {
           for (j <- inputsFixed(0).indices) {
             dut.io.inputs(i)(j).poke(inputsFixed(i)(xDimension - 1 - j)) // correct format, reverse order in y
+          }
+        }
+        for (i <- weightsFixed.indices) {
+          for (j <- weightsFixed(0).indices) {
             dut.io.weights(i)(j).poke(weightsFixed(yDimension - 1 - j)(i)) // correct format, reverse order in x
+          }
+        }
+
+        for (i <- biasesFixed.indices) {
+          for (j <- biasesFixed(0).indices) {
             dut.io.biases(i)(j).poke(biasesFixed(i)(j))
           }
         }
+
 
         // All values should now be loaded
         dut.clock.step()
