@@ -35,21 +35,21 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
   }
 
   //TODO check if correct
-  val inputsBuffers = for (i <- 0 until xDimension) yield { // create array of buffers for inputs
-    val buffer = Module(new ShiftedBuffer(w, xDimension, i)) // shift each buffer by i to create systolic effect
+  val inputsBuffers = for (i <- 0 until yDimension) yield { // create array of buffers for inputs
+    val buffer = Module(new ShiftedBuffer(w, yDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
   //TODO check if correct
-  val weightsBuffers = for (i <- 0 until yDimension) yield { // create array of buffers for weights
-    val buffer = Module(new ShiftedBuffer(w, yDimension, i)) // shift each buffer by i to create systolic effect
+  val weightsBuffers = for (i <- 0 until xDimension) yield { // create array of buffers for weights
+    val buffer = Module(new ShiftedBuffer(w, xDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
   val systolicArray = Module(new SystolicArray(w, wStore, xDimension, yDimension))
 
   // Connect buffers to signals
-  for (i <- 0 until xDimension) {
+  for (i <- 0 until yDimension) {
     inputsBuffers(i).io.load := io.load
     inputsBuffers(i).io.data := io.inputs(i)
     systolicArray.io.a(i) := inputsBuffers(i).io.output
@@ -58,7 +58,7 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     }
   }
 
-  for (i <- 0 until yDimension) {
+  for (i <- 0 until xDimension) {
     weightsBuffers(i).io.load := io.load
     weightsBuffers(i).io.data := io.weights(i)
     systolicArray.io.b(i) := weightsBuffers(i).io.output
@@ -84,21 +84,21 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
   // Addition of biases
   val accumulator = Module(new Accumulator(wStore, xDimension, yDimension))
-  for (i <- 0 until xDimension) {
-    for (j <- 0 until yDimension) {
+  for (row <- 0 until xDimension) {
+    for (column <- 0 until yDimension) {
       // Map results from systolic array in column-major order to accumulator in row-major order
-      accumulator.io.values(i)(j) := systolicArray.io.c(j)(i) //TODO: Handle this correctly in the systolic array
+      accumulator.io.values(row)(column) := systolicArray.io.c(column)(row) //TODO: Handle this correctly in the systolic array
 
       // Continuously emit bias values
       val biasReg = RegInit(0.U(wStore.W))
       when(io.load) {
-        biasReg := io.biases(i)(j) // replace bias value
+        biasReg := io.biases(row)(column) // replace bias value
       }
-      accumulator.io.biases(i)(j) := biasReg
 
+      accumulator.io.biases(row)(column) := biasReg
       if (enableDebuggingIO) {
-        io.debugSystolicArrayResults.get(i)(j) := systolicArray.io.c(j)(i)
-        io.debugBiases.get(i)(j) := biasReg
+        io.debugSystolicArrayResults.get(row)(column) := systolicArray.io.c(column)(row)
+        io.debugBiases.get(row)(column) := biasReg
       }
     }
   }

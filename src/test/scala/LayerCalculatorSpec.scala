@@ -50,10 +50,10 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
         var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
-        var ReLUResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
+        var reluResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
 
         if (enablePrinting)
-          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, ReLUResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
+          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, reluResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
         val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed.litToBoolean)
         val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed.litToBoolean)
@@ -64,7 +64,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         val additionResultFixed = calculateMatrixAddition(multiplicationResultFixed, biasesFixedForTesting)
 
         if (enablePrinting)
-          printMatrixMAC(inputsFixed, weightsFixed, biasesFixedForTesting, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT")
+          printMatrixMAC(inputsFixed, weightsFixed, biasesFixedForTesting, additionResultFixed, "GOLDEN MODEL CALCULATION IN FIXED POINT (NO ReLU)")
 
         inputsFloat = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed.litToBoolean)
         weightsFloat = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed.litToBoolean)
@@ -72,10 +72,10 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
         additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
-        ReLUResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
+        reluResultFloat = calculateMatrixReLU(additionResultFloat, signed.litToBoolean)
 
         if (enablePrinting)
-          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, ReLUResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
+          printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, reluResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
         // Setup the dut
         dut.io.load.poke(true.B)
@@ -155,10 +155,10 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         // Evaluate
-        for (i <- ReLUResultFloat.indices) {
-          for (j <- ReLUResultFloat(0).indices) {
+        for (i <- reluResultFloat.indices) {
+          for (j <- reluResultFloat(0).indices) {
             val a = resultFloat(i)(j)
-            val b = ReLUResultFloat(i)(j)
+            val b = reluResultFloat(i)(j)
             var valid = false
             if (a - 1 <= b && a + 1 >= b) { //within +-1 of golden model
               valid = true
