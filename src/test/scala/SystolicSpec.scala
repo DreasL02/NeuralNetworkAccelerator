@@ -12,9 +12,9 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wStore = 4 * w
-  val xDimension = 5
-  val yDimension = 1
-  val matrixCommonDimension = 2
+  val xDimension = 3
+  val yDimension = 3
+  val matrixCommonDimension = 3
   val fixedPoint = 3
   val signed = true.B
   val numberOfTests = 1
@@ -28,25 +28,22 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
 
-
-
-
   // ======= configure the test end =======
 
   // --- Rest should be left as is ---
-  val seeds = Array.fill(numberOfTests)(0)
-  // increment seeds for each test to get different random numbers
-  for (i <- 0 until numberOfTests) {
-    seeds(i) = i
+  val seeds = Array.fill(numberOfTests * 2)(0)
+  // increment seeds for each test and matrix to get different random numbers
+  for (i <- 0 until numberOfTests * 2) {
+    seeds(i) = 10 * i
   }
 
   // for each seed, generate a random matrix and test
-  for (testNum <- seeds.indices) {
+  for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
     "SystolicArray should calculate correctly for test %d".format(testNum) in {
       test(new SystolicArray(w, wStore, xDimension, yDimension)) { dut =>
-        var m1f = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum))
-        var m2f = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum))
+        var m1f = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 2))
+        var m2f = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 2 + 1))
 
         var mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting)
@@ -129,7 +126,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
             val a = resultFloat(i)(j)
             val b = mrf(i)(j)
             var valid = false
-            if (a - threshold <= b && a + threshold >= b) { //with in +-1 of golden model
+            if (a - threshold <= b && a + threshold >= b) { //with in +-threshold of golden model
               valid = true
             }
             assert(valid, ": test (%d) : element at (%d,%d) did not match (got %f : expected %f)".format(testNum, i, j, a, b))

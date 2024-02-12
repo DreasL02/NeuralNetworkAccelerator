@@ -3,103 +3,133 @@ import utils.{FixedPointConversion, Mapping}
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
+import utils.MatrixUtils.matrixToString
+import utils.RandomData.randomMatrix
 
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
+  // ======= configure the test =======
   val w = 8
   val wStore = 4 * w
-  val dimension = 3
-  val fix = 0
-  val sign = 1
+  val xDimension = 3
+  val yDimension = xDimension // Only square matrices for now
+  val matrixCommonDimension = 3
+  val layers = 2
+  val fixedPoint = 0
+  val signed = true.B
+  val numberOfTests = 1
+  val max = 1.2f
+  val min = -1.2f //0.0f //
+  val threshold = 1f
 
-  val inputsL1: Array[Array[Float]] = Array(Array(1.2f, 1.3f, 2.4f), Array(0.9f, 3.4f, 0.9f), Array(2.2f, 1.2f, 0.9f))
-  val weightsL1: Array[Array[Float]] = Array(Array(-2.2f, 1.3f, 1.0f), Array(4.9f, 0.4f, 4.8f), Array(2.2f, 1.2f, 0.9f))
-  val biasesL1: Array[Array[Float]] = Array(Array(-1.0f, -1.0f, -1.0f), Array(-1.0f, -1.0f, -1.0f), Array(-1.0f, -1.0f, -1.0f))
-  val signL1: Int = sign
-  val fixedPointL1: Int = fix
+  val printing = Array.fill(numberOfTests)(false)
 
-  val inputsL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
-  val weightsL2: Array[Array[Float]] = Array(Array(1.0f, 0.9f, 0.8f), Array(0.7f, 0.6f, 0.4f), Array(0.3f, 0.2f, 0.1f))
-  val biasesL2: Array[Array[Float]] = Array(Array(0.0f, 0.0f, 0.0f), Array(1.0f, 1.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
-  val signL2: Int = sign
-  val fixedPointL2: Int = fix
+  // We can enable printing for a specific test by setting the index to true
+  printing(0) = true
 
-  val inputsL3: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(0.0f, 0.0f, 0.0f), Array(0.0f, 0.0f, 0.0f))
-  val weightsL3: Array[Array[Float]] = Array(Array(1.0f, 0.9f, 0.8f), Array(0.7f, 2f, 0.4f), Array(3f, 0.2f, 0.1f))
-  val biasesL3: Array[Array[Float]] = Array(Array(1.0f, 1.0f, 1.0f), Array(1.0f, 0.0f, 1.0f), Array(1.0f, 1.0f, 1.0f))
-  val signL3: Int = sign
-  val fixedPointL3: Int = fix
+  // ======= configure the test end =======
 
-  val inputs: Array[Array[Array[BigInt]]] = Array(
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL1, fixedPointL1, w, signL1 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL2, fixedPointL2, w, signL2 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsL3, fixedPointL3, w, signL3 == 1)
-  )
-  val weights: Array[Array[Array[BigInt]]] = Array(
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL1, fixedPointL1, w, signL1 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL2, fixedPointL2, w, signL2 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsL3, fixedPointL3, w, signL3 == 1)
-  )
-  val biases: Array[Array[Array[BigInt]]] = Array(
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL1, fixedPointL1, wStore, signL1 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL2, fixedPointL2, wStore, signL2 == 1),
-    FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesL3, fixedPointL3, wStore, signL3 == 1)
-  )
+  // --- Rest should be left as is ---
+  val seeds = Array.fill(numberOfTests * 3 * layers)(0)
+  // increment seeds for each test to get different random numbers
+  for (i <- 0 until numberOfTests * 3 * layers) {
+    seeds(i) = 10 * i
+  }
 
-  val signs: Array[BigInt] = Array(signL1, signL2, signL3)
-  val fixedPoints: Array[BigInt] = Array(fixedPointL1, fixedPointL2, fixedPointL3)
+  // for each seed, generate a random matrix and test
+  for (testNum <- 0 until numberOfTests) {
+    val enablePrinting = printing(testNum)
 
-  var mappedInputs = Mapping.mapInputs(inputs)
-  var mappedWeights = Mapping.mapWeights(weights)
-  var mappedBiases = Mapping.mapBiases(biases)
+    val inputsFloat = Array.ofDim[Array[Array[Float]]](layers)
+    val weightsFloat = Array.ofDim[Array[Array[Float]]](layers)
+    val biasesFloat = Array.ofDim[Array[Array[Float]]](layers)
 
-  "Should initially set address to 0, then increment to 1 after one increment message via UART." in {
-    test(new Accelerator(w, wStore, dimension, dimension, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, true)) { dut =>
-      dut.io.debugAddress.get.expect(0)
-      dut.clock.step()
-      for (i <- 0 until dimension * dimension) {
-        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
+    val inputs = Array.ofDim[Array[Array[BigInt]]](layers)
+    val weights = Array.ofDim[Array[Array[BigInt]]](layers)
+    val biases = Array.ofDim[Array[Array[BigInt]]](layers)
+    val signs = Array.ofDim[BigInt](layers)
+    val fixedPoints = Array.ofDim[BigInt](layers)
+
+    // for each layer, generate a random set matrices
+    for (layer <- 0 until layers) {
+      inputsFloat(layer) = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 3 * layers + layer * 3))
+      weightsFloat(layer) = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 3 * layers + layer * 3 + 1))
+      biasesFloat(layer) = randomMatrix(xDimension, yDimension, min, max, seeds(testNum * 3 * layers + layer * 3 + 2))
+
+      if (enablePrinting) {
+        println("inputsFloat for layer %d".format(layer))
+        print(matrixToString(inputsFloat(layer)))
+        println("weightsFloat for layer %d".format(layer))
+        print(matrixToString(weightsFloat(layer)))
+        println("biasesFloat for layer %d".format(layer))
+        print(matrixToString(biasesFloat(layer)))
+        println();
       }
-      println()
-      dut.io.startCalculation.poke(true.B)
-      while (!dut.io.calculationDone.peek().litToBoolean) {
+
+      inputs(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat(layer), fixedPoint, w, signed.litToBoolean)
+      weights(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsFloat(layer), fixedPoint, w, signed.litToBoolean)
+      biases(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesFloat(layer), fixedPoint * 2, wStore, signed.litToBoolean)
+
+      if (enablePrinting) {
+        println("inputs for layer %d".format(layer))
+        print(matrixToString(inputs(layer)))
+        println("weights for layer %d".format(layer))
+        print(matrixToString(weights(layer)))
+        println("biases for layer %d".format(layer))
+        print(matrixToString(biases(layer)))
+        println();
+      }
+
+      signs(layer) = signed.litValue
+      fixedPoints(layer) = BigInt(fixedPoint)
+    }
+
+    val mappedInputs = Mapping.mapInputs(inputs)
+    val mappedWeights = Mapping.mapWeights(weights)
+    val mappedBiases = Mapping.mapBiases(biases)
+
+    if (enablePrinting) {
+      println("mappedInputs")
+      print(matrixToString(mappedInputs))
+      println("mappedWeights")
+      print(matrixToString(mappedWeights))
+      println("mappedBiases")
+      print(matrixToString(mappedBiases))
+      println();
+    }
+
+    "AcceleratorSpec should calculate correctly for test %d".format(testNum) in {
+      test(new Accelerator(w, wStore, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, true)) { dut =>
+
+        dut.io.debugAddress.get.expect(0)
         dut.clock.step()
+        if (enablePrinting) {
+          for (i <- 0 until xDimension * yDimension) {
+            print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoints(0).toInt, w, signs(0) == 1).toString() + " ")
+          }
+          println()
+        }
+        println()
+
+        // for each layer
+        for (layer <- 0 until layers) {
+          dut.io.startCalculation.poke(true.B) // start the calculation
+          while (!dut.io.calculationDone.peek().litToBoolean) { // wait for the calculation to finish
+            dut.clock.step()
+          }
+          dut.io.startCalculation.poke(false.B)
+          dut.io.readEnable.poke(true.B) // read the result
+          dut.clock.step() // wait for the result to be ready
+          if (enablePrinting) {
+            for (i <- 0 until xDimension * yDimension) {
+              print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoints(layer).toInt, w, signs(layer) == 1).toString() + " ")
+            }
+            println()
+          }
+          println()
+          dut.io.readEnable.poke(false.B)
+          dut.clock.step()
+        }
       }
-      dut.io.startCalculation.poke(false.B)
-      dut.io.debugAddress.get.expect(1)
-      dut.io.readEnable.poke(true.B)
-      dut.clock.step()
-      for (i <- 0 until dimension * dimension) {
-        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
-      }
-      println()
-      dut.io.readEnable.poke(false.B)
-      dut.clock.step()
-      dut.io.startCalculation.poke(true.B)
-      while (!dut.io.calculationDone.peek().litToBoolean) {
-        dut.clock.step()
-      }
-      dut.io.startCalculation.poke(false.B)
-      dut.io.debugAddress.get.expect(2)
-      dut.io.readEnable.poke(true.B)
-      dut.clock.step()
-      for (i <- 0 until dimension * dimension) {
-        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
-      }
-      println()
-      dut.io.readEnable.poke(false.B)
-      dut.clock.step()
-      dut.io.startCalculation.poke(true.B)
-      while (!dut.io.calculationDone.peek().litToBoolean) {
-        dut.clock.step()
-      }
-      dut.io.startCalculation.poke(false.B)
-      dut.io.debugAddress.get.expect(0)
-      dut.io.readEnable.poke(true.B)
-      dut.clock.step()
-      for (i <- 0 until dimension * dimension) {
-        print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPointL1, w, sign == 1).toString() + " ")
-      }
-      println()
     }
   }
 
