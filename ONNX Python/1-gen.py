@@ -1,21 +1,28 @@
 import onnx
 from onnx import helper
 
-input_tensor = helper.make_tensor_value_info('input', onnx.TensorProto.INT8, [2, 2])
-constant_tensor = helper.make_tensor('constant', onnx.TensorProto.INT8, [2, 2], [1, 2, 3, 4])
+input_tensor = helper.make_tensor_value_info(
+    'input', onnx.TensorProto.INT8, [2, 2])
+weight_tensor = helper.make_tensor(
+    'weight', onnx.TensorProto.INT8, [2, 2], [1, 2, 3, 4])
+bias_tensor = helper.make_tensor(
+    'bias', onnx.TensorProto.INT8, [2, 2], [1, 2, 3, 4])
+output_tensor = helper.make_tensor_value_info(
+    'output', onnx.TensorProto.INT8, [2, 2])
+
 
 matmul_node = helper.make_node(
     'MatMul',
-    ['input', 'constant'],
+    ['input', 'weight'],
     ['matmul-output'],
-	"matmul-node"
+    "matmul-node"
 )
 
 bias_node = helper.make_node(
-	"Add",
-	["matmul-output", "constant"],
+    "Add",
+    ["matmul-output", "bias"],
     ["bias-output"],
-	"bias-node"
+    "bias-node"
 )
 
 relu_node = helper.make_node(
@@ -27,15 +34,15 @@ relu_node = helper.make_node(
 
 matmul2_node = helper.make_node(
     'MatMul',
-    ['relu-output', 'constant'],
+    ['relu-output', 'weight'],
     ['matmul2-output'],
     "matmul2-node"
 )
 
 bias2_node = helper.make_node(
     "Add",
-    ["matmul2-output", "constant"],
-    ["bias2-output"],
+    ["matmul2-output", "bias"],
+    ["output"],
     "bias2-node"
 )
 
@@ -44,8 +51,8 @@ graph_def = helper.make_graph(
     [matmul_node, bias_node, relu_node, matmul2_node, bias2_node],
     'test-model',
     [input_tensor],
-    [helper.make_tensor_value_info('bias2-output', onnx.TensorProto.INT8, [2, 2])],
-    [constant_tensor]
+    [output_tensor],
+    [weight_tensor, bias_tensor]
 )
 
 

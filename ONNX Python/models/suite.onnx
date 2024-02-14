@@ -1,25 +1,25 @@
-	onnx-example:ó
-5
+onnx-example:í
+3
 input
-constantmatmul-outputmatmul-node"MatMul
-6
+weightmatmul-outputmatmul-node"MatMul
+2
 matmul-output
-constantbias-output	bias-node"Add
+biasbias-output	bias-node"Add
 +
 bias-outputrelu-output	relu-node"Relu
-=
+;
 relu-output
-constantmatmul2-outputmatmul2-node"MatMul
-9
+weightmatmul2-outputmatmul2-node"MatMul
+/
 matmul2-output
-constantbias2-output
+biasoutput
 bias2-node"Add
-test-model**BconstantZ
+test-model**Bweight**BbiasZ
 input
 
 
-b
-bias2-output
+b
+output
 
 
-B
+B

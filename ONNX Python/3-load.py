@@ -1,5 +1,12 @@
 from onnx import load
 
+# We need to output the following:
+# 1. Number of layers in the model, largest dimension of the model
+# 2. The componenet usage of each individual layer (MatMul, Add, Relu, etc.)
+# 3. The weights and biases of each layer
+# 4. Data type of the weights and biases and component usage
+
+
 opset = {
     "MatMul": 1,
     "Add": 2,
@@ -33,6 +40,7 @@ onnx_types = {
     22: "INT4",
 }
 
+
 def sort_into_layers(onnx_model):
     layers = []
     layer = [onnx_model.graph.node[0]]
@@ -53,10 +61,12 @@ def sort_into_layers(onnx_model):
     return layers
 
 
-with open("models/matmul-2x2-int32-with-scalar-and-bias-relu.onnx", "rb") as f:
+with open("models/suite.onnx", "rb") as f:
     onnx_model = load(f)
 
 layers = sort_into_layers(onnx_model)
+
+print(onnx_model.graph)
 
 for layer in layers:
     for node in layer:
@@ -93,8 +103,7 @@ for init in initializer:
     if init.name in bias_location:
         biases.append(init)
 
-# It seems that data is store din a field that depends on the type of the data
-# We need to check the type of the data and then access the correct field
+# Data is always* stored in int32_data, no matter the data type
 
 weight_matrices = []
 for w in weights:
