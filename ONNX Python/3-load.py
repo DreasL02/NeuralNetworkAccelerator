@@ -104,7 +104,7 @@ for init in initializer:
         biases.append(init)
 
 # Data is always* stored in int32_data, no matter the data type
-
+print("Weights")
 weight_matrices = []
 for w in weights:
     print(w.dims)
@@ -121,5 +121,19 @@ for w in weights:
 
 print(weight_matrices)
 
+print("Biases")
+bias_matrices = []
 for b in biases:
-    print(b.name)
+    print(b.dims)
+    print(b.dims[0])
+    print(b.dims[1])
+    print()
+    bias_matrix = []
+    for x in range(b.dims[0]):
+        bias_row = []
+        for y in range(b.dims[1]):
+            bias_row.append(b.int32_data[x * b.dims[1] + y])
+        bias_matrix.append(bias_row)
+    bias_matrices.append(bias_matrix)
+
+print(bias_matrices)

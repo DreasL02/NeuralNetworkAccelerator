@@ -1,20 +1,20 @@
-onnx-example:í
-3
+onnx-example:§
+5
 input
-weightmatmul-outputmatmul-node"MatMul
-2
+weight_1matmul-outputmatmul-node"MatMul
+4
 matmul-output
-biasbias-output	bias-node"Add
+bias_1bias-output	bias-node"Add
 +
 bias-outputrelu-output	relu-node"Relu
-;
+=
 relu-output
-weightmatmul2-outputmatmul2-node"MatMul
-/
+weight_2matmul2-outputmatmul2-node"MatMul
+1
 matmul2-output
-biasoutput
+bias_2output
 bias2-node"Add
-test-model**Bweight**BbiasZ
+test-model**Bweight_1**Bbias_1**Bweight_2**Bbias_2Z
 input
 
 
