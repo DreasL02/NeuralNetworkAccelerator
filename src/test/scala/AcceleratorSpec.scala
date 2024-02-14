@@ -16,7 +16,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val layers = 2
   val fixedPoint = 0
   val signed = true.B
-  val numberOfTests = 1
+  val numberOfTests = 2
   val max = 1.2f
   val min = -1.2f //0.0f //
   val threshold = 1f
@@ -32,7 +32,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val seeds = Array.fill(numberOfTests * 3 * layers)(0)
   // increment seeds for each test to get different random numbers
   for (i <- 0 until numberOfTests * 3 * layers) {
-    seeds(i) = 10 * i
+    seeds(i) = i
   }
 
   // for each seed, generate a random matrix and test
@@ -99,17 +99,6 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
     "AcceleratorSpec should calculate correctly for test %d".format(testNum) in {
       test(new Accelerator(w, wStore, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, true)) { dut =>
-
-        dut.io.debugAddress.get.expect(0)
-        dut.clock.step()
-        if (enablePrinting) {
-          for (i <- 0 until xDimension * yDimension) {
-            print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoints(0).toInt, w, signs(0) == 1).toString() + " ")
-          }
-          println()
-        }
-        println()
-
         // for each layer
         for (layer <- 0 until layers) {
           dut.io.startCalculation.poke(true.B) // start the calculation
@@ -120,12 +109,12 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
           dut.io.readEnable.poke(true.B) // read the result
           dut.clock.step() // wait for the result to be ready
           if (enablePrinting) {
+            println("Layer %d result".format(layer))
             for (i <- 0 until xDimension * yDimension) {
               print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoints(layer).toInt, w, signs(layer) == 1).toString() + " ")
             }
             println()
           }
-          println()
           dut.io.readEnable.poke(false.B)
           dut.clock.step()
         }

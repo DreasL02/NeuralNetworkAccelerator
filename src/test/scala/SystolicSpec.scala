@@ -34,7 +34,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   val seeds = Array.fill(numberOfTests * 2)(0)
   // increment seeds for each test and matrix to get different random numbers
   for (i <- 0 until numberOfTests * 2) {
-    seeds(i) = 10 * i
+    seeds(i) = i
   }
 
   // for each seed, generate a random matrix and test

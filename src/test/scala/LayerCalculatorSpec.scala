@@ -31,7 +31,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val seeds = Array.fill(numberOfTests * 3)(0)
   // increment seeds for each test and matrix to get different random numbers
   for (i <- 0 until numberOfTests * 3) {
-    seeds(i) = 10 * i
+    seeds(i) = i
   }
 
   // for each test, generate a random set of matrices and test
