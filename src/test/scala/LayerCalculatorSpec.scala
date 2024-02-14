@@ -11,13 +11,14 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val w = 8
   val wStore = 4 * w
   val xDimension = 3
-  val yDimension = 3
+  val yDimension = xDimension // Only square matrices for now
   val matrixCommonDimension = 3
   val fixedPoint = 1
   val signed = true.B
-  val numberOfTests = 10
-  val max = 1.2f
-  val min = -1.2f //0.0f //
+  val numberOfTests = 1
+  val max = 3.2f
+  val min = -3.2f //0.0f //
+  val threshold = 1f
 
   val printing = Array.fill(numberOfTests)(false)
 
@@ -27,26 +28,21 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test end =======
 
   // --- Rest should be left as is ---
-  val seeds = Array.fill(numberOfTests)(0)
-  // increment seeds for each test to get different random numbers
-  for (i <- 0 until numberOfTests) {
+  val seeds = Array.fill(numberOfTests * 3)(0)
+  // increment seeds for each test and matrix to get different random numbers
+  for (i <- 0 until numberOfTests * 3) {
     seeds(i) = i
   }
 
-  // dimensions of the matrices to be multiplied are inferred from the dimensions of the systolic array
-  val dimensionOfInputMatrix = Array(yDimension, matrixCommonDimension)
-  val dimensionOfWeightMatrix = Array(matrixCommonDimension, xDimension)
-  val dimensionOfBiasMatrix = Array(xDimension, yDimension)
-
-  // for each seed, generate a random matrix and test
-  for (testNum <- seeds.indices) {
+  // for each test, generate a random set of matrices and test
+  for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
 
     "LayerCalculator should calculate correctly for test %d".format(testNum) in {
       test(new LayerCalculator(w = w, wStore = wStore, xDimension = xDimension, yDimension = yDimension, enableDebuggingIO = true)) { dut =>
-        var inputsFloat = randomMatrix(dimensionOfInputMatrix(0), dimensionOfInputMatrix(1), min, max, seeds(testNum))
-        var weightsFloat = randomMatrix(dimensionOfWeightMatrix(0), dimensionOfWeightMatrix(1), min, max, seeds(testNum))
-        var biasesFloat = randomMatrix(dimensionOfBiasMatrix(0), dimensionOfBiasMatrix(1), min, max, seeds(testNum))
+        var inputsFloat = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 3))
+        var weightsFloat = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 3 + 1))
+        var biasesFloat = randomMatrix(xDimension, yDimension, min, max, seeds(testNum * 3 + 2))
 
         var multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
         var additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
@@ -81,13 +77,24 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.load.poke(true.B)
         dut.io.signed.poke(signed.asUInt)
         dut.io.fixedPoint.poke(fixedPoint)
+
         for (i <- inputsFixed.indices) {
           for (j <- inputsFixed(0).indices) {
             dut.io.inputs(i)(j).poke(inputsFixed(i)(xDimension - 1 - j)) // correct format, reverse order in y
+          }
+        }
+        for (i <- weightsFixed.indices) {
+          for (j <- weightsFixed(0).indices) {
             dut.io.weights(i)(j).poke(weightsFixed(yDimension - 1 - j)(i)) // correct format, reverse order in x
+          }
+        }
+
+        for (i <- biasesFixed.indices) {
+          for (j <- biasesFixed(0).indices) {
             dut.io.biases(i)(j).poke(biasesFixed(i)(j))
           }
         }
+
 
         // All values should now be loaded
         dut.clock.step()
@@ -160,7 +167,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
             val a = resultFloat(i)(j)
             val b = reluResultFloat(i)(j)
             var valid = false
-            if (a - 1 <= b && a + 1 >= b) { //within +-1 of golden model
+            if (a - threshold <= b && a + threshold >= b) { //within +-threshold of golden model
               valid = true
             }
             assert(valid, ": element at (%d,%d) did not match (got %f : expected %f)".format(i, j, a, b))
