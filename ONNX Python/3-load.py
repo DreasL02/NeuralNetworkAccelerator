@@ -103,8 +103,8 @@ for init in initializer:
     if init.name in bias_location:
         biases.append(init)
 
-# Data is always* stored in int32_data, no matter the data type
-print("Weights")
+# Data is always* stored in int32_data for all integers, and float_data for all floats
+print("\nWeights")
 weight_matrices = []
 for w in weights:
     print(w.dims)
@@ -121,7 +121,7 @@ for w in weights:
 
 print(weight_matrices)
 
-print("Biases")
+print("\nBiases")
 bias_matrices = []
 for b in biases:
     print(b.dims)
