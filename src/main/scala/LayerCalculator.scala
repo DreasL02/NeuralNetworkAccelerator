@@ -1,3 +1,4 @@
+import activation_functions.Rectifier
 import chisel3._
 import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray

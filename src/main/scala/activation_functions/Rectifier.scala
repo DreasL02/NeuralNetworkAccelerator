@@ -1,3 +1,5 @@
+package activation_functions
+
 import chisel3._
 
 class Rectifier(w: Int = 8, xDimension: Int = 4, yDimension: Int = 4) extends Module {
