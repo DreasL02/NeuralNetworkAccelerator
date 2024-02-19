@@ -39,7 +39,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
     val enablePrinting = printing(testNum)
 
     "LayerCalculator should calculate correctly for test %d".format(testNum) in {
-      test(new LayerCalculator(w = w, wStore = wStore, xDimension = xDimension, yDimension = yDimension, signed = true, enableDebuggingIO = true)) { dut =>
+      test(new LayerCalculator(w = w, wStore = wStore, xDimension = xDimension, yDimension = yDimension, signed = signed, fixedPoint = fixedPoint, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 3))
         var weightsFloat = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 3 + 1))
         var biasesFloat = randomMatrix(xDimension, yDimension, min, max, seeds(testNum * 3 + 2))
@@ -75,7 +75,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         // Setup the dut
         dut.io.load.poke(true.B)
-        dut.io.fixedPoint.poke(fixedPoint)
 
         for (i <- inputsFixed.indices) {
           for (j <- inputsFixed(0).indices) {
@@ -98,7 +97,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         // All values should now be loaded
         dut.clock.step()
         dut.io.load.poke(false.B)
-        dut.io.fixedPoint.poke(2.U) // should be ignored when load is false
 
         var cycles = 0
         while (!dut.io.valid.peekBoolean()) {

@@ -19,6 +19,16 @@ class BufferedSystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, y
     val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
   })
 
+  val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
+
+  def timer(max: Int, reset: Bool) = { // timer that counts up to max and then resets, can also be reset manually by asserting reset
+    val x = RegInit(0.U(log2Ceil(max + 1).W))
+    val done = x === max.U // done when x reaches max
+    x := Mux(done || reset, 0.U, x + 1.U) // reset when done or reset is asserted, otherwise increment
+    done
+  }
+
+  io.valid := timer(CYCLES_UNTIL_VALID, io.load) // valid when timer is done
 
   //TODO check if correct
   val inputsBuffers = for (i <- 0 until yDimension) yield { // create array of buffers for inputs
@@ -54,9 +64,6 @@ class BufferedSystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, y
   }
 
   systolicArray.io.clear := io.load // clear systolic array when load is asserted
-
-  // Signal that the computation is valid
-  io.valid := systolicArray.io.valid
 
   // Connect the result of the systolic array to the output
   io.result := systolicArray.io.c

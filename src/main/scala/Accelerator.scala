@@ -12,9 +12,8 @@ class Accelerator(w: Int = 8, // width of the data
                   initialInputsMemoryState: Array[Array[BigInt]], // initial state of the input memory
                   initialWeightsMemoryState: Array[Array[BigInt]], // state of the weights memory
                   initialBiasMemoryState: Array[Array[BigInt]], // state of the bias memory
-                  initialSignsMemoryState: Array[BigInt], // state of the signs memory
-                  initialFixedPointsMemoryState: Array[BigInt], // state of the fixed points memory
                   signed: Boolean = true, // signed or unsigned data
+                  fixedPoint: Int = 0,
                   enableDebuggingIO: Boolean = true // enable debug signals for testing
                  ) extends Module {
 
@@ -36,7 +35,7 @@ class Accelerator(w: Int = 8, // width of the data
     val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(w.W))))
     val debugMatrixMemory2 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(w.W))))
     val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(wStore.W))))
-    val debugAddress = optional(enableDebuggingIO, Output(UInt(log2Ceil(initialFixedPointsMemoryState.length).W)))
+    val debugAddress = optional(enableDebuggingIO, Output(UInt(log2Ceil(initialInputsMemoryState(0).length).W)))
   })
 
   // TODO: investigate if mapped correctly
@@ -74,14 +73,14 @@ class Accelerator(w: Int = 8, // width of the data
 
   val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
 
-  val addressManager = Module(new AddressManager(initialFixedPointsMemoryState.length))
+  val addressManager = Module(new AddressManager(initialInputsMemoryState(0).length))
 
   val memories = Module(new Memories(w, wStore, xDimension, yDimension, initialInputsMemoryState, initialWeightsMemoryState,
-    initialBiasMemoryState, initialSignsMemoryState, initialFixedPointsMemoryState))
+    initialBiasMemoryState))
 
   val layerFSM = Module(new LayerFSM)
 
-  val layerCalculator = Module(new LayerCalculator(w, wStore, xDimension, yDimension, signed, enableDebuggingIO))
+  val layerCalculator = Module(new LayerCalculator(w, wStore, xDimension, yDimension, signed, fixedPoint, enableDebuggingIO))
 
   // Determine if address should be incremented (if either of the FSM say so)
   addressManager.io.incrementAddress := io.incrementAddress || layerFSM.io.incrementAddress
@@ -107,7 +106,6 @@ class Accelerator(w: Int = 8, // width of the data
   layerCalculator.io.inputs := convertVecToMatrix(memories.io.inputsRead) // map from vector to matrix, as the calculator expects a matrix
   layerCalculator.io.weights := convertVecToMatrix(memories.io.weightsRead) // map from vector to matrix, as the calculator expects a matrix
   layerCalculator.io.biases := convertVecToMatrix(memories.io.biasRead) // map from vector to matrix, as the calculator expects a matrix
-  layerCalculator.io.fixedPoint := memories.io.fixedPointRead // pass on the fixed point value
 
   // Default values for writing to input memory
   memories.io.inputsWrite := VecInit(Seq.fill(xDimension * yDimension)(0.U(w.W)))

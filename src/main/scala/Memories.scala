@@ -10,19 +10,14 @@ class Memories(w: Int = 8,
                initialInputsMemoryState: Array[Array[BigInt]],
                initialWeightsMemoryState: Array[Array[BigInt]],
                initialBiasMemoryState: Array[Array[BigInt]],
-               initialSignsMemoryState: Array[BigInt],
-               initialFixedPointMemoryState: Array[BigInt]
               ) extends Module {
   val io = IO(new Bundle {
-    val address = Input(UInt(log2Ceil(initialFixedPointMemoryState.length).W))
+    val address = Input(UInt(log2Ceil(initialInputsMemoryState(0).length).W))
 
     val readEnable = Input(Bool())
     val inputsRead = Output(Vec(xDimension * yDimension, UInt(w.W)))
     val weightsRead = Output(Vec(xDimension * yDimension, UInt(w.W)))
     val biasRead = Output(Vec(xDimension * yDimension, UInt(wStore.W)))
-
-    val signsRead = Output(UInt(1.W))
-    val fixedPointRead = Output(UInt(log2Ceil(w).W))
 
     val writeEnable = Input(Bool())
     val inputsWrite = Input(Vec(xDimension * yDimension, UInt(w.W)))
@@ -32,8 +27,6 @@ class Memories(w: Int = 8,
   val inputsMemory = Module(new MatrixSyncRAM(w, xDimension, yDimension, initialInputsMemoryState))
   val weightsMemory = Module(new MatrixROM(w, xDimension, yDimension, initialWeightsMemoryState))
   val biasMemory = Module(new MatrixROM(wStore, xDimension, yDimension, initialBiasMemoryState))
-  val signsMemory = Module(new ReadOnlyMemory(w, initialSignsMemoryState))
-  val fixedPointsMemory = Module(new ReadOnlyMemory(log2Ceil(w), initialFixedPointMemoryState))
 
 
   // Matrix memories
@@ -50,13 +43,4 @@ class Memories(w: Int = 8,
   biasMemory.io.address := io.address
   biasMemory.io.readEnable := io.readEnable
   io.biasRead := biasMemory.io.dataRead
-
-  // Single memories
-  signsMemory.io.address := io.address
-  signsMemory.io.readEnable := io.readEnable
-  io.signsRead := signsMemory.io.dataRead
-
-  fixedPointsMemory.io.address := io.address
-  fixedPointsMemory.io.readEnable := io.readEnable
-  io.fixedPointRead := fixedPointsMemory.io.dataRead
 }

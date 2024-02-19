@@ -15,7 +15,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   val matrixCommonDimension = 3
   val layers = 2
   val fixedPoint = 0
-  val signed = true.B
+  val signed = true
   val numberOfTests = 2
   val max = 1.2f
   val min = -1.2f //0.0f //
@@ -46,8 +46,6 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
     val inputs = Array.ofDim[Array[Array[BigInt]]](layers)
     val weights = Array.ofDim[Array[Array[BigInt]]](layers)
     val biases = Array.ofDim[Array[Array[BigInt]]](layers)
-    val signs = Array.ofDim[BigInt](layers)
-    val fixedPoints = Array.ofDim[BigInt](layers)
 
     // for each layer, generate a random set matrices
     for (layer <- 0 until layers) {
@@ -65,9 +63,9 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         println();
       }
 
-      inputs(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat(layer), fixedPoint, w, signed.litToBoolean)
-      weights(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsFloat(layer), fixedPoint, w, signed.litToBoolean)
-      biases(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesFloat(layer), fixedPoint * 2, wStore, signed.litToBoolean)
+      inputs(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat(layer), fixedPoint, w, signed)
+      weights(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsFloat(layer), fixedPoint, w, signed)
+      biases(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesFloat(layer), fixedPoint * 2, wStore, signed)
 
       if (enablePrinting) {
         println("inputs for layer %d".format(layer))
@@ -78,9 +76,6 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
         print(matrixToString(biases(layer)))
         println();
       }
-
-      signs(layer) = signed.litValue
-      fixedPoints(layer) = BigInt(fixedPoint)
     }
 
     val mappedInputs = Mapping.mapInputs(inputs)
@@ -98,7 +93,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
 
     "AcceleratorSpec should calculate correctly for test %d".format(testNum) in {
-      test(new Accelerator(w, wStore, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signs, fixedPoints, true)) { dut =>
+      test(new Accelerator(w, wStore, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signed, fixedPoint, true)) { dut =>
         // for each layer
         for (layer <- 0 until layers) {
           dut.io.startCalculation.poke(true.B) // start the calculation
@@ -111,7 +106,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
           if (enablePrinting) {
             println("Layer %d result".format(layer))
             for (i <- 0 until xDimension * yDimension) {
-              print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoints(layer).toInt, w, signs(layer) == 1).toString() + " ")
+              print(FixedPointConversion.fixedToFloat(dut.io.dataOutW(i).peekInt().toInt, fixedPoint, w, signed).toString() + " ")
             }
             println()
           }

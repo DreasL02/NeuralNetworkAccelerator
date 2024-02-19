@@ -10,7 +10,6 @@ class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimensio
     val c = Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W))))
 
     val clear = Input(Bool()) // clears all registers in the PEs
-    val valid = Output(Bool()) // indicates that the systolic array should be done
   })
 
   // Output stationary systolic array
@@ -20,16 +19,6 @@ class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimensio
   // and diagrams from:
   // http://ecelabs.njit.edu/ece459/lab3.php
 
-  val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
-
-  def timer(max: Int, reset: Bool) = { // timer that counts up to max and then resets, can also be reset manually by asserting reset
-    val x = RegInit(0.U(log2Ceil(max + 1).W))
-    val done = x === max.U // done when x reaches max
-    x := Mux(done || reset, 0.U, x + 1.U) // reset when done or reset is asserted, otherwise increment
-    done
-  }
-
-  io.valid := timer(CYCLES_UNTIL_VALID, io.clear) // valid when timer is done
 
   // https://stackoverflow.com/questions/33621533/how-to-do-a-vector-of-modules
   val processingElements = VecInit.fill(xDimension, yDimension)(Module(new ProcessingElement(w, wStore, signed)).io)

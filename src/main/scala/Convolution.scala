@@ -3,8 +3,9 @@ import chisel3.util.log2Ceil
 import systolic_array.SystolicArray
 import utils.Optional._
 
-// Describe the convolution module using N systolic arrays in parallel to calculate the convolution of an input and a kernel matrix
+// Describe the convolution module using N element wise multipliers in parallel to calculate the convolution of an input and a kernel matrix
 // The output of each systolic array is then summed and inserted into the output matrix at the correct position
+
 // The arguments are as follows:
 // w: Int - the bit width of the input and kernel matrices
 // wStore: Int - the bit width of the output matrix
@@ -27,11 +28,6 @@ import utils.Optional._
 
 // ONNX Convolution Pseudo Code:
 // Y[b, o, x, y] = sum(i, kx, ky) (W[o, i, kx, ky] * X[b, i, x * stride_x + kx * dilation_x - pad_x, y * stride_y + ky * dilation_y - pad_y]) + B[o]
-// So to model this in Chisel, we need to calculate the convolution of X and W, and then add B to the result
-// We can use a series of systolic arrays to calculate the convolution, and then use a series of adders to add B to the result
-// As each systolic arrays calculates the convolution of a single channel,
-// we can use N systolic arrays in parallel to calculate the matrix multiplication of X and W for each channel
-// and then sum the results to get the final output matrix
 
 
 class Convolution(w: Int = 8, wStore: Int = 32,
@@ -48,16 +44,10 @@ class Convolution(w: Int = 8, wStore: Int = 32,
   })
 
 
-  val systolicArrays = for (i <- 0 until numberOfChannels) yield { // create array of systolic arrays for each channel
-    val systolicArray = Module(new SystolicArray(w, wStore, 4, 4)) // create systolic array
-    systolicArray // return module
-  }
-
-  // For each systolic array, connect the inputs and weights to the input matrix and kernel matrix
-  for (i <- 0 until numberOfChannels) {
-    systolicArrays(i).io.a := io.X(i)
-    systolicArrays(i).io.b := io.W(i)
-
-
+  val elementWiseMultipliers = for (i <- 0 until numberOfChannels) yield { // create array of element wise multipliers
+    val multiplier = Module(new SystolicArray(w, wStore, kernelDimensions._1, kernelDimensions._2))
+    multiplier.io.a := io.X(i) // should be a image of a slide of the input matrix not the entire matrix
+    multiplier.io.b := io.W(i)
+    multiplier
   }
 }
