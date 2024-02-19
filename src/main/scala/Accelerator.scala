@@ -6,7 +6,7 @@ import utils.Optional.optional
 
 // Top level module for the accelerator
 class Accelerator(w: Int = 8, // width of the data
-                  wStore: Int = 32,
+                  wBig: Int = 32,
                   xDimension: Int = 4, // dimension of the matrices
                   yDimension: Int = 4, // dimension of the matrices
                   initialInputsMemoryState: Array[Array[BigInt]], // initial state of the input memory
@@ -34,7 +34,7 @@ class Accelerator(w: Int = 8, // width of the data
 
     val debugMatrixMemory1 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(w.W))))
     val debugMatrixMemory2 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(w.W))))
-    val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(wStore.W))))
+    val debugMatrixMemory3 = optional(enableDebuggingIO, Output(Vec(xDimension * yDimension, UInt(wBig.W))))
     val debugAddress = optional(enableDebuggingIO, Output(UInt(log2Ceil(initialInputsMemoryState(0).length).W)))
   })
 
@@ -75,12 +75,12 @@ class Accelerator(w: Int = 8, // width of the data
 
   val addressManager = Module(new AddressManager(initialInputsMemoryState(0).length))
 
-  val memories = Module(new Memories(w, wStore, xDimension, yDimension, initialInputsMemoryState, initialWeightsMemoryState,
+  val memories = Module(new Memories(w, wBig, xDimension, yDimension, initialInputsMemoryState, initialWeightsMemoryState,
     initialBiasMemoryState))
 
   val layerFSM = Module(new LayerFSM)
 
-  val layerCalculator = Module(new LayerCalculator(w, wStore, xDimension, yDimension, signed, fixedPoint, enableDebuggingIO))
+  val layerCalculator = Module(new LayerCalculator(w, wBig, xDimension, yDimension, signed, fixedPoint, enableDebuggingIO))
 
   // Determine if address should be incremented (if either of the FSM say so)
   addressManager.io.incrementAddress := io.incrementAddress || layerFSM.io.incrementAddress

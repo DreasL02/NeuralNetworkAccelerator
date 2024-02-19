@@ -2,7 +2,14 @@ import chisel3._
 
 
 // Module for doing a max pooling operation on a matrix. Arguments are: bit-width, kernel shape, pads, and strides, input and output dimensions.
-class MaxPooler(w: Int = 8, kernelShape: (Int, Int) = (2, 2), pads: (Int, Int) = (0, 0), strides: (Int, Int) = (2, 2), xDimension: Int = 4, yDimension: Int = 4) extends Module {
+class MaxPooler(
+                 w: Int = 8,
+                 kernelShape: (Int, Int) = (2, 2),
+                 pads: (Int, Int) = (0, 0),
+                 strides: (Int, Int) = (2, 2),
+                 xDimension: Int = 4,
+                 yDimension: Int = 4
+               ) extends Module {
   val io = IO(new Bundle {
     val inputs = Input(Vec(xDimension, Vec(yDimension, UInt(w.W))))
     val result = Output(Vec((xDimension - kernelShape._1 + 2 * pads._1) / strides._1 + 1, Vec((yDimension - kernelShape._2 + 2 * pads._2) / strides._2 + 1, UInt(w.W))))

@@ -3,11 +3,11 @@ package systolic_array
 import chisel3._
 import chisel3.util.log2Ceil
 
-class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true) extends Module {
+class SystolicArray(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val a = Input(Vec(yDimension, UInt(w.W))) // values shifted in from the left, equal to the number of columns in the systolic array
     val b = Input(Vec(xDimension, UInt(w.W))) // values shifted in from the top, equal to the number of rows in the systolic array
-    val c = Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W))))
+    val c = Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W))))
 
     val clear = Input(Bool()) // clears all registers in the PEs
   })
@@ -21,7 +21,7 @@ class SystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimensio
 
 
   // https://stackoverflow.com/questions/33621533/how-to-do-a-vector-of-modules
-  val processingElements = VecInit.fill(xDimension, yDimension)(Module(new ProcessingElement(w, wStore, signed)).io)
+  val processingElements = VecInit.fill(xDimension, yDimension)(Module(new ProcessingElement(w, wBig, signed)).io)
 
   for (row <- 0 until xDimension) {
     for (column <- 0 until yDimension) {

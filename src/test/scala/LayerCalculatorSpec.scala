@@ -9,7 +9,7 @@ import utils.RandomData.randomMatrix
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
-  val wStore = 4 * w
+  val wBig = 4 * w
   val xDimension = 3
   val yDimension = xDimension // Only square matrices for now
   val matrixCommonDimension = 3
@@ -39,7 +39,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
     val enablePrinting = printing(testNum)
 
     "LayerCalculator should calculate correctly for test %d".format(testNum) in {
-      test(new LayerCalculator(w = w, wStore = wStore, xDimension = xDimension, yDimension = yDimension, signed = signed, fixedPoint = fixedPoint, enableDebuggingIO = true)) { dut =>
+      test(new LayerCalculator(w = w, wBig = wBig, xDimension = xDimension, yDimension = yDimension, signed = signed, fixedPoint = fixedPoint, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 3))
         var weightsFloat = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 3 + 1))
         var biasesFloat = randomMatrix(xDimension, yDimension, min, max, seeds(testNum * 3 + 2))
@@ -53,7 +53,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         val inputsFixed = convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed)
         val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed)
-        val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint * 2, wStore, signed)
+        val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint * 2, wBig, signed)
         val biasesFixedForTesting = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed)
 
         val multiplicationResultFixed = calculateMatrixMultiplication(inputsFixed, weightsFixed)

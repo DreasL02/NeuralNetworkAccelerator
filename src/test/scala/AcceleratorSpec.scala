@@ -9,7 +9,7 @@ import utils.RandomData.randomMatrix
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
-  val wStore = 4 * w
+  val wBig = 4 * w
   val xDimension = 3
   val yDimension = xDimension // Only square matrices for now
   val matrixCommonDimension = 3
@@ -65,7 +65,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       inputs(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat(layer), fixedPoint, w, signed)
       weights(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(weightsFloat(layer), fixedPoint, w, signed)
-      biases(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesFloat(layer), fixedPoint * 2, wStore, signed)
+      biases(layer) = FixedPointConversion.convertFloatMatrixToFixedMatrix(biasesFloat(layer), fixedPoint * 2, wBig, signed)
 
       if (enablePrinting) {
         println("inputs for layer %d".format(layer))
@@ -93,7 +93,7 @@ class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
 
     "AcceleratorSpec should calculate correctly for test %d".format(testNum) in {
-      test(new Accelerator(w, wStore, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signed, fixedPoint, true)) { dut =>
+      test(new Accelerator(w, wBig, xDimension, yDimension, mappedInputs, mappedWeights, mappedBiases, signed, fixedPoint, true)) { dut =>
         // for each layer
         for (layer <- 0 until layers) {
           dut.io.startCalculation.poke(true.B) // start the calculation

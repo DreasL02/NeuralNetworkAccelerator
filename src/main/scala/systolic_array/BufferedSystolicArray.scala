@@ -3,7 +3,7 @@ import chisel3.util.log2Ceil
 import systolic_array.SystolicArray
 import utils.Optional.optional
 
-class BufferedSystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, enableDebuggingIO: Boolean = true // enable debug signals for testing
+class BufferedSystolicArray(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, enableDebuggingIO: Boolean = true // enable debug signals for testing
                            ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
@@ -12,11 +12,11 @@ class BufferedSystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, y
     val weights = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
-    val result = Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))) // result of layer
+    val result = Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))) // result of layer
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W))))
-    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
+    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
   })
 
   val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
@@ -42,7 +42,7 @@ class BufferedSystolicArray(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, y
     buffer // return module
   }
 
-  val systolicArray = Module(new SystolicArray(w, wStore, xDimension, yDimension, signed))
+  val systolicArray = Module(new SystolicArray(w, wBig, xDimension, yDimension, signed))
 
   // Connect buffers to signals
   for (i <- 0 until yDimension) {

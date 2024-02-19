@@ -11,7 +11,7 @@ import utils.FixedPointConversion._
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
-  val wStore = 4 * w
+  val wBig = 4 * w
   val xDimension = 4
   val yDimension = 2
   val matrixCommonDimension = 3
@@ -41,7 +41,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
     "SystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new SystolicArray(w, wStore, xDimension, yDimension, signed)) { dut =>
+      test(new SystolicArray(w, wBig, xDimension, yDimension, signed)) { dut =>
         var m1f = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 2))
         var m2f = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 2 + 1))
 

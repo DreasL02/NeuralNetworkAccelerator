@@ -4,7 +4,7 @@ import memories._
 
 // Memory module that contains all the memories used for the accelerator
 class Memories(w: Int = 8,
-               wStore: Int = 32,
+               wBig: Int = 32,
                xDimension: Int = 4,
                yDimension: Int = 4,
                initialInputsMemoryState: Array[Array[BigInt]],
@@ -17,7 +17,7 @@ class Memories(w: Int = 8,
     val readEnable = Input(Bool())
     val inputsRead = Output(Vec(xDimension * yDimension, UInt(w.W)))
     val weightsRead = Output(Vec(xDimension * yDimension, UInt(w.W)))
-    val biasRead = Output(Vec(xDimension * yDimension, UInt(wStore.W)))
+    val biasRead = Output(Vec(xDimension * yDimension, UInt(wBig.W)))
 
     val writeEnable = Input(Bool())
     val inputsWrite = Input(Vec(xDimension * yDimension, UInt(w.W)))
@@ -26,7 +26,7 @@ class Memories(w: Int = 8,
   // Initialize memories using the vectorized initial states
   val inputsMemory = Module(new MatrixSyncRAM(w, xDimension, yDimension, initialInputsMemoryState))
   val weightsMemory = Module(new MatrixROM(w, xDimension, yDimension, initialWeightsMemoryState))
-  val biasMemory = Module(new MatrixROM(wStore, xDimension, yDimension, initialBiasMemoryState))
+  val biasMemory = Module(new MatrixROM(wBig, xDimension, yDimension, initialBiasMemoryState))
 
 
   // Matrix memories

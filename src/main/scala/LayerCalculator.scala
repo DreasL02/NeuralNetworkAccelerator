@@ -4,28 +4,28 @@ import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
 import utils.Optional.optional
 
-class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, fixedPoint: Int = 0, enableDebuggingIO: Boolean = true // enable debug signals for testing
+class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, fixedPoint: Int = 0, enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
 
     val inputs = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
     val weights = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
-    val biases = Input(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))) // should only be used when load is true
+    val biases = Input(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))) // should only be used when load is true
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
     val result = Output(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // result of layer
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W))))
-    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
-    val debugBiases = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
-    val debugRounderInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
-    val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
+    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
+    val debugBiases = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
+    val debugRounderInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
+    val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
   })
 
 
-  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wStore, xDimension, yDimension, signed, enableDebuggingIO))
+  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wBig, xDimension, yDimension, signed, enableDebuggingIO))
   bufferedSystolicArray.io.load := io.load
   bufferedSystolicArray.io.inputs := io.inputs
   bufferedSystolicArray.io.weights := io.weights
@@ -38,14 +38,14 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
 
   // Addition of biases
-  val accumulator = Module(new Accumulator(wStore, xDimension, yDimension))
+  val accumulator = Module(new Accumulator(wBig, xDimension, yDimension))
   for (row <- 0 until xDimension) {
     for (column <- 0 until yDimension) {
       // Map results from systolic array in column-major order to accumulator in row-major order
       accumulator.io.values(row)(column) := bufferedSystolicArray.io.result(column)(row) //TODO: Handle this correctly in the systolic array
 
       // Continuously emit bias values
-      val biasReg = RegInit(0.U(wStore.W))
+      val biasReg = RegInit(0.U(wBig.W))
       when(io.load) {
         biasReg := io.biases(row)(column) // replace bias value
       }
@@ -63,7 +63,7 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     io.debugRounderInputs.get := accumulator.io.result
   }
 
-  val rounder = Module(new Rounder(w, wStore, xDimension, yDimension, signed, fixedPoint))
+  val rounder = Module(new Rounder(w, wBig, xDimension, yDimension, signed, fixedPoint))
   rounder.io.input := accumulator.io.result
 
   if (enableDebuggingIO) {

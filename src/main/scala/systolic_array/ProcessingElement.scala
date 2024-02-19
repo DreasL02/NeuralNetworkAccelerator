@@ -8,21 +8,21 @@ import chisel3.util.log2Ceil
 // and
 // http://ecelabs.njit.edu/ece459/lab3.php
 
-class ProcessingElement(w: Int = 8, wStore: Int = 32, signed: Boolean = true) extends Module {
+class ProcessingElement(w: Int = 8, wBig: Int = 32, signed: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val aIn = Input(UInt(w.W))
     val bIn = Input(UInt(w.W))
 
     val aOut = Output(UInt(w.W))
     val bOut = Output(UInt(w.W))
-    val cOut = Output(UInt(wStore.W))
+    val cOut = Output(UInt(wBig.W))
 
     val clear = Input(Bool())
   })
 
   val aReg = RegInit(0.U(w.W))
   val bReg = RegInit(0.U(w.W))
-  val cReg = RegInit(0.U(wStore.W))
+  val cReg = RegInit(0.U(wBig.W))
 
   val multiplicationOperation = Wire(UInt((w + w).W))
 
