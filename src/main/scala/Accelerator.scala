@@ -14,6 +14,7 @@ class Accelerator(w: Int = 8, // width of the data
                   initialBiasMemoryState: Array[Array[BigInt]], // state of the bias memory
                   initialSignsMemoryState: Array[BigInt], // state of the signs memory
                   initialFixedPointsMemoryState: Array[BigInt], // state of the fixed points memory
+                  signed: Boolean = true, // signed or unsigned data
                   enableDebuggingIO: Boolean = true // enable debug signals for testing
                  ) extends Module {
 
@@ -80,7 +81,7 @@ class Accelerator(w: Int = 8, // width of the data
 
   val layerFSM = Module(new LayerFSM)
 
-  val layerCalculator = Module(new LayerCalculator(w, wStore, xDimension, yDimension))
+  val layerCalculator = Module(new LayerCalculator(w, wStore, xDimension, yDimension, signed, enableDebuggingIO))
 
   // Determine if address should be incremented (if either of the FSM say so)
   addressManager.io.incrementAddress := io.incrementAddress || layerFSM.io.incrementAddress
@@ -106,7 +107,6 @@ class Accelerator(w: Int = 8, // width of the data
   layerCalculator.io.inputs := convertVecToMatrix(memories.io.inputsRead) // map from vector to matrix, as the calculator expects a matrix
   layerCalculator.io.weights := convertVecToMatrix(memories.io.weightsRead) // map from vector to matrix, as the calculator expects a matrix
   layerCalculator.io.biases := convertVecToMatrix(memories.io.biasRead) // map from vector to matrix, as the calculator expects a matrix
-  layerCalculator.io.signed := memories.io.signsRead(0) === 1.U //bool conversion, as the calculator expects a bool
   layerCalculator.io.fixedPoint := memories.io.fixedPointRead // pass on the fixed point value
 
   // Default values for writing to input memory

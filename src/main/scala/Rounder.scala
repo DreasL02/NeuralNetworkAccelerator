@@ -1,10 +1,9 @@
 import chisel3._
 import chisel3.util._
 
-class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int = 4) extends Module {
+class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val fixedPoint = Input(UInt(log2Ceil(w).W))
-    val signed = Input(Bool())
     val input = Input(Vec(xDimension, Vec(yDimension, UInt(wStore.W))))
     val output = Output(Vec(xDimension, Vec(yDimension, UInt(w.W))))
   })
@@ -12,7 +11,7 @@ class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int
 
   for (column <- 0 until xDimension) {
     for (row <- 0 until yDimension) {
-      when(io.signed) {
+      if (signed) {
         val sign = io.input(column)(row)(wStore - 1)
         when(io.fixedPoint === 0.U) {
           io.output(column)(row) := sign ## io.input(column)(row)(w - 1, 0)
@@ -24,7 +23,7 @@ class Rounder(w: Int = 8, wStore: Int = 16, xDimension: Int = 4, yDimension: Int
         }
 
 
-      }.otherwise {
+      } else {
         when(io.fixedPoint === 0.U) {
           // No fixed point, just pass through the bottom bits
           io.output(column)(row) := io.input(column)(row)

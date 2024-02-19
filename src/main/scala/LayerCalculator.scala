@@ -4,7 +4,7 @@ import chisel3.util.{ShiftRegister, log2Ceil}
 import systolic_array.SystolicArray
 import utils.Optional.optional
 
-class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, enableDebuggingIO: Boolean = true // enable debug signals for testing
+class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
@@ -12,7 +12,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     val inputs = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
     val weights = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
     val biases = Input(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))) // should only be used when load is true
-    val signed = Input(Bool()) // should only be used when load is true
     val fixedPoint = Input(UInt(log2Ceil(w).W)) // should only be used when load is true
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
@@ -26,14 +25,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wStore.W)))))
   })
 
-  val CYCLES_UNTIL_VALID: Int = xDimension * yDimension - 1 // number of cycles until the systolic array is done and the result is valid
-
-  def timer(max: Int, reset: Bool) = { // timer that counts up to max and then resets, can also be reset manually by asserting reset
-    val x = RegInit(0.U(log2Ceil(max + 1).W))
-    val done = x === max.U // done when x reaches max
-    x := Mux(done || reset, 0.U, x + 1.U) // reset when done or reset is asserted, otherwise increment
-    done
-  }
 
   //TODO check if correct
   val inputsBuffers = for (i <- 0 until yDimension) yield { // create array of buffers for inputs
@@ -68,11 +59,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     }
   }
 
-  // Continuously emit signed value
-  val signedReg = RegInit(false.B)
-  when(io.load) {
-    signedReg := io.signed // replace signed value
-  }
 
   // Continuously emit fixed point value
   val fixedPointReg = RegInit(0.U(log2Ceil(w).W))
@@ -80,7 +66,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
     fixedPointReg := io.fixedPoint // replace fixed point value
   }
 
-  systolicArray.io.signed := signedReg // connect signed value
   systolicArray.io.clear := io.load // clear systolic array when load is asserted
 
   // Addition of biases
@@ -111,7 +96,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
   val rounder = Module(new Rounder(w, wStore, xDimension, yDimension))
   rounder.io.fixedPoint := fixedPointReg
-  rounder.io.signed := signedReg
   rounder.io.input := accumulator.io.result
 
   if (enableDebuggingIO) {
@@ -120,7 +104,6 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
 
   // ReLU
   val rectifier = Module(new Rectifier(w, xDimension, yDimension))
-  rectifier.io.signed := signedReg
   rectifier.io.values := rounder.io.output
 
   // Add quantization step here
@@ -134,5 +117,5 @@ class LayerCalculator(w: Int = 8, wStore: Int = 32, xDimension: Int = 4, yDimens
   io.result := rectifier.io.result
 
   // Signal that the computation is valid
-  io.valid := timer(CYCLES_UNTIL_VALID, io.load)
+  io.valid := systolicArray.io.valid
 }
