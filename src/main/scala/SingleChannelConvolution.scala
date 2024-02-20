@@ -12,9 +12,22 @@ import utils.Optional._
 
 // ONNX Convolution Attributes:
 // auto_pad: String - the padding mode to use, can be "NOTSET", "SAME_UPPER", "SAME_LOWER", or "VALID"
-// dilations: Seq[Int] - the dilation to use for the convolution
-// group: Int - the number of groups to use for the convolution
+// - if auto_pad is "NOTSET", then the pads attribute will be used
+// - if auto_pad is "SAME_UPPER" or "SAME_LOWER", then the pads attribute will be calculated e.g. for SAME_UPPER:
+//    pad_x = ceil(input_height * stride_x - input_height + kernel_height - 1) / 2
+//    pad_y = ceil(input_width * stride_y - input_width + kernel_width - 1) / 2
+//  and for SAME_LOWER:
+//    pad_x = floor(input_height * stride_x - input_height + kernel_height - 1) / 2
+//    pad_y = floor(input_width * stride_y - input_width + kernel_width - 1) / 2
+// - if auto_pad is "VALID", then no padding will be used
+// This should probably be handled in python
+
+
+// dilations: Seq[Int] - the dilation to use for the convolution e.g how many pixels to skip when applying the kernel
+// group: Int - the number of groups to use for the convolution e.g. if group is 2, then the input and kernel will be
+//                                     split into 2 groups and the convolution will be done separately for each group
 // kernel_shape: Seq[Int] - the shape of the kernel
+
 // pads: Seq[Int] - the padding to use for the convolution
 // strides: Seq[Int] - the stride to use for the convolution
 
@@ -33,14 +46,14 @@ import utils.Optional._
 
 
 // this module will only do convolution for a single channel
-class Convolution(w: Int = 8, wBig: Int = 32,
-                  inputDimensions: (Int, Int) = (32, 32), // the dimensions of the input matrix
-                  kernelDimensions: (Int, Int) = (3, 3), // the dimensions of the kernel matrix
-                  diliations: (Int, Int) = (1, 1), // the diliations to use for the convolution
-                  group: Int = 1, // the number of groups to use for the convolution
-                  strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-                  pads: (Int, Int, Int, Int) = (0, 0, 0, 0) // the padding to use for the convolution
-                 ) extends Module {
+class SingleChannelConvolution(w: Int = 8, wBig: Int = 32,
+                               inputDimensions: (Int, Int) = (32, 32), // the dimensions of the input matrix
+                               kernelDimensions: (Int, Int) = (3, 3), // the dimensions of the kernel matrix
+                               diliations: (Int, Int) = (1, 1), // the diliations to use for the convolution
+                               group: Int = 1, // the number of groups to use for the convolution
+                               strides: (Int, Int) = (1, 1), // the stride to use for the convolution
+                               pads: (Int, Int, Int, Int) = (0, 0, 0, 0) // the padding to use for the convolution
+                              ) extends Module {
   val io = IO(new Bundle {
     val X = Input(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(w.W)))) // the input matrix
     val W = Input(Vec(kernelDimensions._1, Vec(kernelDimensions._2, UInt(w.W)))) // the kernel matrix
