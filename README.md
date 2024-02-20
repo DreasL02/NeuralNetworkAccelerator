@@ -13,6 +13,7 @@ Ivan Hansgaard Hansen (s214378)
 ## Repository Structure
 
 The project is split into two main parts:
+
 - The hardware accelerator, implemented in Chisel. Can be found in the [src](src) folder.
 - The software interface, implemented in C#. Can be found in the [Interface](Interface) folder.
 
@@ -54,7 +55,8 @@ the CPU to
 an FPGA, which can be tailored to be more efficient at these types of operations, mainly by reducing the amount of
 memory access.
 The main way of achieving this is treating matrices as the primitive datatype, as opposed to a scalar.
-By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive operation.
+By fetching entire matrices at a time, there is no need to fetch each element individually, which is a time expensive
+operation.
 This is especially true for large matrices, which are common in neural networks (see below).
 
 By making a scalable design in the FPGA, the performance costs can as well be fitted to the requirements of the Neural
@@ -156,7 +158,8 @@ will be stored across all c values after N * N - 1 clock cycles.
     </p>
 </figure>
 
-A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the animated GIF below
+A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the animated GIF
+below
 or as a PDF [`here`](docs/systolic_array_example.pdf).
 
 <figure>
@@ -214,7 +217,7 @@ There is taken no care to ensure that the result is representable in the defined
 which can cause error if overflow occurs.
 
 It can found described in the
-[`Accumulator`](src/main/scala/Accumulator.scala) module.
+[`Accumulator`](src/main/scala/Adders.scala) module.
 
 ### Rectifier
 
@@ -310,7 +313,6 @@ The configuration memories are encoded as follows for respectively the fixed poi
 
 The input memory is implemented as a read-write memory, while the remaining memories are implemented as read-only
 
-
 All memories are currently implemented as registers to comply with the Basys3 board and to allow for easy
 implementation.
 
@@ -356,7 +358,8 @@ and biases into the buffers from the memories. Various values within the datapat
 reset to accommodate the incoming values.
 
 When the loading is finished after a clock cycle, the FSM will transition to the Calculating state, where it will start
-the systolic array and accumulator. After NxN - 1 cycles, the datapath will be finished calculating the result and a 'valid' signal will be asserted.
+the systolic array and accumulator. After NxN - 1 cycles, the datapath will be finished calculating the result and a '
+valid' signal will be asserted.
 
 When the 'valid' signal is asserted, the FSM will transition to the Write state, where it will
 write the result to the output memory.
@@ -374,39 +377,57 @@ reasserted.
 To facilitate communication with the accelerator, a UART interface has been implemented.
 
 UART is a serial communication protocol. Data frames are composed of (in order):
+
 - Start bit (logic 0)
 - `n` data bits
 - Stop bit(s) (logic 1)
 
-Support for the raw UART protocol support is provided via a slightly modified version of the [`UART`](https://github.com/freechipsproject/ip-contributions/blob/master/src/main/scala/chisel/lib/uart/Uart.scala) Rx and Tx modules by Martin Schoeberl. These modules implement UART using 8 data bits and 2 stop bits, a so called `8N2` configuration.
+Support for the raw UART protocol support is provided via a slightly modified version of
+the [`UART`](https://github.com/freechipsproject/ip-contributions/blob/master/src/main/scala/chisel/lib/uart/Uart.scala)
+Rx and Tx modules by Martin Schoeberl. These modules implement UART using 8 data bits and 2 stop bits, a so called `8N2`
+configuration.
 
-It may be tempting to arbitrarily increase the number of data bits to increase the throughput of the communication. However, this is not viable in practice, as clock skew between the transmitting and receiving device will cause the bits to become misaligned with time.
+It may be tempting to arbitrarily increase the number of data bits to increase the throughput of the communication.
+However, this is not viable in practice, as clock skew between the transmitting and receiving device will cause the bits
+to become misaligned with time.
 
-Instead, we implement buffering on both the transmitting and receiving side. This allows us to transmit and receive data in larger chunks, while still maintaining synchronization between the FPGA and the host computer.
+Instead, we implement buffering on both the transmitting and receiving side. This allows us to transmit and receive data
+in larger chunks, while still maintaining synchronization between the FPGA and the host computer.
 
 #### DecoupledIO
 
-Since I/O is slow and unpredictable, we use the `DecoupledIO` interface to communicate between the I/O and the rest of the accelerator.
+Since I/O is slow and unpredictable, we use the `DecoupledIO` interface to communicate between the I/O and the rest of
+the accelerator.
 
-DecoupledIO is esentially a channel with a ready-valid interface. This allows the consuming end of the channel to signal when it is ready to receive data, and the producing end to signal when it has data available - this allows the two ends to operate at different speeds. When both ends are ready, data is transferred.
+DecoupledIO is esentially a channel with a ready-valid interface. This allows the consuming end of the channel to signal
+when it is ready to receive data, and the producing end to signal when it has data available - this allows the two ends
+to operate at different speeds. When both ends are ready, data is transferred.
 
 #### Receiver
 
-The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When the vector is full, the buffer asserts the `valid` signal.
+The receiver features a deserializing byte buffer. This is implemented as a Vector of registers, where each register
+holds a byte. Every time the UART receiver has received a byte, it is stored in the next register in the vector. When
+the vector is full, the buffer asserts the `valid` signal.
 
-Then, when the consumer is ready to receive data, it asserts the `ready` signal. When both `ready` and `valid` are asserted, the buffer transfers the data to the consumer, and the buffer is reset.
+Then, when the consumer is ready to receive data, it asserts the `ready` signal. When both `ready` and `valid` are
+asserted, the buffer transfers the data to the consumer, and the buffer is reset.
 
 #### Transmitter
 
-The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded immediately when `valid` is asserted on the buffer input. When the UART is ready to transmit, it asserts the `ready` signal, moving on to the next byte.
+The transmitter features a serializing byte buffer. This is similar to the receiver, except that all bytes are loaded
+immediately when `valid` is asserted on the buffer input. When the UART is ready to transmit, it asserts the `ready`
+signal, moving on to the next byte.
 
 Once all bytes have been transmitted, the buffer asserts the `ready` signal.
 
 #### Protocol
 
-Communication with the accelerator is done through a simple protocol. The protocol is based on a series of commands, which are sent from the host computer to the FPGA. The FPGA then responds with either an OK signal or the requested data.
+Communication with the accelerator is done through a simple protocol. The protocol is based on a series of commands,
+which are sent from the host computer to the FPGA. The FPGA then responds with either an OK signal or the requested
+data.
 
 The commands are:
+
 - `NextInputs`: Load the next inputs into the input buffer.
 - `NextTransmitting`: Start transmitting.
 - `NextCalculating`: Start calculating.
@@ -416,15 +437,20 @@ The commands are:
 
 The communication FSM is implemented in the [`Communicator`](src/main/scala/communicatation/Communicator.scala) module.
 
-The Communicator serves as a bridge between the UART and the accelerator. As the UART operates in bytes, the Communicator is responsible for parsing the bytes into either commands or data. As the accelerator operates on a configurable bit width, special care must be taken to pack/unpack the bytes into the correct format.
+The Communicator serves as a bridge between the UART and the accelerator. As the UART operates in bytes, the
+Communicator is responsible for parsing the bytes into either commands or data. As the accelerator operates on a
+configurable bit width, special care must be taken to pack/unpack the bytes into the correct format.
 
 The FSM has the following states:
+
 - `receivingOpcodes`: Waiting for an opcode. This is the default and idle state.
 - `respondingWithOKSignal`: Responding with an OK signal. This state is entered when an opcode has been processed.
-- `incrementingAddress`: Incrementing the address counter. This state is entered when the `NextAddress` command is received.
+- `incrementingAddress`: Incrementing the address counter. This state is entered when the `NextAddress` command is
+  received.
 - `receivingData`: Waiting for data. This state is entered when the `NextInputs` opcode is received.
 - `sendingData`: Transmitting data. This state is entered when the `NextTransmitting` command is received.
-- `waitForExternalCalculation`: Calculating. This state is entered when the `NextCalculating` command is received. This state waits for calculation to finish, and then returns to the `respondingWithOKSignal` state.
+- `waitForExternalCalculation`: Calculating. This state is entered when the `NextCalculating` command is received. This
+  state waits for calculation to finish, and then returns to the `respondingWithOKSignal` state.
 
 <figure>
     <p align = "center">
@@ -436,43 +462,50 @@ The FSM has the following states:
 </figure>
 
 ### Top-level
+
 The communication module is then connected to the datapath, its controller and the memories in the
 [`Accelerator`](src/main/scala/Top.scala) module.
 This module functions as the top-level module of the accelerator.
 It provides a series of debug signals to allow for inspection of the internal state of the accelerator.
 
 ## Unit Tests
+
 To verify the functionality of the accelerator, a series of unit tests have been written.
 These can be found in the [`test`](src/test/scala) folder.
 
 The tests roughly corresponds to the different modules in the design.
 
 A subset of the tests are listed below:
+
 - A test of the systolic array, which tests the
-functionality of the systolic array and the rounder,
-with the possibility of easily matrix dimensions and fixed point format.
-It automatically compares the result of the systolic array to the result of a matrix multiplication in software,
-both in fixed point and inferred to floating point.
+  functionality of the systolic array and the rounder,
+  with the possibility of easily matrix dimensions and fixed point format.
+  It automatically compares the result of the systolic array to the result of a matrix multiplication in software,
+  both in fixed point and inferred to floating point.
 - A test of the entire layer function datapath, with the same functionality as the systolic array test.
 - A test of the shifted buffer module, confirming its behavior.
 - Various tests of the byte buffers.
 - A test for the entire Accelerator transmitting commands through the UART,
-and then inspecting the internal state of the accelerator. A custom UART encoder/decoder was written in Scala for this purpose.
+  and then inspecting the internal state of the accelerator. A custom UART encoder/decoder was written in Scala for this
+  purpose.
 
 Testing though UART commands proved to be a quite cumbersome process,
 as an enormous amount of cycles are required to transmit the data, thereby slowing down the testing framework.
 
 ## Synthesis
+
 Synthesis of the design was done using the AMD Vivado Design Suite 2023.2.
 The XDC file used for the target board can found [here](Basys3_Master.xdc).
 
 The utilization of the FPGA resources varies depending on the configuration of the accelerator.
 
-An interesting resource available in the Basys3 board is the DSP48E1 module, which is a dedicated DSP module that can be used to implement MAC operations.
+An interesting resource available in the Basys3 board is the DSP48E1 module, which is a dedicated DSP module that can be
+used to implement MAC operations.
 The module is capable of performing a 25x18 bit multiplication and a 48 bit addition in a single clock cycle [2].
 It is therefore perfect for implementing the MAC operation in the PE, when remaining below the bit width limit of 18.
 
-Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different configurations of a three layer network where fixed point is disabled and the values are unsigned:
+Below is a table of the utilization of the FPGA resources as reported by Vivado for the synthesis of different
+configurations of a three layer network where fixed point is disabled and the values are unsigned:
 
 | Dimensions of matrix | Bit width | Slice LUTs <br/>(20800 total) | Slice Registers <br/>(41600 total) | DSPs <br/>(90 total) |
 |----------------------|-----------|-------------------------------|------------------------------------|----------------------|
@@ -499,8 +532,8 @@ The design seems to quickly use up the available LUTs.
 When examining the split of LUTs on different components, surprisingly the address counter uses a large amount of LUTs.
 This could perhaps be removed by switching to a non-register memory, but this would require a redesign of the memory.
 
-
 ## Interfacing
+
 To interface with the accelerator an easy way to send commands and receive data though UART is needed.
 For this purpose a C# application was written, which can be found in the [Interface](Interface) folder.
 
@@ -508,7 +541,6 @@ C# was chosen due to our familiarity with the language, and good support for ser
 
 The application is a simple console application, which couples up to an instance of an Interface class.
 This allows for simple commands such as `transmit`, `calculate` etc.
-
 
 ## References
 

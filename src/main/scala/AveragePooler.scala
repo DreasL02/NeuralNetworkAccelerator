@@ -21,6 +21,7 @@ class AveragePooler(
   val xOutputDimension = (xDimension - kernelShape._1 + 2 * pads._1) / strides._1 + 1
   val yOutputDimension = (yDimension - kernelShape._2 + 2 * pads._2) / strides._2 + 1
 
+  // TODO: convert this to fixed point
   val reciprocalNumberOfKernalElements = 1.U(w.W) / (kernelShape._1 * kernelShape._2).U(w.W)
 
   for (i <- 0 until xOutputDimension) {

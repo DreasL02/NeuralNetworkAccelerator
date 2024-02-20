@@ -3,7 +3,13 @@ import chisel3.util.log2Ceil
 import systolic_array.SystolicArray
 import utils.Optional.optional
 
-class BufferedSystolicArray(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, enableDebuggingIO: Boolean = true // enable debug signals for testing
+class BufferedSystolicArray(
+                             w: Int = 8,
+                             wBig: Int = 32,
+                             xDimension: Int = 4,
+                             yDimension: Int = 4,
+                             signed: Boolean = true,
+                             enableDebuggingIO: Boolean = true
                            ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values

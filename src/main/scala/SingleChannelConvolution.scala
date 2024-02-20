@@ -20,7 +20,7 @@ import utils.Optional._
 //    pad_x = floor(input_height * stride_x - input_height + kernel_height - 1) / 2
 //    pad_y = floor(input_width * stride_y - input_width + kernel_width - 1) / 2
 // - if auto_pad is "VALID", then no padding will be used
-// This should probably be handled in python
+// This should probably be handled in python?
 
 
 // dilations: Seq[Int] - the dilation to use for the convolution e.g how many pixels to skip when applying the kernel
@@ -36,6 +36,8 @@ import utils.Optional._
 // W: Tensor - the kernel tensor, a 4D tensor in the format [output_channel, input_channel, kernel_height, kernel_width]
 // B: Tensor - the bias tensor, a 1D tensor in the format [output_channel]
 
+// NB: not much documentation on the bias tensor, and as it is optional, it is not included in this module
+
 // batch size is assumed to be 1 always, i.e. only one image is processed at a time
 
 // ONNX Convolution Outputs:
@@ -46,23 +48,26 @@ import utils.Optional._
 
 
 // this module will only do convolution for a single channel
-class SingleChannelConvolution(w: Int = 8, wBig: Int = 32,
+class SingleChannelConvolution(w: Int = 8,
+                               wBig: Int = 32,
                                inputDimensions: (Int, Int) = (32, 32), // the dimensions of the input matrix
                                kernelDimensions: (Int, Int) = (3, 3), // the dimensions of the kernel matrix
                                diliations: (Int, Int) = (1, 1), // the diliations to use for the convolution
-                               group: Int = 1, // the number of groups to use for the convolution
                                strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-                               pads: (Int, Int, Int, Int) = (0, 0, 0, 0) // the padding to use for the convolution
+                               pads: (Int, Int) = (0, 0) // the padding to use for the convolution
                               ) extends Module {
   val io = IO(new Bundle {
     val X = Input(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(w.W)))) // the input matrix
     val W = Input(Vec(kernelDimensions._1, Vec(kernelDimensions._2, UInt(w.W)))) // the kernel matrix
-    val B = Input(UInt(wBig.W)) // the bias value
 
     val Y = Output(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(wBig.W)))) // the output matrix
 
   })
 
+  val numberOfSlices = inputDimensions._1 * inputDimensions._2
+
+
+  // TODO: factor in the padding and stride
   val inputSlices = for (i <- 0 until inputDimensions._1) yield {
     for (j <- 0 until inputDimensions._2) yield {
       val slice = Wire(Vec(kernelDimensions._1, Vec(kernelDimensions._2, UInt(w.W)))
@@ -76,6 +81,8 @@ class SingleChannelConvolution(w: Int = 8, wBig: Int = 32,
     }
   }
 
+
+  // TODO: factor in dilation
   val elementWiseMultipliers = for (i <- 0 until inputDimensions._1) yield {
     for (j <- 0 until inputDimensions._2) yield {
       val elementWiseMultiplier = Module(new ElementWiseMultiplier(w, wBig, kernelDimensions._1, kernelDimensions._2))
@@ -85,9 +92,20 @@ class SingleChannelConvolution(w: Int = 8, wBig: Int = 32,
     }
   }
 
-  val summer = for (i <- 0 until inputDimensions._1) yield {
-    val summer = Module(new Summer(wBig, inputDimensions._1, inputDimensions._2))
+  // sum the results of the element wise multipliers
+  val summer = for (i <- 0 until numberOfSlices) yield {
+    val summer = Module(new Summer(wBig, kernelDimensions._1, kernelDimensions._2))
     summer.io.inputs := elementWiseMultipliers(i)
     summer.io.result
   }
+
+  val result = Wire(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(wBig.W))))
+  for (i <- 0 until inputDimensions._1) {
+    for (j <- 0 until inputDimensions._2) {
+      result(i)(j) := summer(i * inputDimensions._2 + j)
+    }
+  }
+
+
+  io.Y := result
 }

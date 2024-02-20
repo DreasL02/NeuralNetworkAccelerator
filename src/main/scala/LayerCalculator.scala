@@ -38,11 +38,11 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
 
 
   // Addition of biases
-  val accumulator = Module(new Accumulator(wBig, xDimension, yDimension))
+  val adders = Module(new Adders(wBig, xDimension, yDimension))
   for (row <- 0 until xDimension) {
     for (column <- 0 until yDimension) {
       // Map results from systolic array in column-major order to accumulator in row-major order
-      accumulator.io.values(row)(column) := bufferedSystolicArray.io.result(column)(row) //TODO: Handle this correctly in the systolic array
+      adders.io.values(row)(column) := bufferedSystolicArray.io.result(column)(row) //TODO: Handle this correctly in the systolic array
 
       // Continuously emit bias values
       val biasReg = RegInit(0.U(wBig.W))
@@ -50,7 +50,7 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
         biasReg := io.biases(row)(column) // replace bias value
       }
 
-      accumulator.io.biases(row)(column) := biasReg
+      adders.io.biases(row)(column) := biasReg
       if (enableDebuggingIO) {
         io.debugSystolicArrayResults.get(row)(column) := bufferedSystolicArray.io.result(column)(row)
         io.debugBiases.get(row)(column) := biasReg
@@ -60,11 +60,11 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
 
 
   if (enableDebuggingIO) {
-    io.debugRounderInputs.get := accumulator.io.result
+    io.debugRounderInputs.get := adders.io.result
   }
 
   val rounder = Module(new Rounder(w, wBig, xDimension, yDimension, signed, fixedPoint))
-  rounder.io.input := accumulator.io.result
+  rounder.io.input := adders.io.result
 
   if (enableDebuggingIO) {
     io.debugReLUInputs.get := rounder.io.output

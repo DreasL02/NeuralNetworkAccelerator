@@ -20,6 +20,4 @@ class ElementWiseMultiplier(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDi
       io.result(row)(column) := multiplicationOperation
     }
   }
-
-
 }
