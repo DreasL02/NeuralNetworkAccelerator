@@ -23,8 +23,8 @@ class BufferedSystolicArray(
     val valid = Output(Bool()) // indicates that the systolic array should be done
     val result = Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))) // result of layer
 
-    val debugInputs = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W))))
-    val debugWeights = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W))))
+    val debugInputs = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W))))
+    val debugWeights = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W))))
     val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
   })
 

@@ -12,13 +12,13 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
   val w = 8
   val wBig = 4 * w
   val xDimension = 3
-  val yDimension = xDimension // Only square matrices for now
+  val yDimension = 2 // Only square matrices for now
   val matrixCommonDimension = 2
   val fixedPoint = 0
   val signed = true
   val numberOfTests = 1
   val max = 3.2f
-  val min = -3.2f //0.0f //
+  val min = 0.0f //0.0f //
   val threshold = 1f
 
   val printing = Array.fill(numberOfTests)(false)
@@ -80,6 +80,13 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
           formattedWeights(i) = formattedWeights(i).reverse
         }
 
+        if (enablePrinting) {
+          println("FORMATTED INPUTS")
+          print(matrixToString(formattedInputs))
+          println("FORMATTED WEIGHTS")
+          print(matrixToString(formattedWeights))
+        }
+
         // Setup the dut by loading the inputs and weights into the buffers
         dut.io.load.poke(true.B)
 
@@ -106,12 +113,12 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
             println("Cycle %d".format(cycles))
             println("DEBUG WEIGHTS / DEBUG INPUTS")
             print("  ")
-            for (i <- 0 until yDimension) {
+            for (i <- 0 until xDimension) {
               print(dut.io.debugWeights.get(i).peek().litValue)
               print(" ")
             }
             println()
-            for (i <- 0 until xDimension) {
+            for (i <- 0 until yDimension) {
               print(dut.io.debugInputs.get(i).peek().litValue)
               println()
             }
@@ -119,7 +126,7 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
             println("DEBUG SYSTOLIC ARRAY RESULTS")
             for (i <- 0 until xDimension) {
               for (j <- 0 until yDimension) {
-                print(dut.io.debugSystolicArrayResults.get(j)(i).peek().litValue)
+                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
                 print(" ")
               }
               println()

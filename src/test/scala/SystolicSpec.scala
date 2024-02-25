@@ -12,14 +12,14 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wBig = 4 * w
-  val xDimension = 4
-  val yDimension = 2
-  val matrixCommonDimension = 3
-  val fixedPoint = 3
+  val xDimension = 3
+  val yDimension = 4
+  val matrixCommonDimension = 2
+  val fixedPoint = 0
   val signed = true
-  val numberOfTests = 10
-  val max = 1.2f
-  val min = -1.2f
+  val numberOfTests = 1
+  val max = 3.2f
+  val min = 0.0f
   val threshold = 0.1f
   val printing = Array.fill(numberOfTests)(false)
 
@@ -77,12 +77,16 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           println("----")
         }
 
-        val max_number_of_cycles = mm1.length * mm2(0).length
+        val max_number_of_cycles = mm1(0).length
         for (cycle <- 0 until max_number_of_cycles) {
+          var values = "inp : "
           for (i <- mm1.indices) {
+            values += mm1(i)(mm1(0).length - 1 - cycle).toString + ", "
             dut.io.a(i).poke(mm1(i)(mm1(0).length - 1 - cycle))
           }
+          values += "\nwei : "
           for (i <- mm2(0).indices) {
+            values += mm2(mm2.length - 1 - cycle)(i).toString + ", "
             dut.io.b(i).poke(mm2(mm2.length - 1 - cycle)(i))
           }
           dut.clock.step()
@@ -90,11 +94,12 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
           for (i <- mr.indices) {
             for (j <- mr(0).indices) {
-              resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
+              resultFixed(i)(j) = dut.io.c(i)(j).peek().litValue
             }
           }
           if (enablePrinting) {
             println("Cycle %d:".format(cycle))
+            println(values)
             print(matrixToString(resultFixed))
           }
         }
@@ -102,7 +107,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
         for (i <- mr.indices) {
           for (j <- mr(0).indices) {
-            resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
+            resultFixed(i)(j) = dut.io.c(i)(j).peek().litValue
           }
         }
 

@@ -75,21 +75,21 @@ object MatrixUtils {
   }
 
 
-  def convertMatrixToMappedAMatrix(m: Array[Array[BigInt]], scalar: Int): Array[Array[BigInt]] = {
-    val m_a: Array[Array[BigInt]] = Array.fill(m.length, m.length * scalar)(0)
+  def convertMatrixToMappedAMatrix(m: Array[Array[BigInt]], increment: Int): Array[Array[BigInt]] = {
+    val m_a: Array[Array[BigInt]] = Array.fill(m.length, m.length + increment)(0)
     for (i <- m.indices) {
       for (j <- m(0).indices) {
-        m_a(i)(m.length * scalar - 1 - i - j) = m(i)(m(0).length - 1 - j)
+        m_a(i)(m.length + increment - 1 - i - j) = m(i)(m(0).length - 1 - j)
       }
     }
     m_a
   }
 
-  def convertMatrixToMappedBMatrix(m: Array[Array[BigInt]], scalar: Int): Array[Array[BigInt]] = {
-    val m_b: Array[Array[BigInt]] = Array.fill(m(0).length * scalar, m(0).length)(0)
+  def convertMatrixToMappedBMatrix(m: Array[Array[BigInt]], increment: Int): Array[Array[BigInt]] = {
+    val m_b: Array[Array[BigInt]] = Array.fill(m(0).length + increment, m(0).length)(0)
     for (i <- m.indices) {
       for (j <- m(0).indices) {
-        m_b(m(0).length * scalar - 1 - i - j)(j) = m(m.length - 1 - i)(j)
+        m_b(m(0).length + increment - 1 - i - j)(j) = m(m.length - 1 - i)(j)
       }
     }
     m_b
