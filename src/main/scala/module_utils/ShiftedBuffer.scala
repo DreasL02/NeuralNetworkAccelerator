@@ -1,3 +1,5 @@
+package module_utils
+
 import chisel3._
 
 class ShiftedBuffer(w: Int = 8, dimension: Int = 4, shift: Int) extends Module {

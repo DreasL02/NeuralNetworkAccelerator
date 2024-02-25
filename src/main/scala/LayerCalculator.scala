@@ -1,8 +1,7 @@
 import activation_functions.Rectifier
 import chisel3._
-import chisel3.util.{ShiftRegister, log2Ceil}
-import systolic_array.SystolicArray
-import utils.Optional.optional
+import systolic_array.{BufferedSystolicArray}
+import scala_utils.Optional.optional
 
 class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, fixedPoint: Int = 0, enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
@@ -24,8 +23,8 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
   })
 
-
-  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wBig, xDimension, yDimension, signed, enableDebuggingIO))
+  //TODO: change
+  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wBig, xDimension, yDimension, 3, signed, enableDebuggingIO))
   bufferedSystolicArray.io.load := io.load
   bufferedSystolicArray.io.inputs := io.inputs
   bufferedSystolicArray.io.weights := io.weights

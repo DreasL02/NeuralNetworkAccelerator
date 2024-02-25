@@ -1,4 +1,4 @@
-import utils.{FixedPointConversion, Mapping}
+import scala_utils.{FixedPointConversion, Mapping}
 import chisel3.emitVerilog
 import communication.chisel.lib.uart.UartTx
 import systolic_array.SystolicArray

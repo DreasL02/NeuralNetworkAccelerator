@@ -10,7 +10,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val clockTimeout = 200_000_000
   val frequency = 5000 * 2
   val baudRate = 10
-  val cyclesPerSerialBit = utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
+  val cyclesPerSerialBit = scala_utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
   val uartFrameSize = 11
 
@@ -49,7 +49,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       println("uartOutput: " + uartOutput.mkString)
 
-      val bytesFromEmittedUartFrames = utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+      val bytesFromEmittedUartFrames = scala_utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
       println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
       assert(bytesFromEmittedUartFrames.length == 1)
       assert(bytesFromEmittedUartFrames(0) == testValue)
@@ -81,7 +81,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       println("uartOutput: " + uartOutput.mkString)
 
-      val bytesFromEmittedUartFrames = utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+      val bytesFromEmittedUartFrames = scala_utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
       println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
       assert(bytesFromEmittedUartFrames.length == 2)
       assert(bytesFromEmittedUartFrames(0) == testValue1)
@@ -203,7 +203,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       println("uartOutput1: " + uartOutput1.mkString)
 
-      val bytesFromEmittedUartFrames1 = utils.UartCoding.decodeUartBitsToByteArray(uartOutput1.toArray)
+      val bytesFromEmittedUartFrames1 = scala_utils.UartCoding.decodeUartBitsToByteArray(uartOutput1.toArray)
       println("Bytes from emitted UART frames 1: " + bytesFromEmittedUartFrames1.mkString(", "))
       assert(bytesFromEmittedUartFrames1.length == 2)
       assert(bytesFromEmittedUartFrames1(0) == testValue1)
@@ -239,7 +239,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       println("uartOutput2: " + uartOutput2.mkString)
 
-      val bytesFromEmittedUartFrames2 = utils.UartCoding.decodeUartBitsToByteArray(uartOutput2.toArray)
+      val bytesFromEmittedUartFrames2 = scala_utils.UartCoding.decodeUartBitsToByteArray(uartOutput2.toArray)
       println("Bytes from emitted UART frames 2: " + bytesFromEmittedUartFrames2.mkString(", "))
       assert(bytesFromEmittedUartFrames2.length == 2)
       assert(bytesFromEmittedUartFrames2(0) == testValue3)

@@ -1,4 +1,4 @@
-package utils
+package scala_utils
 
 object FixedPointConversion {
   def fixedToFloat(fixedRepresentation: Int, fixedPointFractionalBits: Int, width: Int, signed: Boolean): Float = {

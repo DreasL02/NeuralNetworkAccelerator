@@ -1,5 +1,6 @@
 import chisel3._
 import chiseltest._
+import module_utils.ShiftedBuffer
 import org.scalatest.freespec.AnyFreeSpec
 
 class ShiftedBufferSpec extends AnyFreeSpec with ChiselScalatestTester {

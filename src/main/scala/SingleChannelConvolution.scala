@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util.log2Ceil
 import systolic_array.SystolicArray
-import utils.Optional._
+import scala_utils.Optional._
 
 // Describe the convolution module using N element wise multipliers in parallel
 // to calculate the convolution of an input and a kernel matrix
@@ -63,6 +63,7 @@ class SingleChannelConvolution(w: Int = 8,
     val Y = Output(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(wBig.W)))) // the output matrix
 
   })
+  /*
 
   val numberOfSlices = inputDimensions._1 * inputDimensions._2
 
@@ -108,4 +109,6 @@ class SingleChannelConvolution(w: Int = 8,
 
 
   io.Y := result
+
+   */
 }

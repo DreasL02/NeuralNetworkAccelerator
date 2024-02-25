@@ -2,7 +2,7 @@ import communication.Encodings.Codes.none
 import chisel3._
 import chisel3.util.log2Ceil
 import communication.{Communicator, Decoder}
-import utils.Optional.optional
+import scala_utils.Optional.optional
 
 // Top level module for the accelerator
 class Accelerator(w: Int = 8, // width of the data

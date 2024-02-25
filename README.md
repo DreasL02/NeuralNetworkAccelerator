@@ -190,7 +190,7 @@ Below we will go through the different components of the datapath.
 
 The inputs to the systolic array, the weights and inputs, have to formatted correctly. This is done in part through a
 series of
-[`ShiftedBuffer`](src/main/scala/ShiftedBuffer.scala) modules.
+[`module_utils.ShiftedBuffer`](src/main/scala/ShiftedBuffer.scala) modules.
 The buffers are implemented as a series of shift registers, which shift the input values into the systolic array,
 with a load signal to enable loading values from the memory into the entire series at the same time.
 The values loaded from the memory have to follow a certain format, that is described in more detail in the

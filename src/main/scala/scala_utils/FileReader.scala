@@ -1,4 +1,4 @@
-package utils
+package scala_utils
 
 object FileReader {
 

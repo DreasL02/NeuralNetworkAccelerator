@@ -4,9 +4,9 @@ import chisel3.util.Fill
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import systolic_array.SystolicArray
-import utils.RandomData._
-import utils.MatrixUtils._
-import utils.FixedPointConversion._
+import scala_utils.RandomData._
+import scala_utils.MatrixUtils._
+import scala_utils.FixedPointConversion._
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======

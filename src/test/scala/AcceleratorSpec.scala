@@ -1,10 +1,10 @@
 
-import utils.{FixedPointConversion, Mapping}
+import scala_utils.{FixedPointConversion, Mapping}
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import utils.MatrixUtils.matrixToString
-import utils.RandomData.randomMatrix
+import scala_utils.MatrixUtils.matrixToString
+import scala_utils.RandomData.randomMatrix
 
 class AcceleratorSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======

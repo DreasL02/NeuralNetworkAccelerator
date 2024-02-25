@@ -10,7 +10,7 @@ class UartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val clockTimeout = 200_000_000
   val frequency = 100
   val baudRate = 1
-  val cyclesPerSerialBit = utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
+  val cyclesPerSerialBit = scala_utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
 
   val high = 1.U(1.W)
@@ -46,7 +46,7 @@ class UartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
 
       val hardwareOutput = uartOutputBuffer.mkString("")
-      val expectedOutput = utils.UartCoding.encodeByteToUartBits(testValue)
+      val expectedOutput = scala_utils.UartCoding.encodeByteToUartBits(testValue)
       println(s"hardwareOutput: $hardwareOutput, expectedOutput: $expectedOutput")
       assert(hardwareOutput == expectedOutput)
     }

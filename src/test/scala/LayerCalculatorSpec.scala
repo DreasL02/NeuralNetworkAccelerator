@@ -2,9 +2,9 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import utils.MatrixUtils._
-import utils.FixedPointConversion._
-import utils.RandomData.randomMatrix
+import scala_utils.MatrixUtils._
+import scala_utils.FixedPointConversion._
+import scala_utils.RandomData.randomMatrix
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
