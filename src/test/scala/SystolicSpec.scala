@@ -11,7 +11,7 @@ import scala_utils.FixedPointConversion._
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 7
-  val wBig = 4 * w
+  val wResult = 4 * w
   val numberOfColumns = 7 // number of columns in the result matrix
   val numberOfRows = 5 // number of rows in the result matrix
   val matrixCommonDimension = 10 // number of columns in the first matrix and number of rows in the second matrix
@@ -41,7 +41,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
     "SystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new SystolicArray(w, wBig, numberOfRows, numberOfColumns, signed)) { dut =>
+      test(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed)) { dut =>
         var m1f = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
         var m2f = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
 
