@@ -151,7 +151,7 @@ will be stored across all c values after N * N - 1 clock cycles.
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/systolic_array.png" alt="3x3 Systolic Array" width="300" />
+        <img src="figures/systolic_array.png" alt="3x3 Systolic Array" width="300" />
         <figcaption>
             Example of connections in a 3x3 Systolic Array (figure self produced).
         </figcaption>
@@ -160,11 +160,11 @@ will be stored across all c values after N * N - 1 clock cycles.
 
 A detailed and visual example computation of a 3x3 systolic array across 8 clock cycles can be seen in the animated GIF
 below
-or as a PDF [`here`](docs/systolic_array_example.pdf).
+or as a PDF [`here`](systolic_array_example.pdf).
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/systolic_example.gif" alt="3x3 Systolic Array" width="800" />
+        <img src="figures/systolic_example.gif" alt="3x3 Systolic Array" width="800" />
         <figcaption>
             Example of an integer computation in a 3x3 Systolic Array (gif self produced).
         </figcaption>
@@ -200,7 +200,7 @@ A visual example of the three instances of buffers with different shifts can be 
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/3_buffers.png" alt="input_mem" width="800" />
+        <img src="figures/3_buffers.png" alt="input_mem" width="800" />
         <figcaption>
           Three instances of buffers with different shifts. Orange registers are initialized to 0.
           Blue registers are initialized to values from memory (figure self produced).
@@ -255,7 +255,7 @@ Below is an example of how the input memory is encoded for a 3x3 matrix with thr
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/input_mem.png" alt="input_mem" width="800" />
+        <img src="figures/input_mem.png" alt="input_mem" width="800" />
         <figcaption>
             Inputs encoded in memory for a 3x3 matrix with three layers (figure self produced).
         </figcaption>
@@ -266,7 +266,7 @@ Similarly, the weight memory is encoded for the example as:
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/weights_mem.png" alt="weight_mem" width="800" />
+        <img src="figures/weights_mem.png" alt="weight_mem" width="800" />
         <figcaption>
             Weights encoded in memory for a 3x3 matrix with three layers (figure self produced).
         </figcaption>
@@ -277,14 +277,14 @@ When transcribed to the buffers and systolic array, the computation is then vali
 in the following format:
 <figure>
     <p align = "center">
-        <img src="docs/figures/matrix_after.png" alt="Result" width="300" />
+        <img src="figures/matrix_after.png" alt="Result" width="300" />
     </p>
 </figure>
 
 The bias memory is therefore encoded as:
 <figure>
     <p align = "center">
-        <img src="docs/figures/bias_mem.png" alt="weight_mem" width="800" />
+        <img src="figures/bias_mem.png" alt="weight_mem" width="800" />
         <figcaption>
             Biases encoded in memory fra 3x3 matrix with three layers (figure self produced).
         </figcaption>
@@ -295,7 +295,7 @@ So adding the biases can easily be described.
 The configuration memories are encoded as follows for respectively the fixed point format and signed configuration:
 <figure>
     <p align = "center">
-        <img src="docs/figures/fixed_mem.png" alt="weight_mem" width="800" />
+        <img src="figures/fixed_mem.png" alt="weight_mem" width="800" />
         <figcaption>
             Fixed point encoded in memory for 3x3 matrix with three layers and a bit width of 16 (figure self produced).
         </figcaption>
@@ -304,7 +304,7 @@ The configuration memories are encoded as follows for respectively the fixed poi
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/signed_mem.png" alt="weight_mem" width="800" />
+        <img src="figures/signed_mem.png" alt="weight_mem" width="800" />
         <figcaption>
             Sign encoded in memory for 3x3 matrix with three layers (figure self produced).
         </figcaption>
@@ -328,7 +328,7 @@ The description of the datapath is found in the
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
+        <img src="figures/MainUnit.png" alt="3x3 Systolic Array" width="800" />
         <figcaption>
             Data path of the accelerator (figure self produced).
         </figcaption>
@@ -454,7 +454,7 @@ The FSM has the following states:
 
 <figure>
     <p align = "center">
-        <img src="docs/figures/Transmission.png" alt="3x3 Systolic Array" width="800" />
+        <img src="figures/Transmission.png" alt="3x3 Systolic Array" width="800" />
         <figcaption>
             Data path for layer function (figure self produced).
         </figcaption>
