@@ -80,7 +80,8 @@ class Accelerator(w: Int = 8, // width of the data
 
   val layerFSM = Module(new LayerFSM)
 
-  val layerCalculator = Module(new LayerCalculator(w, wBig, xDimension, yDimension, signed, fixedPoint, enableDebuggingIO))
+  // TODO: finish this
+  val layerCalculator = Module(new LayerCalculator(w, wBig, xDimension, yDimension, 3, signed, fixedPoint, enableDebuggingIO))
 
   // Determine if address should be incremented (if either of the FSM say so)
   addressManager.io.incrementAddress := io.incrementAddress || layerFSM.io.incrementAddress

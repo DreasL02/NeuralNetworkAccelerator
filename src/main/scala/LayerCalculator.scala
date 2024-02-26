@@ -1,30 +1,38 @@
 import activation_functions.Rectifier
 import chisel3._
-import systolic_array.{BufferedSystolicArray}
+import systolic_array.BufferedSystolicArray
 import scala_utils.Optional.optional
 
-class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true, fixedPoint: Int = 0, enableDebuggingIO: Boolean = true // enable debug signals for testing
+class LayerCalculator(
+                       w: Int = 8,
+                       wResult: Int = 32,
+                       numberOfRows: Int = 4, // number of rows in the result matrix
+                       numberOfColumns: Int = 4, // number of columns in the result matrix
+                       commonDimension: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
+                       signed: Boolean = true,
+                       fixedPoint: Int = 0,
+                       enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values
 
-    val inputs = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // should only be used when load is true
-    val biases = Input(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))) // should only be used when load is true
+    val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
+    val weights = Input(Vec(numberOfColumns, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
+
+    val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // should only be used when load is true
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
-    val result = Output(Vec(xDimension, Vec(yDimension, UInt(w.W)))) // result of layer
+    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))) // result of layer
 
-    val debugInputs = optional(enableDebuggingIO, Output(Vec(xDimension, UInt(w.W))))
-    val debugWeights = optional(enableDebuggingIO, Output(Vec(yDimension, UInt(w.W))))
-    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
-    val debugBiases = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
-    val debugRounderInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
-    val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(xDimension, Vec(yDimension, UInt(wBig.W)))))
+    val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
+    val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
+    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugRounderInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  //TODO: change
-  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wBig, xDimension, yDimension, 3, signed, enableDebuggingIO))
+  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
   bufferedSystolicArray.io.load := io.load
   bufferedSystolicArray.io.inputs := io.inputs
   bufferedSystolicArray.io.weights := io.weights
@@ -33,25 +41,24 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
   if (enableDebuggingIO) {
     io.debugInputs.get := bufferedSystolicArray.io.debugInputs.get
     io.debugWeights.get := bufferedSystolicArray.io.debugWeights.get
+    io.debugSystolicArrayResults.get := bufferedSystolicArray.io.debugSystolicArrayResults.get
   }
 
 
   // Addition of biases
-  val adders = Module(new Adders(wBig, xDimension, yDimension))
-  for (row <- 0 until xDimension) {
-    for (column <- 0 until yDimension) {
-      // Map results from systolic array in column-major order to accumulator in row-major order
-      adders.io.values(row)(column) := bufferedSystolicArray.io.result(column)(row) //TODO: Handle this correctly in the systolic array
+  val adders = Module(new Adders(wResult, numberOfRows, numberOfColumns))
+  adders.io.values := bufferedSystolicArray.io.result
 
+  for (row <- 0 until numberOfRows) {
+    for (column <- 0 until numberOfColumns) {
       // Continuously emit bias values
-      val biasReg = RegInit(0.U(wBig.W))
+      val biasReg = RegInit(0.U(wResult.W))
       when(io.load) {
         biasReg := io.biases(row)(column) // replace bias value
       }
 
       adders.io.biases(row)(column) := biasReg
       if (enableDebuggingIO) {
-        io.debugSystolicArrayResults.get(row)(column) := bufferedSystolicArray.io.result(column)(row)
         io.debugBiases.get(row)(column) := biasReg
       }
     }
@@ -62,7 +69,7 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
     io.debugRounderInputs.get := adders.io.result
   }
 
-  val rounder = Module(new Rounder(w, wBig, xDimension, yDimension, signed, fixedPoint))
+  val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
   rounder.io.input := adders.io.result
 
   if (enableDebuggingIO) {
@@ -70,7 +77,7 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
   }
 
   // ReLU
-  val rectifier = Module(new Rectifier(w, xDimension, yDimension, signed))
+  val rectifier = Module(new Rectifier(w, numberOfRows, numberOfColumns, signed))
   rectifier.io.values := rounder.io.output
 
   // Add quantization step here
@@ -82,5 +89,4 @@ class LayerCalculator(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimensio
 
   // Result of computations
   io.result := rectifier.io.result
-
 }

@@ -41,9 +41,10 @@ object MatrixUtils {
   }
 
   def calculateMatrixAddition(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
+    // should do element wise addition of two equal sized matrices
     val mr: Array[Array[Float]] = Array.fill(m1.length, m2(0).length)(0)
     for (i <- m1.indices) {
-      for (j <- m2.indices) {
+      for (j <- m2(0).indices) {
         mr(i)(j) = m1(i)(j) + m2(i)(j)
       }
     }
@@ -53,7 +54,7 @@ object MatrixUtils {
   def calculateMatrixAddition(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]]): Array[Array[BigInt]] = {
     val mr: Array[Array[BigInt]] = Array.fill(m1.length, m2(0).length)(0)
     for (i <- m1.indices) {
-      for (j <- m2.indices) {
+      for (j <- m2(0).indices) {
         mr(i)(j) = m1(i)(j) + m2(i)(j)
       }
     }
