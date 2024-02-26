@@ -13,6 +13,9 @@ class ProcessingElement(
                          wResult: Int = 32, // width of the result / register
                          signed: Boolean = true // to determine if signed or unsigned multiplication should be used
                        ) extends Module {
+
+  assert(wResult >= w * 2, "wResult must be at least twice the width of w")
+
   val io = IO(new Bundle {
     val aIn = Input(UInt(w.W))
     val bIn = Input(UInt(w.W))

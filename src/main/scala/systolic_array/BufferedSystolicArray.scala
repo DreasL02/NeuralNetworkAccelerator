@@ -8,8 +8,8 @@ import module_utils.ShiftedBuffer
 class BufferedSystolicArray(
                              w: Int = 8,
                              wResult: Int = 32,
-                             numberOfRows: Int = 4, // number of rows in the result matrix
-                             numberOfColumns: Int = 4, // number of columns in the result matrix
+                             numberOfRows: Int = 4, // number of rows in the result matrix / number of rows in the first matrix
+                             numberOfColumns: Int = 4, // number of columns in the result matrix / number of columns in the second matrix
                              commonDimension: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
                              signed: Boolean = true,
                              enableDebuggingIO: Boolean = true
@@ -39,13 +39,11 @@ class BufferedSystolicArray(
 
   io.valid := timer(CYCLES_UNTIL_VALID, io.load) // valid when timer is done
 
-  //TODO check if correct
   val inputsBuffers = for (i <- 0 until numberOfRows) yield { // create array of buffers for inputs
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
-  //TODO check if correct
   val weightsBuffers = for (i <- 0 until numberOfColumns) yield { // create array of buffers for weights
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module

@@ -1,4 +1,4 @@
-import activation_functions.Rectifier
+import activation_functions.{ReLU}
 import chisel3._
 import module_utils.Adders
 import systolic_array.BufferedSystolicArray
@@ -63,8 +63,8 @@ class LayerCalculator(
   }
 
   // ReLU
-  val rectifier = Module(new Rectifier(w, numberOfRows, numberOfColumns, signed))
-  rectifier.io.values := rounder.io.output
+  val rectifier = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
+  rectifier.io.input := rounder.io.output
 
   // Result of computations
   io.result := rectifier.io.result
