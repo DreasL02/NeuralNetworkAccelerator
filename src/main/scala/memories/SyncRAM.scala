@@ -5,9 +5,9 @@ import chisel3.util.log2Ceil
 
 // https://www.chisel-lang.org/docs/explanations/memories#single-ported
 
-class SyncRAM(w: Int = 8, initialMemoryState: Array[BigInt]) extends Module {
+class SyncRAM(w: Int = 8, size: Int = 32) extends Module {
   val io = IO(new Bundle {
-    val address = Input(UInt(log2Ceil(initialMemoryState.length).W))
+    val address = Input(UInt(log2Ceil(size).W))
 
     val readEnable = Input(Bool())
     val dataRead = Output(UInt(w.W))
@@ -16,15 +16,8 @@ class SyncRAM(w: Int = 8, initialMemoryState: Array[BigInt]) extends Module {
     val dataWrite = Input(UInt(w.W))
   })
 
-  // TODO: Use SyncReadMem instead of RegInit
-  // Look at different ways to initialize the memory
-  // We may have to use a external file to initialize the memory
-  // https://www.chisel-lang.org/docs/appendix/experimental-features
-  // In which case we would probably have to refactor the code
-  // val memory = SyncReadMem(initialMemoryState.length, UInt(w.W))
-
   // Initialize memories using the vectorized initial states
-  val memory = RegInit(VecInit(initialMemoryState.toIndexedSeq.map(_.S(w.W).asUInt)))
+  val memory = SyncReadMem(size, UInt(w.W))
 
   io.dataRead := 0.U
 

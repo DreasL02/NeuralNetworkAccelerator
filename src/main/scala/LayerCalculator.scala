@@ -47,7 +47,7 @@ class LayerCalculator(
 
   // Addition of biases
   val adders = Module(new Adders(wResult, numberOfRows, numberOfColumns))
-  adders.io.values := bufferedSystolicArray.io.result
+  adders.io.operandA := bufferedSystolicArray.io.result
 
   for (row <- 0 until numberOfRows) {
     for (column <- 0 until numberOfColumns) {
@@ -57,7 +57,7 @@ class LayerCalculator(
         biasReg := io.biases(row)(column) // replace bias value
       }
 
-      adders.io.biases(row)(column) := biasReg
+      adders.io.operandB(row)(column) := biasReg
       if (enableDebuggingIO) {
         io.debugBiases.get(row)(column) := biasReg
       }
