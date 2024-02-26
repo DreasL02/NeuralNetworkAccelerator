@@ -1,5 +1,6 @@
 import chisel3._
 import chiseltest._
+import module_utils.{ByteCollector, ByteIntoVectorCollector, ByteSplitter, VectorIntoByteSplitter}
 import org.scalatest.freespec.AnyFreeSpec
 
 class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {

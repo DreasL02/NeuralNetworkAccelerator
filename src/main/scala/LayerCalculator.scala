@@ -1,5 +1,6 @@
 import activation_functions.Rectifier
 import chisel3._
+import module_utils.Adders
 import systolic_array.BufferedSystolicArray
 import scala_utils.Optional.optional
 
@@ -44,33 +45,18 @@ class LayerCalculator(
     io.debugSystolicArrayResults.get := bufferedSystolicArray.io.debugSystolicArrayResults.get
   }
 
-
-  // Addition of biases
-  val adders = Module(new Adders(wResult, numberOfRows, numberOfColumns))
-  adders.io.operandA := bufferedSystolicArray.io.result
-
-  for (row <- 0 until numberOfRows) {
-    for (column <- 0 until numberOfColumns) {
-      // Continuously emit bias values
-      val biasReg = RegInit(0.U(wResult.W))
-      when(io.load) {
-        biasReg := io.biases(row)(column) // replace bias value
-      }
-
-      adders.io.operandB(row)(column) := biasReg
-      if (enableDebuggingIO) {
-        io.debugBiases.get(row)(column) := biasReg
-      }
-    }
-  }
-
+  val bufferedBias = Module(new BufferedBias(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
+  bufferedBias.io.input := bufferedSystolicArray.io.result
+  bufferedBias.io.biases := io.biases
+  bufferedBias.io.load := io.load
 
   if (enableDebuggingIO) {
-    io.debugRounderInputs.get := adders.io.result
+    io.debugBiases.get := bufferedBias.io.debugBiases.get
+    io.debugRounderInputs.get := bufferedBias.io.result
   }
 
   val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
-  rounder.io.input := adders.io.result
+  rounder.io.input := bufferedBias.io.result
 
   if (enableDebuggingIO) {
     io.debugReLUInputs.get := rounder.io.output
@@ -79,13 +65,6 @@ class LayerCalculator(
   // ReLU
   val rectifier = Module(new Rectifier(w, numberOfRows, numberOfColumns, signed))
   rectifier.io.values := rounder.io.output
-
-  // Add quantization step here
-  // val quantizer = Module(new Quantizer(w, dimension))
-  // quantizer.io.values := rectifier.io.result
-  // quantizer.io.fixedPoint := fixedPointTargetReg
-  // quantizer.io.signed := signedTargetReg
-  // io.result := quantizer.io.result
 
   // Result of computations
   io.result := rectifier.io.result

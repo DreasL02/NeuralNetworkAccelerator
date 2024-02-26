@@ -1,3 +1,5 @@
+package module_utils
+
 import chisel3._
 import chisel3.util.Cat
 
@@ -10,7 +12,7 @@ class ByteSplitter(w: Int = 8) extends Module {
     val output = Output(Vec(numberOfBytes, UInt(8.W)))
   })
   // splits in order: (0) is lsb, (numberOfBytes - 1) is msb
-  var bitsNotGoneThrough = w  // number of bits that has not gone through the splitter
+  var bitsNotGoneThrough = w // number of bits that has not gone through the splitter
   for (i <- 0 until numberOfBytes) {
     val byte = WireInit(0.U(8.W))
 
