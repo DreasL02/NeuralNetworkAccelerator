@@ -42,6 +42,24 @@ object FileReader {
     matrix
   }
 
-
+  def writeMatrixToFile(fileName: String, matrix: Array[Array[Float]]): Unit = {
+    val file = new java.io.PrintWriter(fileName)
+    file.write("[\n")
+    for (i <- matrix.indices) {
+      file.write("  [")
+      for (j <- matrix(i).indices) {
+        file.write(matrix(i)(j).toString)
+        if (j < matrix(i).length - 1) {
+          file.write(", ")
+        }
+      }
+      file.write("]")
+      if (i < matrix.length - 1) {
+        file.write(",\n")
+      }
+    }
+    file.write("\n]")
+    file.close()
+  }
 }
 

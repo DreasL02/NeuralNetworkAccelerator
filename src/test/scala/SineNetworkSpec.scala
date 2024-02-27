@@ -30,229 +30,60 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val weights = Array(weightsL1Fixed, weightsL2Fixed, weightsL3Fixed)
   val biases = Array(biasesL1Fixed, biasesL2Fixed, biasesL3Fixed)
 
-  val input = 1.0f
-  val inputFixed = floatToFixed(input, fixedPoint, w, signed)
+  val numberOfInputs = 50
+  val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
+  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
+  val results = Array.fill(numberOfInputs)(0.0f)
+  val expected = inputs.map(i => Math.sin(i))
 
-  val print1 = false // seems to work
-  val print2 = true
-  val print3 = false
-
-  "SineNetwork should behave correctly" in {
-    test(new SineNetwork(w, wResult, signed, fixedPoint, weights, biases, true)) { dut =>
-      dut.io.loads(0).poke(true.B)
-      dut.io.loads(1).poke(false.B)
-      dut.io.loads(2).poke(false.B)
-
-      dut.io.input.poke(inputFixed.U)
-
-      dut.clock.step()
-      dut.io.loads(0).poke(false.B)
-      var cycle = 0
-      while (!dut.io.valids(0).peekBoolean()) {
-        if (print1) {
-          println("Cycle: " + cycle)
-          println("MMU1 Input")
-          for (i <- 0 until dut.io.debugMMU1Input.get.length) {
-            print(fixedToFloat(dut.io.debugMMU1Input.get(i).peek().litValue, fixedPoint, w, signed))
-            print(" ")
-          }
-          println()
-          println("MMU1 Weights")
-          for (i <- 0 until dut.io.debugMMU1Weights.get.length) {
-            print(fixedToFloat(dut.io.debugMMU1Weights.get(i).peek().litValue, fixedPoint, w, signed))
-            print(" ")
-          }
-          println()
-          println("MMU1 Result")
-          for (i <- 0 until dut.io.debugMMU1Result.get.length) {
-            for (j <- 0 until dut.io.debugMMU1Result.get(i).length) {
-              print(fixedToFloat(dut.io.debugMMU1Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Bias1 Biases")
-          for (i <- 0 until dut.io.debugBias1Biases.get.length) {
-            for (j <- 0 until dut.io.debugBias1Biases.get(i).length) {
-              print(fixedToFloat(dut.io.debugBias1Biases.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Rounder Input / Bias result")
-          for (i <- 0 until dut.io.debugRounder1Input.get.length) {
-            for (j <- 0 until dut.io.debugRounder1Input.get(i).length) {
-              print(fixedToFloat(dut.io.debugRounder1Input.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Rounder1 Output")
-          for (i <- 0 until dut.io.debugRounder1Output.get.length) {
-            for (j <- 0 until dut.io.debugRounder1Output.get(i).length) {
-              print(fixedToFloat(dut.io.debugRounder1Output.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("ReLU1 Input")
-          for (i <- 0 until dut.io.debugReLU1Input.get.length) {
-            for (j <- 0 until dut.io.debugReLU1Input.get(i).length) {
-              print(fixedToFloat(dut.io.debugReLU1Input.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("ReLU1 Output")
-          for (i <- 0 until dut.io.debugReLU1Output.get.length) {
-            for (j <- 0 until dut.io.debugReLU1Output.get(i).length) {
-              print(fixedToFloat(dut.io.debugReLU1Output.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
+  var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
+  for (testNum <- 0 until numberOfInputs) {
+    "SineNetwork should behave correctly for input: %f".format(inputs(testNum)) in {
+      test(new SineNetwork(w, wResult, signed, fixedPoint, weights, biases, true)) { dut =>
+        var cycleTotal = 0
+        dut.io.input.poke(inputsFixed(testNum).U)
+        for (i <- 0 until 3) {
+          for (j <- 0 until 3) {
+            dut.io.loads(j).poke(false.B)
           }
 
+          dut.io.loads(i).poke(true.B)
+          dut.clock.step()
+          cycleTotal += 1
+          dut.io.loads(i).poke(false.B)
 
-        }
-        dut.clock.step()
-        cycle += 1
-      }
-
-      println("ReLU1 Output")
-      for (i <- 0 until dut.io.debugReLU1Output.get.length) {
-        for (j <- 0 until dut.io.debugReLU1Output.get(i).length) {
-          print(fixedToFloat(dut.io.debugReLU1Output.get(i)(j).peek().litValue, fixedPoint, w, signed))
-          print(" ")
-        }
-        println()
-      }
-
-      dut.io.loads(1).poke(true.B)
-      dut.clock.step()
-      dut.io.loads(1).poke(false.B)
-      cycle = 0
-      while (!dut.io.valids(1).peekBoolean()) {
-        if (print2) {
-          println("Cycle: " + cycle)
-          println("MMU2 Input")
-          for (i <- 0 until dut.io.debugMMU2Input.get.length) {
-            print(dut.io.debugMMU2Input.get(i).peek().litValue)
-            print(" ")
-          }
-          println()
-          println("MMU2 Weights")
-          for (i <- 0 until dut.io.debugMMU2Weights.get.length) {
-            print(dut.io.debugMMU2Weights.get(i).peek().litValue)
-            print(" ")
-          }
-          println()
-          println("MMU2 Result")
-          for (i <- 0 until dut.io.debugMMU2Result.get.length) {
-            for (j <- 0 until dut.io.debugMMU2Result.get(i).length) {
-              print(fixedToFloat(dut.io.debugMMU2Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Bias2 Biases")
-          for (i <- 0 until dut.io.debugBias2Biases.get.length) {
-            for (j <- 0 until dut.io.debugBias2Biases.get(i).length) {
-              print(fixedToFloat(dut.io.debugBias2Biases.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Rounder2 Input / Bias result")
-          for (i <- 0 until dut.io.debugRounder2Input.get.length) {
-            for (j <- 0 until dut.io.debugRounder2Input.get(i).length) {
-              print(fixedToFloat(dut.io.debugRounder2Input.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("Rounder2 Output")
-          for (i <- 0 until dut.io.debugRounder2Output.get.length) {
-            for (j <- 0 until dut.io.debugRounder2Output.get(i).length) {
-              print(fixedToFloat(dut.io.debugRounder2Output.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("ReLU2 Input")
-          for (i <- 0 until dut.io.debugReLU2Input.get.length) {
-            for (j <- 0 until dut.io.debugReLU2Input.get(i).length) {
-              print(fixedToFloat(dut.io.debugReLU2Input.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
-          }
-          println("ReLU2 Output")
-          for (i <- 0 until dut.io.debugReLU2Output.get.length) {
-            for (j <- 0 until dut.io.debugReLU2Output.get(i).length) {
-              print(fixedToFloat(dut.io.debugReLU2Output.get(i)(j).peek().litValue, fixedPoint, w, signed))
-              print(" ")
-            }
-            println()
+          var cycle = 0
+          while (!dut.io.valids(i).peekBoolean()) {
+            dut.clock.step()
+            cycle += 1
+            cycleTotal += 1
           }
         }
-        dut.clock.step()
-        cycle += 1
-      }
+        val resultFixed = dut.io.output.peek().litValue
+        println("Input: " + inputs(testNum))
+        println("Output: " + fixedToFloat(resultFixed, fixedPoint, w, signed))
+        println("Expected: " + expected(testNum))
+        println("Cycles: " + cycleTotal)
+        results(testNum) = fixedToFloat(resultFixed, fixedPoint, w, signed)
 
-      println("MMU2 Result")
-      for (i <- 0 until dut.io.debugMMU2Result.get.length) {
-        for (j <- 0 until dut.io.debugMMU2Result.get(i).length) {
-          print(fixedToFloat(dut.io.debugMMU2Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-          print(" ")
+        done += 1
+        if (done == numberOfInputs) {
+          val file = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_results.txt")
+          // replace all '.' with ',' to make it easier to import into danish excel
+          file.write(results.mkString("; ").replace('.', ','))
+          file.close()
+
+          val file2 = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_expected.txt")
+          // replace all '.' with ',' to make it easier to import into danish excel
+          file2.write(expected.mkString("; ").replace('.', ','))
+          file2.close()
+
+          val file3 = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_inputs.txt")
+          // replace all '.' with ',' to make it easier to import into danish excel
+          file3.write(inputs.mkString("; ").replace('.', ','))
+          file3.close()
         }
-        println()
       }
-
-
-      dut.io.loads(2).poke(true.B)
-      dut.clock.step()
-      dut.io.loads(2).poke(false.B)
-      cycle = 0
-      while (!dut.io.valids(2).peekBoolean()) {
-        if (print3) {
-          println("Cycle: " + cycle)
-          println("MMU3 Input")
-          for (i <- 0 until dut.io.debugMMU3Input.get.length) {
-            print(dut.io.debugMMU3Input.get(i).peek().litValue)
-            print(" ")
-          }
-          println()
-          println("MMU3 Weights")
-          for (i <- 0 until dut.io.debugMMU3Weights.get.length) {
-            print(dut.io.debugMMU3Weights.get(i).peek().litValue)
-            print(" ")
-          }
-          println()
-          println("MMU3 Result")
-          for (i <- 0 until dut.io.debugMMU3Result.get.length) {
-            for (j <- 0 until dut.io.debugMMU3Result.get(i).length) {
-              print(fixedToFloat(dut.io.debugMMU3Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-              print(" ")
-            }
-            println()
-          }
-        }
-        cycle += 1
-        dut.clock.step()
-      }
-
-      println("MMU3 Result")
-      for (i <- 0 until dut.io.debugMMU3Result.get.length) {
-        for (j <- 0 until dut.io.debugMMU3Result.get(i).length) {
-          print(fixedToFloat(dut.io.debugMMU3Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-          print(" ")
-        }
-        println()
-      }
-
-      val resultFixed = dut.io.output.peek().litValue
-      println("Output: " + fixedToFloat(resultFixed, fixedPoint, w, signed))
-      println("Expected: " + Math.sin(input))
     }
   }
 }
