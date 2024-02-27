@@ -11,14 +11,14 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
-  val numberOfRows = 4
-  val numberOfColumns = 7
-  val matrixCommonDimension = 5
-  val fixedPoint = 0
+  val numberOfRows = 1
+  val numberOfColumns = 16
+  val matrixCommonDimension = 1
+  val fixedPoint = 2
   val signed = true
   val numberOfTests = 10
   val max = 3.2f
-  val min = 0.0f //0.0f //
+  val min = -3.0f //0.0f //
   val threshold = 1f
 
   val printing = Array.fill(numberOfTests)(false)
