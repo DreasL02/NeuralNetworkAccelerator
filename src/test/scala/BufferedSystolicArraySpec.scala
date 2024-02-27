@@ -87,9 +87,8 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
           print(matrixToString(formattedWeights))
         }
 
-        // Setup the dut by loading the inputs and weights into the buffers
-        dut.io.load.poke(true.B)
-
+        // Setup the dut by loading the inputs and weights into the buffers by indicating that the producer is ready
+        dut.io.ready.poke(true.B)
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until matrixCommonDimension) {
             dut.io.inputs(i)(j).poke(formattedInputs(i)(j))
@@ -104,7 +103,6 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.clock.step()
         // All values should now be loaded into the buffers
-        dut.io.load.poke(false.B)
 
         // Wait for the systolic array to be done
         var cycles = 0

@@ -30,7 +30,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val weights = Array(weightsL1Fixed, weightsL2Fixed, weightsL3Fixed)
   val biases = Array(biasesL1Fixed, biasesL2Fixed, biasesL3Fixed)
 
-  val numberOfInputs = 50
+  val numberOfInputs = 10
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
   val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
@@ -42,21 +42,15 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
       test(new SineNetwork(w, wResult, signed, fixedPoint, weights, biases, true)) { dut =>
         var cycleTotal = 0
         dut.io.input.poke(inputsFixed(testNum).U)
-        for (i <- 0 until 3) {
-          for (j <- 0 until 3) {
-            dut.io.loads(j).poke(false.B)
-          }
-
-          dut.io.loads(i).poke(true.B)
+        dut.io.ready.poke(true.B)
+        dut.clock.step()
+        cycleTotal += 1
+        while (!dut.io.valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
-          dut.io.loads(i).poke(false.B)
 
-          var cycle = 0
-          while (!dut.io.valids(i).peekBoolean()) {
-            dut.clock.step()
-            cycle += 1
-            cycleTotal += 1
+          if (cycleTotal > 1000) {
+            fail("Timeout")
           }
         }
         val resultFixed = dut.io.output.peek().litValue

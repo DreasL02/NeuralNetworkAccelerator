@@ -94,8 +94,8 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
           print(matrixToString(formattedWeights))
         }
 
-        // Setup the dut
-        dut.io.load.poke(true.B)
+        // Setup the dut by indicating that the producer is ready
+        dut.io.ready.poke(true.B)
 
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until commonDimension) {
@@ -117,7 +117,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.clock.step()
         // All values should now be loaded
-        dut.io.load.poke(false.B)
 
         var cycles = 0
         while (!dut.io.valid.peekBoolean()) {

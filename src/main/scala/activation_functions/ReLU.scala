@@ -6,6 +6,9 @@ class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: 
   val io = IO(new Bundle {
     val input = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
     val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
+
+    val valid = Output(Bool()) // indicates that the module should be done
+    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
   })
 
   for (row <- 0 until numberOfRows) {
@@ -19,4 +22,6 @@ class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: 
       }
     }
   }
+  
+  io.valid := io.ready
 }

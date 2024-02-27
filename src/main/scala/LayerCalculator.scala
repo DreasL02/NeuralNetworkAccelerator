@@ -15,14 +15,14 @@ class LayerCalculator(
                        enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
   val io = IO(new Bundle {
-    val load = Input(Bool()) // load values
+    val ready = Input(Bool()) // load values
+    val valid = Output(Bool()) // indicates that the systolic array should be done
 
     val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
     val weights = Input(Vec(numberOfColumns, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
 
     val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // should only be used when load is true
 
-    val valid = Output(Bool()) // indicates that the systolic array should be done
     val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))) // result of layer
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
@@ -34,10 +34,9 @@ class LayerCalculator(
   })
 
   val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-  bufferedSystolicArray.io.load := io.load
+  bufferedSystolicArray.io.ready := io.ready
   bufferedSystolicArray.io.inputs := io.inputs
   bufferedSystolicArray.io.weights := io.weights
-  io.valid := bufferedSystolicArray.io.valid
 
   if (enableDebuggingIO) {
     io.debugInputs.get := bufferedSystolicArray.io.debugInputs.get
@@ -48,7 +47,7 @@ class LayerCalculator(
   val bufferedBias = Module(new BufferedBias(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
   bufferedBias.io.input := bufferedSystolicArray.io.result
   bufferedBias.io.biases := io.biases
-  bufferedBias.io.load := io.load
+  bufferedBias.io.ready := bufferedSystolicArray.io.valid
 
   if (enableDebuggingIO) {
     io.debugBiases.get := bufferedBias.io.debugBiases.get
@@ -57,6 +56,7 @@ class LayerCalculator(
 
   val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
   rounder.io.input := bufferedBias.io.result
+  rounder.io.ready := bufferedBias.io.valid
 
   if (enableDebuggingIO) {
     io.debugReLUInputs.get := rounder.io.output
@@ -65,7 +65,9 @@ class LayerCalculator(
   // ReLU
   val rectifier = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
   rectifier.io.input := rounder.io.output
+  rectifier.io.ready := rounder.io.valid
 
   // Result of computations
   io.result := rectifier.io.result
+  io.valid := rectifier.io.valid
 }

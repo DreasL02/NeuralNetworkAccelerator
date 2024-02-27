@@ -15,8 +15,8 @@ class SineNetwork(
                  )
   extends Module {
   val io = IO(new Bundle {
-    val loads = Input(Vec(3, Bool())) // load input
-    val valids = Output(Vec(3, Bool())) // valid output
+    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
+    val valid = Output(Bool()) // indicates that the module should be done
     val input = Input(UInt(w.W))
     val output = Output(UInt(w.W))
 
@@ -92,52 +92,57 @@ class SineNetwork(
   }
 
   val mmu1 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 1, true, enableDebuggingIO))
-  mmu1.io.load := io.loads(0)
   mmu1.io.inputs := VecInit(Seq.fill(1)(VecInit(Seq.fill(1)(io.input))))
-  mmu1.io.weights := (transpose(weights1))
+  mmu1.io.weights := transpose(weights1)
+  mmu1.io.ready := io.ready
 
   val bias1 = Module(new BufferedBias(wResult, 1, 16, enableDebuggingIO))
   bias1.io.input := mmu1.io.result
   bias1.io.biases := biases1
-  bias1.io.load := io.loads(0)
+  bias1.io.ready := mmu1.io.valid
 
   val rounder1 = Module(new Rounder(w, wResult, 1, 16, signed, fixedPoint))
   rounder1.io.input := bias1.io.result
+  rounder1.io.ready := bias1.io.valid
 
   val relu1 = Module(new ReLU(w, 1, 16, enableDebuggingIO))
   relu1.io.input := rounder1.io.output
+  relu1.io.ready := rounder1.io.valid
 
   val mmu2 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 16, true, enableDebuggingIO))
-  mmu2.io.load := io.loads(1)
   mmu2.io.inputs := reverseRows(relu1.io.result)
-  mmu2.io.weights := (transpose(weights2))
+  mmu2.io.weights := transpose(weights2)
+  mmu2.io.ready := relu1.io.valid
 
   val bias2 = Module(new BufferedBias(wResult, 1, 16, enableDebuggingIO))
   bias2.io.input := mmu2.io.result
   bias2.io.biases := biases2
-  bias2.io.load := io.loads(1)
+  bias2.io.ready := mmu2.io.valid
 
   val rounder2 = Module(new Rounder(w, wResult, 1, 16, signed, fixedPoint))
   rounder2.io.input := bias2.io.result
+  rounder2.io.ready := bias2.io.valid
 
   val relu2 = Module(new ReLU(w, 1, 16, enableDebuggingIO))
   relu2.io.input := rounder2.io.output
+  relu2.io.ready := rounder2.io.valid
 
   val mmu3 = Module(new BufferedSystolicArray(w, wResult, 1, 1, 16, true, enableDebuggingIO))
-  mmu3.io.load := io.loads(2)
   mmu3.io.inputs := reverseRows(relu2.io.result)
-  mmu3.io.weights := (transpose(weights3))
+  mmu3.io.weights := transpose(weights3)
+  mmu3.io.ready := relu2.io.valid
 
   val bias3 = Module(new BufferedBias(wResult, 1, 1, enableDebuggingIO))
   bias3.io.input := mmu3.io.result
   bias3.io.biases := biases3
-  bias3.io.load := io.loads(2)
+  bias3.io.ready := mmu3.io.valid
 
   val rounder3 = Module(new Rounder(w, wResult, 1, 1, signed, fixedPoint))
   rounder3.io.input := bias3.io.result
+  rounder3.io.ready := bias3.io.valid
 
   io.output := rounder3.io.output(0)(0)
-  io.valids := VecInit(Seq(mmu1.io.valid, mmu2.io.valid, mmu3.io.valid))
+  io.valid := rounder3.io.valid
 
   if (enableDebuggingIO) {
     io.debugMMU1Input.get := mmu1.io.debugInputs.get

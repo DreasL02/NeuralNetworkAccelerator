@@ -12,6 +12,8 @@ class Rounder(
   val io = IO(new Bundle {
     val input = Input(Vec(xDimension, Vec(yDimension, UInt(wBig.W))))
     val output = Output(Vec(xDimension, Vec(yDimension, UInt(w.W))))
+    val valid = Output(Bool()) // indicates that the module should be done
+    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
   })
 
 
@@ -22,10 +24,10 @@ class Rounder(
         if (fixedPoint == 0) {
           io.output(column)(row) := sign ## io.input(column)(row)(w - 1, 0)
         } else {
-          io.output(column)(row) := sign ## (io.input(column)(row) >> fixedPoint.U)(w - 1, 0).asUInt
+          //io.output(column)(row) := sign ## (io.input(column)(row) >> fixedPoint.U)(w - 1, 0).asUInt
 
           // Round to nearest with round up on a tie
-          //io.output(column)(row) := sign ## ((io.input(column)(row) + (1.U << (io.fixedPoint - 1.U)).asUInt) >> io.fixedPoint)(w - 2, 0).asUInt
+          io.output(column)(row) := sign ## ((io.input(column)(row) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(w - 1, 0).asUInt
         }
 
 
@@ -44,4 +46,6 @@ class Rounder(
 
     }
   }
+
+  io.valid := io.ready
 }

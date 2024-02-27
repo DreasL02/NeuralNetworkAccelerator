@@ -4,37 +4,29 @@ import module_utils.Adders
 import scala_utils.Optional.optional
 
 
-// Describes a addition operation of two matrices, with the second matrix being a bias matrix that is continuously
-// emitted until assertion of the load signal
+// TODO: either fold into Adders or change functionality to be very inline with ONNX Add
 
 class BufferedBias(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDebuggingIO: Boolean = true) extends Module {
   val io = IO(new Bundle {
     val input = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
     val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
-    val load = Input(Bool())
 
     val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
 
     val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
+
+    val valid = Output(Bool()) // indicates that the module should be done
+    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
   })
 
   val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
   adders.io.operandA := io.input
+  adders.io.operandB := io.biases
+  io.result := adders.io.result
 
-  for (row <- 0 until numberOfRows) {
-    for (column <- 0 until numberOfColumns) {
-      // Continuously emit bias values
-      val biasReg = RegInit(0.U(w.W))
-      when(io.load) {
-        biasReg := io.biases(row)(column) // replace bias value
-      }
-
-      adders.io.operandB(row)(column) := biasReg
-      if (enableDebuggingIO) {
-        io.debugBiases.get(row)(column) := biasReg
-      }
-    }
+  if (enableDebuggingIO) {
+    io.debugBiases.get := io.biases
   }
 
-  io.result := adders.io.result
+  io.valid := io.ready
 }
