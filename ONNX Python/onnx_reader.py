@@ -50,7 +50,7 @@ for node in onnx_model.graph.node:
 
 def find_dimension(node_name):
     if graph[node_name]["type"] in ["input", "initializer"]:
-        return graph[node_name]["dims"]
+        return list(graph[node_name]["dims"])
 
     # we are dealing with a node (operation)
     if graph[node_name]["op_type"] == "MatMul":
@@ -60,18 +60,36 @@ def find_dimension(node_name):
 
     return find_dimension(graph[node_name]["input"][0])
 
-
 for node in graph:
     if graph[node]["type"] != "node":
         # we are only interested in nodes (operations)
         continue
 
-    pprint.pprint(graph[node])
-    print("")
+    graph[node]["input_dims"] = []
 
     for input in graph[node]["input"]:
-        pprint.pprint(graph[input])
-        print(find_dimension(input))
-        print()
+        input_dims = find_dimension(input)
+        graph[node]["input_dims"].append(input_dims)
 
-    print("\n\n\n")
+
+
+supported_operators = ["MatMul", "Add", "Relu"]
+scala_dict = {k: [] for k in supported_operators}
+
+for node in graph:
+    if graph[node]["type"] == "node":
+
+        operator = graph[node]["op_type"]
+        input_dims = graph[node]["input_dims"]
+
+        operator_details = {
+            "op_type": operator,
+            "input_dims": input_dims,
+        }
+
+        scala_dict[operator].append(operator_details)
+
+
+import json
+with open("out.json", "w") as f:
+    json.dump(scala_dict, f, indent=2)

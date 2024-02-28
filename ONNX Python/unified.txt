@@ -1,0 +1,201 @@
+{'Add__13:0': {'input': ['sequential_2/dense_7/MatMul;sequential_2/dense_7/Relu;sequential_2/dense_7/BiasAdd', 'sequential_2/dense_7/BiasAdd/ReadVariableOp'],
+               'name': 'Add__13',
+               'op_type': 'Add',
+               'output': ['Add__13:0'],
+               'type': 'node'},
+ 'Add__8:0': {'input': ['sequential_2/dense_6/MatMul;sequential_2/dense_6/Relu;sequential_2/dense_6/BiasAdd', 'sequential_2/dense_6/BiasAdd/ReadVariableOp'],
+              'name': 'Add__8',
+              'op_type': 'Add',
+              'output': ['Add__8:0'],
+              'type': 'node'},
+ 'Relu__10:0': {'input': ['Add__13:0'],
+                'name': 'Relu__10',
+                'op_type': 'Relu',
+                'output': ['Relu__10:0'],
+                'type': 'node'},
+ 'Relu__5:0': {'input': ['Add__8:0'],
+               'name': 'Relu__5',
+               'op_type': 'Relu',
+               'output': ['Relu__5:0'],
+               'type': 'node'},
+ 'StatefulPartitionedCall:0': {'input': ['StatefulPartitionedCall:0_raw_output___3:0', 'sequential_2/dense_8/BiasAdd/ReadVariableOp'],
+                               'name': 'Add__16',
+                               'op_type': 'Add',
+                               'output': ['StatefulPartitionedCall:0'],
+                               'type': 'node'},
+ 'StatefulPartitionedCall:0_raw_output___3:0': {'input': ['Relu__10:0', 'const_fold_opt__20'],
+                                                'name': 'StatefulPartitionedCall:0',
+                                                'op_type': 'MatMul',
+                                                'output': ['StatefulPartitionedCall:0_raw_output___3:0'],
+                                                'type': 'node'},
+ 'const_fold_opt__20': {'data_type': 1,
+                        'dims': [16, 1],
+                        'name': 'const_fold_opt__20',
+                        'output': 'const_fold_opt__20',
+                        'raw_data': b'\xb0E >\xacS\x1f>\xb2\x10\x95>07\x80?'
+                                    b'\xee\x92\xa8>\x8b\x82]\xbe\x86Wr?'
+                                    b'\xc7\x99O\xbf\x9a\x84\x9f\xbey`\x85\xbf'
+                                    b'\x82[.\xbf\xe38\x1b?\xb8(\xd3>O%%\xbf'
+                                    b'7\x90\x86?-\xed\xc1=',
+                        'type': 'initializer'},
+ 'const_fold_opt__21': {'data_type': 1,
+                        'dims': [1, 16],
+                        'name': 'const_fold_opt__21',
+                        'output': 'const_fold_opt__21',
+                        'raw_data': b'\xca\xb9\xd1\xbe\x8d\xbdY>\x00g\xb2\xbb'
+                                    b'\x83)\xe7>\xda\x0e\x13?\x04\xa5\xb1\xbe'
+                                    b'\xc2=M\xbc\x80\xe0\xf3\xbc\xa7\x9f\x1f>'
+                                    b'\x17\xec\xa5>\xc4\x8a!\xbe\x9b\xbf\xc0>'
+                                    b'\xf7-\xd3\xbe:\xd9\xaa\xbe'
+                                    b'\x10\xf0\x98\xbd\xb8\xdb\xde>',
+                        'type': 'initializer'},
+ 'const_fold_opt__22': {'data_type': 1,
+                        'dims': [16, 16],
+                        'name': 'const_fold_opt__22',
+                        'output': 'const_fold_opt__22',
+                        'raw_data': b'\xc7\xb3\xad>?;\x95>ywU\xbe\xe1US\xbe'
+                                    b'\xb0=\x92\xbd\x8c\x1f\xaa\xbd'
+                                    b'\x00\xdaN\xbb\xc8Lh\xbd3\xf5\xc9>'
+                                    b'\x10\xba\t\xbe\x8a\x88\xc6\xbe\x92+0>'
+                                    b'el]\xbe\xf78\xd6\xbe(\xdbi=\xe0r\x8b\xbc'
+                                    b'\xf1V\x9e\xbe~\xd7\xda\xbe'
+                                    b'\xf6\xa3\x7f\xbd\xef\x8e\x12?'
+                                    b'F\xce\xb2\xbeWV\xfc>\x14\xb5\xb0>'
+                                    b'4\x87\xba\xbd#\x13P\xbe\x0b\x9d\xa5>'
+                                    b'\x1b\xf6\xa5\xbe,\xae[\xbe\x88<\xd3\xbe'
+                                    b'I\x15\xce>\xf6!\x8a>\x18\xe7\xc6\xbd'
+                                    b'`\x96\xea\xbd\xa3\xa3\xa8\xbepdO=%L\xae>'
+                                    b'\xe0\x07\x8e\xbej\xb9:>\x91\xdd\xca\xbe'
+                                    b'Xs\x13\xbd#\x83\xbb\xbeO\xa9\xb3\xbe'
+                                    b"'\x9a\x87>\xa0q\x19\xbd\xd4\xf6\x86\xbe"
+                                    b'\xfcc\xd6\xbd\x80sR\xbc\x91\xe0\xc6>'
+                                    b'\x8a\x8b6>\xb8r\xe2\xbd\xd2\x1d\xaf\xbe'
+                                    b'H\xc4\x8b\xbe\xb6\xe7\x0f>\xbe\xcfe<'
+                                    b'\x97\xce\xa8\xbd\xf6\xdb\x1c\xbf'
+                                    b'\x93&\x89>*\x83\xde=&\xec\xb2\xbe'
+                                    b'\xb2\xb0\x88>T\xcc{\xbe\xed\xa4a\xbf'
+                                    b'\xd7\xfe\x98>\xa8\x1f\xa5\xbd'
+                                    b'0\x0e\xc3\xbc\x8c\xa7\xf7=\xce$\xa6>'
+                                    b'\xc5\x9f\x89\xbeuq\xb4\xbeA\xb0\xba>'
+                                    b'1\xad\xde\xbe\x8c\x95\xef\xbe'
+                                    b'{\xb7\xf3\xbd\x08\x0b\x98>g\x01 \xbf'
+                                    b'\x07_\xb2>\x19\xd5\x8c>\xd1\xb9+\xbf'
+                                    b'_$\xd4\xbe\x17\xe2\xae>\x8fz\xbe>'
+                                    b'\xaa\xbf\x0c>\xf8si=V\x15\x0b>\xa2\xdc}>'
+                                    b'X\xbcI\xbd\xc3\x17\xa3\xbe-\x7f\xdb>'
+                                    b'\x0f\x8e\xdd>\xea}\xa1\xbe\x01\xbf\xc1>'
+                                    b'\xaaw.>\xf34v\xbe\x0fj\x89>\x1a\xf9>>'
+                                    b'\xf2\xb5\r>\xd0\xb5\xaa\xbd|5\xf3\xbd'
+                                    b'X\xa3\xf9\xbc\xa2CG>w\x0f\x8e\xbe'
+                                    b'\xcb\xe3b?\x00\xfaS?\x12\xa3\x1d?'
+                                    b'\x8d\x0e\x84;\x8dL8?\xcb\x9c\xdf>'
+                                    b"\xe8\xcf\xe5\xbe\xa9\xb7\x90\xbe'8m>"
+                                    b'\xad\n\x12?\x86\x04\xd5=\xcd\xb5\xb4>'
+                                    b' \x97\x11<\x12\xf3\x8c\xbe\\\xe6\xcf='
+                                    b'\x13\xa0\xc1>>\xb2C>Lr\x9e\xbd\x80\xf9(<'
+                                    b'"\x1cK>\x0e\n.>\x11\xa8\xcd>\x04q\xd6='
+                                    b'\xfb\x96\x88>$\x11\xe6=A\x03\x9a\xbe'
+                                    b'\xeaJ\x8a\xbe8\xed\x0c=<\xb7\x85\xbe'
+                                    b'I\x06\xf3\xbc\xf6R\x89>\xec\xb3\xf3='
+                                    b'\xa1\xc10\xbe\xb1O\x99>\xc0\xb9)\xbe'
+                                    b'@\x8d\x01\xbcV\x16g\xbf$z\x00\xbe\xc4?S?'
+                                    b'\xa6\xd6\x93\xbe\x14\xaa\x06?'
+                                    b'\x06\x91\x0f>y\x97Q\xbe\xa8&\xc4\xbe'
+                                    b'\x14b\t\xbe\x88\xa8\x87\xbe\xf7\xef$>'
+                                    b'\x8f\x9a\x91>;\xf1q>\x8f\xc5\xe2\xbe'
+                                    b'\r\xc7->\xa8k\x1c>\xd0\x15\x0f\xbe'
+                                    b'Q\xf7h\xbdnS1\xbe\xe6\x9a;>\x06V$>'
+                                    b'\x86P\x14\xbf\x0e\x9e\xd8\xbe'
+                                    b'\xb5\x19\x8c>\xa2\x13\xcc\xbe!\x17\x88>'
+                                    b'T\x04\xc1=>\x17h>\x08\x90\x93\xbd\\{j\xbe'
+                                    b'U\x07\xcc\xbe\x0b!\x8c>\xec\xf5\x98\xbe'
+                                    b'#h\xcc>>\xc9\xcf\xbe\x00\xba\xa9:Qr\x9c>'
+                                    b'!\n\xd0>8\xb3\xd6\xbd"\xee\x1c>\xf7_\x9b>'
+                                    b'-\x13o>\x01`\xac\xbd\xa4f\xf0='
+                                    b'V\xd6\xd0\xbd\x1c\x96\xca>P\x06\xa5='
+                                    b'SS\xc3\xbe~?\xbd\xbe\x1f\xe5}=\x1d\x14H='
+                                    b'\xccoG\xbe\xbc\xa2\xc7\xbb\xecOG>'
+                                    b'\xaeP~\xbe\x14\xcc\xa2\xbe'
+                                    b'\xa4\xee\xad\xbd\xb5\xd1\x97>RDr>'
+                                    b'\x82\xe8J>l\xb04\xbe\xd3\x02\xa2>'
+                                    b'\xc0K\x19\xbe\xb4\xc4\x9d\xbe\xe2k\x1b>'
+                                    b'\xf0`\xe7\xbd\x84\x1a\xd3=\x1b\tO\xbe'
+                                    b'KD\xc2>\x10N#\xbd\x03Y\xb0>\xc6c1>'
+                                    b'd\x18\xa3\xbd\xbe\xd6x>f/Y>\x86A\x1f>'
+                                    b'\xd0fB=\x80\x82\xdf<\xa3_\x90\xbe'
+                                    b'_\x17\x92>ZY\n\xbeX\xc7x\xbeQ8\xc4>J@U>'
+                                    b'k\xd8\xcb>xj\x90\xbd?V\xcf>\xa2%U\xbe'
+                                    b'\xe6\xd9\x0b\xbe\xfc\x80\xc7=\xeb?\xd3>'
+                                    b'\xdd@\xcb\xbe\xc2OD>\xec7\xd6\xbe'
+                                    b'th\xf5\xbdP\x8b9=\xa2\xfd\t>\x13\xd9~\xbe'
+                                    b'\x88\x994\xbd\xe0\xa58\xbc8\xa8l\xbd'
+                                    b'\n\x18"\xbe\x17\xa9\xcc>$g\x99\xbe'
+                                    b'\xaa\xf2\x1b\xbe\xc7@:\xbe\x806*\xbf'
+                                    b'\xf2\xfd.>\xc5\x92=\xbf\x0er$\xbf'
+                                    b'\xa1D\xf9<\xacW\xcd=\xbc.\x8c\xbf'
+                                    b'I\xe0\x8b>\x06?\x0f?B\xe5#>'
+                                    b'\xa8\xf0\x82\xbd\x14e \xbf4v\xb5=',
+                        'type': 'initializer'},
+ 'sequential_2/dense_6/BiasAdd/ReadVariableOp': {'data_type': 1,
+                                                 'dims': [16],
+                                                 'name': 'sequential_2/dense_6/BiasAdd/ReadVariableOp',
+                                                 'output': 'sequential_2/dense_6/BiasAdd/ReadVariableOp',
+                                                 'raw_data': b'\x00\x00\x00\x00'
+                                                             b'\x1frm?'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\xa0>\xa9;'
+                                                             b'\xc3\xfc^\xbe'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\xb9=\x92?'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\x86\xbf&\xbf'
+                                                             b'\xf0\xb2\x87\xbe'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\xda\x80\xfe\xbb'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'd\xef\x8f\xbf',
+                                                 'type': 'initializer'},
+ 'sequential_2/dense_6/MatMul;sequential_2/dense_6/Relu;sequential_2/dense_6/BiasAdd': {'input': ['serving_default_dense_6_input:0', 'const_fold_opt__21'],
+                                                                                        'name': 'sequential_2/dense_6/MatMul;sequential_2/dense_6/Relu;sequential_2/dense_6/BiasAdd',
+                                                                                        'op_type': 'MatMul',
+                                                                                        'output': ['sequential_2/dense_6/MatMul;sequential_2/dense_6/Relu;sequential_2/dense_6/BiasAdd'],
+                                                                                        'type': 'node'},
+ 'sequential_2/dense_7/BiasAdd/ReadVariableOp': {'data_type': 1,
+                                                 'dims': [16],
+                                                 'name': 'sequential_2/dense_7/BiasAdd/ReadVariableOp',
+                                                 'output': 'sequential_2/dense_7/BiasAdd/ReadVariableOp',
+                                                 'raw_data': b'\x00\x00\x00\x00'
+                                                             b'\x00\x00\x00\x00'
+                                                             b' 5\xcd\xbc'
+                                                             b'\xb4$\xd5>'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'\xa8\x92\xc8>'
+                                                             b'I\xb8\xfa>'
+                                                             b'`\x92\xb2>'
+                                                             b'\x00"/\xbc'
+                                                             b'0\x80\xcb>'
+                                                             b'\x96\xcb\xc1>'
+                                                             b'Q\x19\xe4\xbe'
+                                                             b'\x00\x00\x00\x00'
+                                                             b'xK\xb0>'
+                                                             b'\xf1[\xa7>'
+                                                             b'_r\x1e\xbd',
+                                                 'type': 'initializer'},
+ 'sequential_2/dense_7/MatMul;sequential_2/dense_7/Relu;sequential_2/dense_7/BiasAdd': {'input': ['Relu__5:0', 'const_fold_opt__22'],
+                                                                                        'name': 'sequential_2/dense_7/MatMul;sequential_2/dense_7/Relu;sequential_2/dense_7/BiasAdd',
+                                                                                        'op_type': 'MatMul',
+                                                                                        'output': ['sequential_2/dense_7/MatMul;sequential_2/dense_7/Relu;sequential_2/dense_7/BiasAdd'],
+                                                                                        'type': 'node'},
+ 'sequential_2/dense_8/BiasAdd/ReadVariableOp': {'data_type': 1,
+                                                 'dims': [1],
+                                                 'name': 'sequential_2/dense_8/BiasAdd/ReadVariableOp',
+                                                 'output': 'sequential_2/dense_8/BiasAdd/ReadVariableOp',
+                                                 'raw_data': b'\xcd\xef\xa7\xbe',
+                                                 'type': 'initializer'},
+ 'serving_default_dense_6_input:0': {'data_type': 1,
+                                     'dims': 1,
+                                     'name': 'serving_default_dense_6_input:0',
+                                     'output': 'serving_default_dense_6_input:0',
+                                     'type': 'input'}}
