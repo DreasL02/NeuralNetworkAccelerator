@@ -4,22 +4,22 @@ import chisel3.util.Fill
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import systolic_array.SystolicArray
-import utils.RandomData._
-import utils.MatrixUtils._
-import utils.FixedPointConversion._
+import scala_utils.RandomData._
+import scala_utils.MatrixUtils._
+import scala_utils.FixedPointConversion._
 
 class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
-  val w = 8
-  val wStore = 4 * w
-  val xDimension = 3
-  val yDimension = 3
-  val matrixCommonDimension = 3
+  val w = 7
+  val wResult = 4 * w
+  val numberOfColumns = 7 // number of columns in the result matrix
+  val numberOfRows = 5 // number of rows in the result matrix
+  val matrixCommonDimension = 10 // number of columns in the first matrix and number of rows in the second matrix
   val fixedPoint = 3
-  val signed = true.B
-  val numberOfTests = 1
-  val max = 1.2f
-  val min = 0.0f
+  val signed = true
+  val numberOfTests = 10
+  val max = 3.2f
+  val min = -3.2f
   val threshold = 0.1f
   val printing = Array.fill(numberOfTests)(false)
 
@@ -41,51 +41,63 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
     "SystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new SystolicArray(w, wStore, xDimension, yDimension)) { dut =>
-        var m1f = randomMatrix(yDimension, matrixCommonDimension, min, max, seeds(testNum * 2))
-        var m2f = randomMatrix(matrixCommonDimension, xDimension, min, max, seeds(testNum * 2 + 1))
+      test(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed)) { dut =>
+        var m1f = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
+        var m2f = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
 
         var mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting)
           printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
-        val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed.litToBoolean)
-        val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed.litToBoolean)
+        val m1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed)
+        val m2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed)
         val mr = calculateMatrixMultiplication(m1, m2)
 
-        val ms1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed.litToBoolean)
-        val ms2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed.litToBoolean)
+        val ms1 = convertFloatMatrixToFixedMatrix(m1f, fixedPoint, w, signed)
+        val ms2 = convertFloatMatrixToFixedMatrix(m2f, fixedPoint, w, signed)
 
         if (enablePrinting)
           printMatrixMultiplication(m1, m2, mr, "GOLDEN MODEL CALCULATION IN FIXED POINT")
 
-        m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint, w, signed.litToBoolean)
-        m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint, w, signed.litToBoolean)
+        m1f = convertFixedMatrixToFloatMatrix(m1, fixedPoint, w, signed)
+        m2f = convertFixedMatrixToFloatMatrix(m2, fixedPoint, w, signed)
         mrf = calculateMatrixMultiplication(m1f, m2f)
         if (enablePrinting) {
           printMatrixMultiplication(m1f, m2f, mrf, "GOLDEN MODEL CALCULATION IN AFTER TRANSFORMATION BACK TO FLOATING")
+
+          println("-- Dimensions of matrices --")
+          println("a: (%d,%d)".format(m1.length, m1(0).length))
+          println("b: (%d,%d)".format(m2.length, m2(0).length))
         }
 
-        val mm1 = convertMatrixToMappedAMatrix(ms1, xDimension)
-        val mm2 = convertMatrixToMappedBMatrix(ms2, yDimension)
 
-        dut.io.signed.poke(signed)
+        val mm1 = convertMatrixToMappedAMatrix(ms1, numberOfColumns + matrixCommonDimension - 2)
+        val mm2 = convertMatrixToMappedBMatrix(ms2, numberOfRows + matrixCommonDimension - 2)
 
         if (enablePrinting) {
           println("-- a --")
           print(matrixToString(mm1))
           println("-- b --")
           print(matrixToString(mm2))
-          println("----")
+          println("-- Dimensions --")
+          println("m_a: (%d,%d)".format(mm1.length, mm1(0).length))
+          println("m_b: (%d,%d)".format(mm2.length, mm2(0).length))
+          println("---------")
         }
 
-        val max_number_of_cycles = mm1.length * mm2(0).length
-        println("max_number_of_cycles: %d".format(max_number_of_cycles))
+        val max_number_of_cycles = mm1(0).length
+        if (enablePrinting) {
+          println("Max number of cycles: %d".format(max_number_of_cycles))
+        }
         for (cycle <- 0 until max_number_of_cycles) {
+          var values = "a : "
           for (i <- mm1.indices) {
+            values += mm1(i)(mm1(0).length - 1 - cycle).toString + ", "
             dut.io.a(i).poke(mm1(i)(mm1(0).length - 1 - cycle))
           }
+          values += "\nb : "
           for (i <- mm2(0).indices) {
+            values += mm2(mm2.length - 1 - cycle)(i).toString + ", "
             dut.io.b(i).poke(mm2(mm2.length - 1 - cycle)(i))
           }
           dut.clock.step()
@@ -93,11 +105,12 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
           val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
           for (i <- mr.indices) {
             for (j <- mr(0).indices) {
-              resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
+              resultFixed(i)(j) = dut.io.c(i)(j).peek().litValue
             }
           }
           if (enablePrinting) {
             println("Cycle %d:".format(cycle))
+            println(values)
             print(matrixToString(resultFixed))
           }
         }
@@ -105,12 +118,12 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(mm1.length, mm2(0).length)(0)
         for (i <- mr.indices) {
           for (j <- mr(0).indices) {
-            resultFixed(i)(j) = dut.io.c(j)(i).peek().litValue
+            resultFixed(i)(j) = dut.io.c(i)(j).peek().litValue
           }
         }
 
         // width and fixed point are doubled because the result is the sum of two fixed point numbers and no rounding is done
-        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed.litToBoolean)
+        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed)
 
 
         if (enablePrinting) {

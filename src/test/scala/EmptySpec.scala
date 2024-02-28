@@ -2,7 +2,7 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import utils.FixedPointConversion.{fixedToFloat, floatToFixed}
+import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class EmptySpec extends AnyFreeSpec with ChiselScalatestTester {
 
