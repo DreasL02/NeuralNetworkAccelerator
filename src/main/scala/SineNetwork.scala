@@ -1,6 +1,6 @@
 import activation_functions.ReLU
 import chisel3._
-import systolic_array.BufferedSystolicArray
+import systolic_array.MatMul
 import scala_utils.DimensionManipulation._
 import scala_utils.Optional._
 
@@ -91,12 +91,12 @@ class SineNetwork(
     }
   }
 
-  val mmu1 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 1, true, enableDebuggingIO))
+  val mmu1 = Module(new MatMul(w, wResult, 1, 16, 1, signed, enableDebuggingIO))
   mmu1.io.inputs := VecInit(Seq.fill(1)(VecInit(Seq.fill(1)(io.input))))
   mmu1.io.weights := transpose(weights1)
   mmu1.io.ready := io.ready
 
-  val bias1 = Module(new BufferedBias(wResult, 1, 16, enableDebuggingIO))
+  val bias1 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
   bias1.io.input := mmu1.io.result
   bias1.io.biases := biases1
   bias1.io.ready := mmu1.io.valid
@@ -109,12 +109,12 @@ class SineNetwork(
   relu1.io.input := rounder1.io.output
   relu1.io.ready := rounder1.io.valid
 
-  val mmu2 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 16, true, enableDebuggingIO))
+  val mmu2 = Module(new MatMul(w, wResult, 1, 16, 16, signed, enableDebuggingIO))
   mmu2.io.inputs := reverseRows(relu1.io.result)
   mmu2.io.weights := transpose(weights2)
   mmu2.io.ready := relu1.io.valid
 
-  val bias2 = Module(new BufferedBias(wResult, 1, 16, enableDebuggingIO))
+  val bias2 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
   bias2.io.input := mmu2.io.result
   bias2.io.biases := biases2
   bias2.io.ready := mmu2.io.valid
@@ -127,12 +127,12 @@ class SineNetwork(
   relu2.io.input := rounder2.io.output
   relu2.io.ready := rounder2.io.valid
 
-  val mmu3 = Module(new BufferedSystolicArray(w, wResult, 1, 1, 16, true, enableDebuggingIO))
+  val mmu3 = Module(new MatMul(w, wResult, 1, 1, 16, signed, enableDebuggingIO))
   mmu3.io.inputs := reverseRows(relu2.io.result)
   mmu3.io.weights := transpose(weights3)
   mmu3.io.ready := relu2.io.valid
 
-  val bias3 = Module(new BufferedBias(wResult, 1, 1, enableDebuggingIO))
+  val bias3 = Module(new Add(wResult, 1, 1, enableDebuggingIO))
   bias3.io.input := mmu3.io.result
   bias3.io.biases := biases3
   bias3.io.ready := mmu3.io.valid

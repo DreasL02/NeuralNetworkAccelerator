@@ -5,9 +5,9 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
-import systolic_array.BufferedSystolicArray
+import systolic_array.MatMul
 
-class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
+class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -40,8 +40,8 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
 
-    "BufferedSystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new BufferedSystolicArray(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
+    "MatMul should calculate correctly for test %d".format(testNum) in {
+      test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
         var weightsFloat = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
 

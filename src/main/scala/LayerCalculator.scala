@@ -1,7 +1,7 @@
-import activation_functions.{ReLU}
+import activation_functions.ReLU
 import chisel3._
 import module_utils.Adders
-import systolic_array.BufferedSystolicArray
+import systolic_array.MatMul
 import scala_utils.Optional.optional
 
 class LayerCalculator(
@@ -33,7 +33,7 @@ class LayerCalculator(
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val bufferedSystolicArray = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+  val bufferedSystolicArray = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
   bufferedSystolicArray.io.ready := io.ready
   bufferedSystolicArray.io.inputs := io.inputs
   bufferedSystolicArray.io.weights := io.weights
@@ -44,7 +44,7 @@ class LayerCalculator(
     io.debugSystolicArrayResults.get := bufferedSystolicArray.io.debugSystolicArrayResults.get
   }
 
-  val bufferedBias = Module(new BufferedBias(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
+  val bufferedBias = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
   bufferedBias.io.input := bufferedSystolicArray.io.result
   bufferedBias.io.biases := io.biases
   bufferedBias.io.ready := bufferedSystolicArray.io.valid
