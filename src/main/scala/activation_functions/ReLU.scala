@@ -3,6 +3,13 @@ package activation_functions
 import chisel3._
 
 class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: Boolean = true) extends Module {
+  def this(reluType: onnx.Operators.ReLUType) = this(
+    reluType.wOperands,
+    reluType.operandDimensions._1,
+    reluType.operandDimensions._2,
+    reluType.signed
+  )
+
   val io = IO(new Bundle {
     val input = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
     val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
@@ -22,6 +29,6 @@ class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: 
       }
     }
   }
-  
+
   io.valid := io.ready
 }

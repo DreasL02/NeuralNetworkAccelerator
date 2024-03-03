@@ -1,44 +1,42 @@
 package onnx
 
 object Operators {
-
-  type InputType = {
-    val w: Int
-    val dimensions: (Int, Int)
+  case class InputType(w: Int, dimensions: (Int, Int)) {
+    require(w > 0, "w must be greater than 0")
+    require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
+    require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
   }
 
-  type OutputType = {
-    val w: Int
-    val dimensions: (Int, Int)
+  case class OutputType(w: Int, dimensions: (Int, Int), connectionIndex: Int) {
+    require(w > 0, "w must be greater than 0")
+    require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
+    require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
   }
 
-  type initializerType = {
-    val dimensions: (Int, Int)
-    val w: Int
-    val data: Seq[Seq[Int]]
+  case class InitializerType(dimensions: (Int, Int), w: Int, data: Seq[Seq[Int]]) {
+    require(w > 0, "w must be greater than 0")
+    require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
+    require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
   }
 
-  type AddType = {
-    val wOperands: Int
-    val fixedPoint: Int
-
-    val operandDimensions: (Int, Int)
+  case class AddType(wOperands: Int, operandDimensions: (Int, Int), connectionIndex: (Int, Int)) {
+    require(wOperands > 0, "wOperands must be greater than 0")
+    require(operandDimensions._1 > 0, "operandDimensions._1 must be greater than 0")
+    require(operandDimensions._2 > 0, "operandDimensions._2 must be greater than 0")
   }
 
-  type MatMulType = {
-    val wOperands: Int
-    val wResult: Int
-    val fixedPointOfOperands: Int
-    val signed: Boolean
-
-    val operandADimensions: (Int, Int)
-    val operandBDimensions: (Int, Int)
+  case class MatMulType(wOperands: Int, wResult: Int, signed: Boolean, operandADimensions: (Int, Int), operandBDimensions: (Int, Int), connectionIndex: (Int, Int)) {
+    require(wOperands > 0, "wOperands must be greater than 0")
+    require(wResult >= 2 * wOperands, "wResult must be greater than or equal 2 * wOperands")
+    require(operandADimensions._1 > 0, "operandADimensions._1 must be greater than 0")
+    require(operandADimensions._2 > 0, "operandADimensions._2 must be greater than 0")
+    require(operandBDimensions._1 > 0, "operandBDimensions._1 must be greater than 0")
+    require(operandBDimensions._2 > 0, "operandBDimensions._2 must be greater than 0")
   }
 
-  type ReLUType = {
-    val wOperands: Int
-    val signed: Boolean
-
-    val operandDimensions: (Int, Int)
+  case class ReLUType(wOperands: Int, signed: Boolean, operandDimensions: (Int, Int), connectionIndex: Int) {
+    require(wOperands > 0, "wOperands must be greater than 0")
+    require(operandDimensions._1 > 0, "operandDimensions._1 must be greater than 0")
+    require(operandDimensions._2 > 0, "operandDimensions._2 must be greater than 0")
   }
 }

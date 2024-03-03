@@ -14,6 +14,18 @@ class MatMul(
               signed: Boolean = true,
               enableDebuggingIO: Boolean = true
             ) extends Module {
+
+  // Additional constructor to create a MatMul module from a MatMulType
+  def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(
+    matMulType.wOperands,
+    matMulType.wResult,
+    matMulType.operandADimensions._1,
+    matMulType.operandBDimensions._2,
+    matMulType.operandADimensions._2,
+    matMulType.signed,
+    enableDebuggingIO
+  )
+
   val io = IO(new Bundle {
     val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
     val weights = Input(Vec(numberOfColumns, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
@@ -83,3 +95,4 @@ class MatMul(
     io.debugSystolicArrayResults.get := systolicArray.io.c
   }
 }
+

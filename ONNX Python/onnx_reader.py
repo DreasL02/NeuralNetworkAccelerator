@@ -91,5 +91,5 @@ for node in graph:
 
 
 import json
-with open("out.json", "w") as f:
+with open("example_spec_file.json", "w") as f:
     json.dump(scala_dict, f, indent=2)
