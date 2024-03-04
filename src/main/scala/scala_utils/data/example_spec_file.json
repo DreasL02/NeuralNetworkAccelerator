@@ -1,8 +1,7 @@
 {
   "Input": [
     {
-      "bit_width": 32,
-      "op_type": "Input",
+      "bit_width": 8,
       "index": 0,
       "input_dims": [
         [
@@ -16,7 +15,6 @@
   "Initializer": [
     {
       "bit_width": 8,
-      "op_type": "Initializer",
       "index": 1,
       "input_dims": [
         [
@@ -28,7 +26,6 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Initializer",
       "index": 2,
       "input_dims": [
         [
@@ -40,7 +37,6 @@
     },
     {
       "bit_width": 8,
-      "op_type": "Initializer",
       "index": 3,
       "input_dims": [
         [
@@ -52,7 +48,6 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Initializer",
       "index": 4,
       "input_dims": [
         [
@@ -64,7 +59,6 @@
     },
     {
       "bit_width": 8,
-      "op_type": "Initializer",
       "index": 5,
       "input_dims": [
         [
@@ -76,7 +70,6 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Initializer",
       "index": 6,
       "input_dims": [
         [
@@ -91,7 +84,7 @@
     {
       "bit_width_operands": 8,
       "bit_width_result": 32,
-      "op_type": "MatMul",
+      "signed": true,
       "index": 7,
       "input_dims": [
         [
@@ -111,7 +104,7 @@
     {
       "bit_width_operands": 8,
       "bit_width_result": 32,
-      "op_type": "MatMul",
+      "signed": true,
       "index": 8,
       "input_dims": [
         [
@@ -131,7 +124,7 @@
     {
       "bit_width_operands": 8,
       "bit_width_result": 32,
-      "op_type": "MatMul",
+      "signed": true,
       "index": 9,
       "input_dims": [
         [
@@ -152,7 +145,6 @@
   "Add": [
     {
       "bit_width": 32,
-      "op_type": "Add",
       "index": 10,
       "input_dims": [
         [
@@ -171,7 +163,6 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Add",
       "index": 11,
       "input_dims": [
         [
@@ -190,7 +181,6 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Add",
       "index": 12,
       "input_dims": [
         [
@@ -208,10 +198,10 @@
       ]
     }
   ],
-  "Relu": [
+  "ReLU": [
     {
       "bit_width": 32,
-      "op_type": "Relu",
+      "signed": true,
       "index": 13,
       "input_dims": [
         [
@@ -225,7 +215,7 @@
     },
     {
       "bit_width": 32,
-      "op_type": "Relu",
+      "signed": true,
       "index": 14,
       "input_dims": [
         [
@@ -238,11 +228,44 @@
       ]
     }
   ],
+  "Round": [
+    {
+      "bit_width_operands": 32,
+      "bit_width_result": 8,
+      "fixed_point_position": 3,
+      "signed": true,
+      "index": 15,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        12
+      ]
+    },
+    {
+      "bit_width_operands": 32,
+      "bit_width_result": 8,
+      "fixed_point_position": 3,
+      "signed": true,
+      "index": 16,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        14
+      ]
+    }
+  ],
   "Output": [
     {
       "bit_width": 32,
-      "op_type": "Output",
-      "index": 15,
+      "index": 17,
       "input_dims": [
         [
           1,

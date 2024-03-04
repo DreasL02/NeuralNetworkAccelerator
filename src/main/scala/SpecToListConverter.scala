@@ -1,6 +1,6 @@
 import onnx.Operators
 
-class SpecToListConverter {
+object SpecToListConverter {
 
   // Reads a spec file (e.g. "scala_utils/data/example_spec_file.json") and converts it to various lists of the ONNX types
   def convertSpecToLists(specFilePath: String): (List[Any], List[List[Int]]) = {
@@ -14,28 +14,27 @@ class SpecToListConverter {
     val matmul = json("MatMul").arr
     val relu = json("ReLU").arr
     val round = json("Round").arr
-
     val inputList = inputs.map(input => {
       val w = input("bit_width").num.toInt
-      val dimensions = (input("input_dims")(0).num.toInt, input("input_dims")(1).num.toInt)
+      val dimensions = (input("input_dims")(0)(0).num.toInt, input("input_dims")(0)(1).num.toInt)
       val index = input("index").num.toInt
       (index, Operators.InputType(w, dimensions), List())
     }).toList
 
     val outputList = outputs.map(output => {
       val w = output("bit_width").num.toInt
-      val dimensions = (output("input_dims")(0).num.toInt, output("input_dims")(1).num.toInt)
+      val dimensions = (output("input_dims")(0)(0).num.toInt, output("input_dims")(0)(1).num.toInt)
       val index = output("index").num.toInt
-      val connectionIndex = output("connections").num.toInt
+      val connectionIndex = output("connections")(0).num.toInt
       (index, Operators.OutputType(w, dimensions), List(connectionIndex))
     }).toList
 
     val initializerList = initializers.map(initializer => {
-      val dimensions = (initializer("input_dims")(0).num.toInt, initializer("input_dims")(1).num.toInt)
+      val dimensions = (initializer("input_dims")(0)(0).num.toInt, initializer("input_dims")(0)(1).num.toInt)
       val w = initializer("bit_width").num.toInt
       val index = initializer("index").num.toInt
       // TODO: Find out how data is best represented in the JSON file / in another file
-      //val data = initializer("data").arr.map(row => row.arr.map(_.num.toInt).toSeq).toSeq
+
       (index, Operators.InitializerType(dimensions, w, null), List())
     }).toList
 
@@ -51,7 +50,7 @@ class SpecToListConverter {
     val matmulList = matmul.map(matmul => {
       val wOperands = matmul("bit_width_operands").num.toInt
       val wResult = matmul("bit_width_result").num.toInt
-      val signed = true // TODO: make this a parameter in the JSON file
+      val signed = matmul("signed").bool
       val operandADim = (matmul("input_dims")(0)(0).num.toInt, matmul("input_dims")(0)(1).num.toInt)
       val operandBDim = (matmul("input_dims")(1)(0).num.toInt, matmul("input_dims")(1)(1).num.toInt)
       val index = matmul("index").num.toInt
@@ -62,21 +61,21 @@ class SpecToListConverter {
 
     val reluList = relu.map(relu => {
       val wOperands = relu("bit_width").num.toInt
-      val signed = true // TODO: make this a parameter in the JSON file
-      val operandDimensions = (relu("input_dims")(0).num.toInt, relu("input_dims")(1).num.toInt)
+      val signed = relu("signed").bool
+      val operandDimensions = (relu("input_dims")(0)(0).num.toInt, relu("input_dims")(0)(1).num.toInt)
       val index = relu("index").num.toInt
-      val connectionIndex = relu("connections").num.toInt
+      val connectionIndex = relu("connections")(0).num.toInt
       (index, Operators.ReLUType(wOperands, signed, operandDimensions), List(connectionIndex))
     }).toList
 
     val roundList = round.map(round => {
       val wOperands = round("bit_width_operands").num.toInt
       val wResult = round("bit_width_result").num.toInt
-      val signed = true // TODO: make this a parameter in the JSON file
-      val operandDimensions = (round("input_dims")(0).num.toInt, round("input_dims")(1).num.toInt)
-      val fixedPoint = round("fixed_point").num.toInt
+      val signed = round("signed").bool
+      val operandDimensions = (round("input_dims")(0)(0).num.toInt, round("input_dims")(0)(1).num.toInt)
+      val fixedPoint = round("fixed_point_position").num.toInt
       val index = round("index").num.toInt
-      val connectionIndex = round("connections").num.toInt
+      val connectionIndex = round("connections")(0).num.toInt
       (index, Operators.RoundType(wOperands, wResult, signed, operandDimensions, fixedPoint), List(connectionIndex))
     }).toList
 
