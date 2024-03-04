@@ -39,4 +39,12 @@ object Operators {
     require(operandDimensions._1 > 0, "operandDimensions._1 must be greater than 0")
     require(operandDimensions._2 > 0, "operandDimensions._2 must be greater than 0")
   }
+
+  case class RoundType(wOperands: Int, wResult: Int, signed: Boolean, operandDimensions: (Int, Int), fixedPoint: Int) {
+    require(wOperands > 0, "wOperands must be greater than 0")
+    require(wResult >= wOperands, "wResult must be greater than or equal wOperands")
+    require(operandDimensions._1 > 0, "operandDimensions._1 must be greater than 0")
+    require(operandDimensions._2 > 0, "operandDimensions._2 must be greater than 0")
+    require(fixedPoint >= 0, "fixedPoint must be greater than or equal 0")
+  }
 }

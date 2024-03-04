@@ -13,6 +13,7 @@ class SpecToListConverter {
     val add = json("Add").arr
     val matmul = json("MatMul").arr
     val relu = json("ReLU").arr
+    val round = json("Round").arr
 
     val inputList = inputs.map(input => {
       val w = input("bit_width").num.toInt
@@ -68,12 +69,23 @@ class SpecToListConverter {
       (index, Operators.ReLUType(wOperands, signed, operandDimensions), List(connectionIndex))
     }).toList
 
+    val roundList = round.map(round => {
+      val wOperands = round("bit_width_operands").num.toInt
+      val wResult = round("bit_width_result").num.toInt
+      val signed = true // TODO: make this a parameter in the JSON file
+      val operandDimensions = (round("input_dims")(0).num.toInt, round("input_dims")(1).num.toInt)
+      val fixedPoint = round("fixed_point").num.toInt
+      val index = round("index").num.toInt
+      val connectionIndex = round("connections").num.toInt
+      (index, Operators.RoundType(wOperands, wResult, signed, operandDimensions, fixedPoint), List(connectionIndex))
+    }).toList
+
     // only one input and one output is supported
     if (inputList.length != 1 || outputList.length != 1) {
       throw new Exception("Only one input and one output is supported")
     }
 
-    val allLists = List(inputList, outputList, initializerList, addList, matmulList, reluList)
+    val allLists = List(inputList, outputList, initializerList, addList, matmulList, reluList, roundList)
     val sortedList = allLists.flatten.sortBy(_._1).map(_._2)
     val connectionList = allLists.flatten.sortBy(_._1).map(_._3)
     (sortedList, connectionList)

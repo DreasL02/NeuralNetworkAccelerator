@@ -8,8 +8,20 @@ class AutomaticGeneration(
                            connectionList: List[List[Int]],
                            enableDebuggingIO: Boolean = true
                          ) extends Module {
+  // TODO: Handle different widths by introducing rounders
+  val inputNode = listOfNodes.head.asInstanceOf[InputType]
+  val outputNode = listOfNodes.last.asInstanceOf[OutputType]
 
+  val io = IO(new Bundle {
+    // initializers
+    val ready = Input(Bool()) // indicates that the producer has new data to be processed
+    val input = Input(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
 
+    val output = Output(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
+    val valid = Output(Bool()) // indicates that the module should be done
+  })
+
+  // Module Creation
   val modules = listOfNodes.map {
     case inputType: InputType =>
       val input = Module(new InputModule(inputType))
@@ -29,27 +41,20 @@ class AutomaticGeneration(
     case reluType: ReLUType =>
       val relu = Module(new ReLU(reluType))
       relu
+    case roundType: RoundType =>
+      val rounder = Module(new Rounder(roundType))
+      rounder
+    case _ =>
+      throw new Exception("Unknown module type")
   }
 
-  // TODO: Handle different widths by introducing rounders
-
-  val inputNode = listOfNodes.head.asInstanceOf[InputType]
-  val outputNode = listOfNodes.last.asInstanceOf[OutputType]
-  val io = IO(new Bundle {
-    // initializers
-    val ready = Input(Bool()) // indicates that the producer has new data to be processed
-    val input = Input(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
-
-
-    val output = Output(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
-    val valid = Output(Bool()) // indicates that the module should be done
-  })
-
-  for (i <- 0 until listOfNodes.length) {
+  // Connection Logic (Wiring)
+  for (i <- 0 until modules.length) {
     val currentModule = modules(i)
     val connections = connectionList(i)
     currentModule match {
       case input: InputModule =>
+        // Should only happen once
         input.io.ready := io.ready
         input.io.inputs := io.input
       case add: Add =>
@@ -73,6 +78,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             ready1 := conInitializer.io.valid
             add.io.input := conInitializer.io.output
+          case conRound: Rounder =>
+            ready1 := conRound.io.valid
+            add.io.input := conRound.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
@@ -94,6 +102,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             ready2 := conInitializer.io.valid
             add.io.biases := conInitializer.io.output
+          case conRound: Rounder =>
+            ready2 := conRound.io.valid
+            add.io.biases := conRound.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
@@ -121,6 +132,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             ready1 := conInitializer.io.valid
             matMul.io.inputs := conInitializer.io.output
+          case conRound: Rounder =>
+            ready1 := conRound.io.valid
+            matMul.io.inputs := conRound.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -142,6 +156,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             ready2 := conInitializer.io.valid
             matMul.io.weights := conInitializer.io.output
+          case conRound: Rounder =>
+            ready2 := conRound.io.valid
+            matMul.io.weights := conRound.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -164,6 +181,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             relu.io.input := conInitializer.io.output
             relu.io.ready := conInitializer.io.valid
+          case conRound: Rounder =>
+            relu.io.input := conRound.io.output
+            relu.io.ready := conRound.io.valid
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a relu module")
           case _ =>
@@ -171,8 +191,10 @@ class AutomaticGeneration(
         }
 
       case _: Initializer =>
+      // Initializers do not have any inputs
 
       case output: OutputModule =>
+        // Should only happen once
         val connectedModule = modules(connections(0))
         connectedModule match {
           case conInput: InputModule =>
@@ -190,6 +212,9 @@ class AutomaticGeneration(
           case conInitializer: Initializer =>
             output.io.inputs := conInitializer.io.output
             output.io.ready := conInitializer.io.valid
+          case conRound: Rounder =>
+            output.io.inputs := conRound.io.output
+            output.io.ready := conRound.io.valid
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an output module")
           case _ =>
@@ -197,6 +222,32 @@ class AutomaticGeneration(
         }
         io.output := output.io.outputs
         io.valid := output.io.valid
+      case rounder: Rounder =>
+        val connectedModule = modules(connections(0))
+        connectedModule match {
+          case conInput: InputModule =>
+            rounder.io.input := conInput.io.outputs
+            rounder.io.ready := conInput.io.valid
+          case conAdd: Add =>
+            rounder.io.input := conAdd.io.result
+            rounder.io.ready := conAdd.io.valid
+          case conMatMul: MatMul =>
+            rounder.io.input := conMatMul.io.result
+            rounder.io.ready := conMatMul.io.valid
+          case conReLU: ReLU =>
+            rounder.io.input := conReLU.io.result
+            rounder.io.ready := conReLU.io.valid
+          case conInitializer: Initializer =>
+            rounder.io.input := conInitializer.io.output
+            rounder.io.ready := conInitializer.io.valid
+          case conRound: Rounder =>
+            rounder.io.input := conRound.io.output
+            rounder.io.ready := conRound.io.valid
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a rounder module")
+          case _ =>
+            throw new Exception("Unknown module connected to rounder module")
+        }
       case _ =>
         throw new Exception("Unknown module type")
     }
