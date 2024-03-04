@@ -58,46 +58,46 @@ class AutomaticGeneration(
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
-          case input: InputModule =>
-            ready1 := input.io.valid
-            add.io.input := input.io.outputs
-          case add: Add =>
-            ready1 := add.io.valid
-            add.io.input := add.io.result
-          case matMul: MatMul =>
-            ready1 := matMul.io.valid
-            add.io.input := matMul.io.result
-          case relu: ReLU =>
-            ready1 := relu.io.valid
-            add.io.input := relu.io.result
-          case initializer: Initializer =>
-            ready1 := initializer.io.valid
-            add.io.input := initializer.io.output
+          case conInput: InputModule =>
+            ready1 := conInput.io.valid
+            add.io.input := conInput.io.outputs
+          case conAdd: Add =>
+            ready1 := conAdd.io.valid
+            add.io.input := conAdd.io.result
+          case conMatMul: MatMul =>
+            ready1 := conMatMul.io.valid
+            add.io.input := conMatMul.io.result
+          case conReLU: ReLU =>
+            ready1 := conReLU.io.valid
+            add.io.input := conReLU.io.result
+          case conInitializer: Initializer =>
+            ready1 := conInitializer.io.valid
+            add.io.input := conInitializer.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
             throw new Exception("Unknown module connected to add module inputs")
         }
         connectedModule2 match {
-          case input: InputModule =>
-            ready2 := input.io.valid
-            add.io.biases := input.io.outputs
-          case add: Add =>
-            ready2 := add.io.valid
-            add.io.biases := add.io.result
-          case matMul: MatMul =>
-            ready2 := matMul.io.valid
-            add.io.biases := matMul.io.result
-          case relu: ReLU =>
-            ready2 := relu.io.valid
-            add.io.biases := relu.io.result
-          case initializer: Initializer =>
-            ready2 := initializer.io.valid
-            add.io.biases := initializer.io.output
+          case conInput: InputModule =>
+            ready2 := conInput.io.valid
+            add.io.biases := conInput.io.outputs
+          case conAdd: Add =>
+            ready2 := conAdd.io.valid
+            add.io.biases := conAdd.io.result
+          case conMatMul: MatMul =>
+            ready2 := conMatMul.io.valid
+            add.io.biases := conMatMul.io.result
+          case conReLU: ReLU =>
+            ready2 := conReLU.io.valid
+            add.io.biases := conReLU.io.result
+          case conInitializer: Initializer =>
+            ready2 := conInitializer.io.valid
+            add.io.biases := conInitializer.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
-            throw new Exception("Unknown module connected to add module biases")
+            throw new Exception("Unknown module connected to add module inputs")
         }
         add.io.ready := ready1 && ready2
       case matMul: MatMul =>
@@ -106,67 +106,64 @@ class AutomaticGeneration(
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
-          case input: InputModule =>
-            ready1 := input.io.valid
-            matMul.io.inputs := input.io.outputs
-          case add: Add =>
-            ready1 := add.io.valid
-            matMul.io.inputs := add.io.result
-          case matMul: MatMul =>
-            ready1 := matMul.io.valid
-            matMul.io.inputs := matMul.io.result
-          case relu: ReLU =>
-            ready1 := relu.io.valid
-            matMul.io.inputs := relu.io.result
-          case initializer: Initializer =>
-            ready1 := initializer.io.valid
-            matMul.io.inputs := initializer.io.output
+          case conInput: InputModule =>
+            ready1 := conInput.io.valid
+            matMul.io.inputs := conInput.io.outputs
+          case conAdd: Add =>
+            ready1 := conAdd.io.valid
+            matMul.io.inputs := conAdd.io.result
+          case conMatMul: MatMul =>
+            ready1 := conMatMul.io.valid
+            matMul.io.inputs := conMatMul.io.result
+          case conReLU: ReLU =>
+            ready1 := conReLU.io.valid
+            matMul.io.inputs := conReLU.io.result
+          case conInitializer: Initializer =>
+            ready1 := conInitializer.io.valid
+            matMul.io.inputs := conInitializer.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
             throw new Exception("Unknown module connected to matmul module inputs")
         }
         connectedModule2 match {
-          case input: InputModule =>
-            ready2 := input.io.valid
-            matMul.io.weights := input.io.outputs
-          case add: Add =>
-            ready2 := add.io.valid
-            matMul.io.weights := add.io.result
-          case matMul: MatMul =>
-            ready2 := matMul.io.valid
-            matMul.io.weights := matMul.io.result
-          case relu: ReLU =>
-            ready2 := relu.io.valid
-            matMul.io.weights := relu.io.result
-          case initializer: Initializer =>
-            ready2 := initializer.io.valid
-            matMul.io.weights := initializer.io.output
+          case conInput: InputModule =>
+            ready2 := conInput.io.valid
+            matMul.io.weights := conInput.io.outputs
+          case conAdd: Add =>
+            ready2 := conAdd.io.valid
+            matMul.io.weights := conAdd.io.result
+          case conMatMul: MatMul =>
+            ready2 := conMatMul.io.valid
+            matMul.io.weights := conMatMul.io.result
+          case conReLU: ReLU =>
+            ready2 := conReLU.io.valid
+            matMul.io.weights := conReLU.io.result
+          case conInitializer: Initializer =>
+            ready2 := conInitializer.io.valid
+            matMul.io.weights := conInitializer.io.output
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
-            throw new Exception("Unknown module connected to matmul module weights")
+            throw new Exception("Unknown module connected to matmul module inputs")
         }
         matMul.io.ready := ready1 && ready2
 
       case relu: ReLU =>
         val connectedModule = modules(connections(0))
         connectedModule match {
-          case input: InputModule =>
-            relu.io.input := input.io.outputs
-            relu.io.ready := input.io.valid
-          case add: Add =>
-            relu.io.input := add.io.result
-            relu.io.ready := add.io.valid
-          case matMul: MatMul =>
-            relu.io.input := matMul.io.result
-            relu.io.ready := matMul.io.valid
-          case relu: ReLU =>
-            relu.io.input := relu.io.result
-            relu.io.ready := relu.io.valid
-          case initializer: Initializer =>
-            relu.io.input := initializer.io.output
-            relu.io.ready := initializer.io.valid
+          case conInput: InputModule =>
+            relu.io.input := conInput.io.outputs
+            relu.io.ready := conInput.io.valid
+          case conAdd: Add =>
+            relu.io.input := conAdd.io.result
+            relu.io.ready := conAdd.io.valid
+          case conMatMul: MatMul =>
+            relu.io.input := conMatMul.io.result
+            relu.io.ready := conMatMul.io.valid
+          case conInitializer: Initializer =>
+            relu.io.input := conInitializer.io.output
+            relu.io.ready := conInitializer.io.valid
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a relu module")
           case _ =>
@@ -178,21 +175,21 @@ class AutomaticGeneration(
       case output: OutputModule =>
         val connectedModule = modules(connections(0))
         connectedModule match {
-          case input: InputModule =>
-            output.io.inputs := input.io.outputs
-            output.io.ready := input.io.valid
-          case add: Add =>
-            output.io.inputs := add.io.result
-            output.io.ready := add.io.valid
-          case matMul: MatMul =>
-            output.io.inputs := matMul.io.result
-            output.io.ready := matMul.io.valid
-          case relu: ReLU =>
-            output.io.inputs := relu.io.result
-            output.io.ready := relu.io.valid
-          case initializer: Initializer =>
-            output.io.inputs := initializer.io.output
-            output.io.ready := initializer.io.valid
+          case conInput: InputModule =>
+            output.io.inputs := conInput.io.outputs
+            output.io.ready := conInput.io.valid
+          case conAdd: Add =>
+            output.io.inputs := conAdd.io.result
+            output.io.ready := conAdd.io.valid
+          case conMatMul: MatMul =>
+            output.io.inputs := conMatMul.io.result
+            output.io.ready := conMatMul.io.valid
+          case conReLU: ReLU =>
+            output.io.inputs := conReLU.io.result
+            output.io.ready := conReLU.io.valid
+          case conInitializer: Initializer =>
+            output.io.inputs := conInitializer.io.output
+            output.io.ready := conInitializer.io.valid
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an output module")
           case _ =>
