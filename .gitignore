@@ -409,7 +409,6 @@ hs_err_pid*
 *.zip
 *.tar.gz
 *.rar
-*.json
 *.fir
 *.v
 *.sv

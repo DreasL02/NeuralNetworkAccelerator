@@ -1,0 +1,257 @@
+{
+  "Input": [
+    {
+      "bit_width": 32,
+      "op_type": "Input",
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          1
+        ]
+      ],
+      "connections": []
+    }
+  ],
+  "Initializer": [
+    {
+      "bit_width": 8,
+      "op_type": "Initializer",
+      "index": 1,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Initializer",
+      "index": 2,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "op_type": "Initializer",
+      "index": 3,
+      "input_dims": [
+        [
+          16,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Initializer",
+      "index": 4,
+      "input_dims": [
+        [
+          16,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "op_type": "Initializer",
+      "index": 5,
+      "input_dims": [
+        [
+          16,
+          1
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Initializer",
+      "index": 6,
+      "input_dims": [
+        [
+          1,
+          1
+        ]
+      ],
+      "connections": []
+    }
+  ],
+  "MatMul": [
+    {
+      "bit_width_operands": 8,
+      "bit_width_result": 32,
+      "op_type": "MatMul",
+      "index": 7,
+      "input_dims": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        0,
+        1
+      ]
+    },
+    {
+      "bit_width_operands": 8,
+      "bit_width_result": 32,
+      "op_type": "MatMul",
+      "index": 8,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          16,
+          16
+        ]
+      ],
+      "connections": [
+        13,
+        3
+      ]
+    },
+    {
+      "bit_width_operands": 8,
+      "bit_width_result": 32,
+      "op_type": "MatMul",
+      "index": 9,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          16,
+          1
+        ]
+      ],
+      "connections": [
+        14,
+        5
+      ]
+    }
+  ],
+  "Add": [
+    {
+      "bit_width": 32,
+      "op_type": "Add",
+      "index": 10,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        7,
+        2
+      ]
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Add",
+      "index": 11,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        8,
+        4
+      ]
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Add",
+      "index": 12,
+      "input_dims": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "connections": [
+        9,
+        6
+      ]
+    }
+  ],
+  "Relu": [
+    {
+      "bit_width": 32,
+      "op_type": "Relu",
+      "index": 13,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        10
+      ]
+    },
+    {
+      "bit_width": 32,
+      "op_type": "Relu",
+      "index": 14,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": [
+        11
+      ]
+    }
+  ],
+  "Output": [
+    {
+      "bit_width": 32,
+      "op_type": "Output",
+      "index": 15,
+      "input_dims": [
+        [
+          1,
+          1
+        ]
+      ],
+      "connections": [
+        12
+      ]
+    }
+  ]
+}

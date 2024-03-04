@@ -8,9 +8,9 @@ class AutomaticGeneration(
                            connectionList: List[List[Int]],
                            enableDebuggingIO: Boolean = true
                          ) extends Module {
-  // TODO: Handle different widths by introducing rounders
-  val inputNode = listOfNodes.head.asInstanceOf[InputType]
-  val outputNode = listOfNodes.last.asInstanceOf[OutputType]
+
+  val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
+  val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
 
   val io = IO(new Bundle {
     // initializers
@@ -45,7 +45,7 @@ class AutomaticGeneration(
       val rounder = Module(new Rounder(roundType))
       rounder
     case _ =>
-      throw new Exception("Unknown module type")
+      throw new Exception("Unknown specified module type (module creation)")
   }
 
   // Connection Logic (Wiring)
@@ -222,6 +222,7 @@ class AutomaticGeneration(
         }
         io.output := output.io.outputs
         io.valid := output.io.valid
+
       case rounder: Rounder =>
         val connectedModule = modules(connections(0))
         connectedModule match {
@@ -248,6 +249,7 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown module connected to rounder module")
         }
+
       case _ =>
         throw new Exception("Unknown module type")
     }
