@@ -3,7 +3,7 @@ import onnx.Operators
 class SpecToListConverter {
 
   // Reads a spec file (e.g. "scala_utils/data/example_spec_file.json") and converts it to various lists of the ONNX types
-  def convertSpecToLists(specFilePath: String): List[Any] = {
+  def convertSpecToLists(specFilePath: String): (List[Any], List[List[Int]]) = {
     val spec = scala.io.Source.fromFile(specFilePath).mkString
 
     val json = ujson.read(spec)
@@ -18,7 +18,7 @@ class SpecToListConverter {
       val w = input("bit_width").num.toInt
       val dimensions = (input("input_dims")(0).num.toInt, input("input_dims")(1).num.toInt)
       val index = input("index").num.toInt
-      (index, Operators.InputType(w, dimensions))
+      (index, Operators.InputType(w, dimensions), List())
     }).toList
 
     val outputList = outputs.map(output => {
@@ -26,7 +26,7 @@ class SpecToListConverter {
       val dimensions = (output("input_dims")(0).num.toInt, output("input_dims")(1).num.toInt)
       val index = output("index").num.toInt
       val connectionIndex = output("connections").num.toInt
-      (index, Operators.OutputType(w, dimensions, connectionIndex))
+      (index, Operators.OutputType(w, dimensions), List(connectionIndex))
     }).toList
 
     val initializerList = initializers.map(initializer => {
@@ -35,15 +35,16 @@ class SpecToListConverter {
       val index = initializer("index").num.toInt
       // TODO: Find out how data is best represented in the JSON file / in another file
       //val data = initializer("data").arr.map(row => row.arr.map(_.num.toInt).toSeq).toSeq
-      (index, Operators.InitializerType(dimensions, w, null))
+      (index, Operators.InitializerType(dimensions, w, null), List())
     }).toList
 
     val addList = add.map(add => {
       val wOperands = add("bit_width").num.toInt
       val operandDimensions = (add("input_dims")(0)(0).num.toInt, add("input_dims")(0)(1).num.toInt)
       val index = add("index").num.toInt
-      val connectionIndex = (add("connections")(0).num.toInt, add("connections")(1).num.toInt)
-      (index, Operators.AddType(wOperands, operandDimensions, connectionIndex))
+      val connection1 = add("connections")(0).num.toInt
+      val connection2 = add("connections")(1).num.toInt
+      (index, Operators.AddType(wOperands, operandDimensions), List(connection1, connection2))
     }).toList
 
     val matmulList = matmul.map(matmul => {
@@ -53,8 +54,9 @@ class SpecToListConverter {
       val operandADim = (matmul("input_dims")(0)(0).num.toInt, matmul("input_dims")(0)(1).num.toInt)
       val operandBDim = (matmul("input_dims")(1)(0).num.toInt, matmul("input_dims")(1)(1).num.toInt)
       val index = matmul("index").num.toInt
-      val connectionIndex = (matmul("connections")(0).num.toInt, matmul("connections")(1).num.toInt)
-      (index, Operators.MatMulType(wOperands, wResult, signed, operandADim, operandBDim, connectionIndex))
+      val connection1 = matmul("connections")(0).num.toInt
+      val connection2 = matmul("connections")(1).num.toInt
+      (index, Operators.MatMulType(wOperands, wResult, signed, operandADim, operandBDim), List(connection1, connection2))
     }).toList
 
     val reluList = relu.map(relu => {
@@ -63,11 +65,17 @@ class SpecToListConverter {
       val operandDimensions = (relu("input_dims")(0).num.toInt, relu("input_dims")(1).num.toInt)
       val index = relu("index").num.toInt
       val connectionIndex = relu("connections").num.toInt
-      (index, Operators.ReLUType(wOperands, signed, operandDimensions, connectionIndex))
+      (index, Operators.ReLUType(wOperands, signed, operandDimensions), List(connectionIndex))
     }).toList
+
+    // only one input and one output is supported
+    if (inputList.length != 1 || outputList.length != 1) {
+      throw new Exception("Only one input and one output is supported")
+    }
 
     val allLists = List(inputList, outputList, initializerList, addList, matmulList, reluList)
     val sortedList = allLists.flatten.sortBy(_._1).map(_._2)
-    sortedList
+    val connectionList = allLists.flatten.sortBy(_._1).map(_._3)
+    (sortedList, connectionList)
   }
 }
