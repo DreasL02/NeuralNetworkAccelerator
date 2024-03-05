@@ -42,7 +42,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   for (testNum <- 0 until numberOfInputs) {
-    "SineNetwork should behave correctly for test %d (input = %f)".format(testNum, inputs(testNum)) in {
+    "SineNetwork should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
       test(new SineNetwork(w, wResult, signed, fixedPoint, weights, biases, true)) { dut =>
         var cycleTotal = 0
         dut.io.input.poke(inputsFixed(testNum).U)

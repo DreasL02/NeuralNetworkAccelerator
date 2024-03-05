@@ -7,7 +7,8 @@ import systolic_array.MatMul
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           enableDebuggingIO: Boolean = true
+                           enableDebuggingIO: Boolean = true,
+                           printing: Boolean = true
                          ) extends Module {
 
   val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
@@ -52,7 +53,7 @@ class AutomaticGeneration(
   // Connection Logic (Wiring)
   for (i <- 0 until modules.length) {
     val currentModule = modules(i)
-    println("Generating connections for: " + currentModule)
+    if (printing) println("Generating connections for: " + currentModule)
     val connectionIndices = connectionList(i)
     currentModule match {
       case input: InputModule =>
@@ -62,8 +63,10 @@ class AutomaticGeneration(
       case add: Add =>
         val connectedModule1 = modules(connectionIndices(0))
         val connectedModule2 = modules(connectionIndices(1))
-        println("Connected module 1: " + connectedModule1)
-        println("Connected module 2: " + connectedModule2)
+        if (printing) {
+          println("Connected module 1: " + connectedModule1)
+          println("Connected module 2: " + connectedModule2)
+        }
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
@@ -118,8 +121,10 @@ class AutomaticGeneration(
       case matMul: MatMul =>
         val connectedModule1 = modules(connectionIndices(0))
         val connectedModule2 = modules(connectionIndices(1))
-        println("Connected module 1: " + connectedModule1)
-        println("Connected module 2: " + connectedModule2)
+        if (printing) {
+          println("Connected module 1: " + connectedModule1)
+          println("Connected module 2: " + connectedModule2)
+        }
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
@@ -174,7 +179,7 @@ class AutomaticGeneration(
 
       case relu: ReLU =>
         val connectedModule = modules(connectionIndices(0))
-        println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             relu.io.input := conInput.io.outputs
@@ -203,7 +208,7 @@ class AutomaticGeneration(
       case output: OutputModule =>
         // Should only happen once
         val connectedModule = modules(connectionIndices(0))
-        println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             output.io.inputs := conInput.io.outputs
@@ -233,7 +238,7 @@ class AutomaticGeneration(
 
       case rounder: Rounder =>
         val connectedModule = modules(connectionIndices(0))
-        println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             rounder.io.input := conInput.io.outputs
@@ -263,6 +268,6 @@ class AutomaticGeneration(
         throw new Exception("Unknown module type")
     }
 
-    println("Connections generated for: " + currentModule)
+    if (printing) println("Connections generated for: " + currentModule)
   }
 }

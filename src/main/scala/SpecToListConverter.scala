@@ -33,9 +33,9 @@ object SpecToListConverter {
       val dimensions = (initializer("input_dims")(0)(0).num.toInt, initializer("input_dims")(0)(1).num.toInt)
       val w = initializer("bit_width").num.toInt
       val index = initializer("index").num.toInt
-      // TODO: Find out how data is best represented in the JSON file / in another file
-      // Temporary solution: a random 2D array of integers with the same dimensions as the initializer
-      val data = (0 until dimensions._1).map(_ => (0 until dimensions._2).map(_ => scala.util.Random.nextInt(256)).toList).toList
+      // The data is given as a flat array, so we need to group it into the correct dimensions in row-major order
+
+      val data = initializer("data").arr.map(_.num.toInt).toSeq.grouped(dimensions._2).toSeq
       (index, Operators.InitializerType(dimensions, w, data), List())
     }).toList
 
@@ -57,8 +57,6 @@ object SpecToListConverter {
       val index = matmul("index").num.toInt
       val connection1 = matmul("connections")(0).num.toInt
       val connection2 = matmul("connections")(1).num.toInt
-      println("operandADim: " + operandADim)
-      println("operandBDim: " + operandBDim)
       (index, Operators.MatMulType(wOperands, wResult, signed, operandADim, operandBDim), List(connection1, connection2))
     }).toList
 
