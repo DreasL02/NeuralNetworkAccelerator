@@ -127,7 +127,7 @@ class AutomaticGeneration(
         }
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
-        connectedModule1 match {
+        connectedModule1 match { // matmuls inputs are row-reversed
           case conInput: InputModule =>
             ready1 := conInput.io.valid
             matMul.io.inputs := reverseRows(conInput.io.outputs)
@@ -151,7 +151,7 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown module connected to matmul module inputs")
         }
-        connectedModule2 match {
+        connectedModule2 match { // matmuls weights are transposed
           case conInput: InputModule =>
             ready2 := conInput.io.valid
             matMul.io.weights := transpose(conInput.io.outputs)
