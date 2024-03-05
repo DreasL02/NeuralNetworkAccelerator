@@ -34,8 +34,9 @@ object SpecToListConverter {
       val w = initializer("bit_width").num.toInt
       val index = initializer("index").num.toInt
       // TODO: Find out how data is best represented in the JSON file / in another file
-
-      (index, Operators.InitializerType(dimensions, w, null), List())
+      // Temporary solution: a random 2D array of integers with the same dimensions as the initializer
+      val data = (0 until dimensions._1).map(_ => (0 until dimensions._2).map(_ => scala.util.Random.nextInt(256)).toList).toList
+      (index, Operators.InitializerType(dimensions, w, data), List())
     }).toList
 
     val addList = add.map(add => {
@@ -56,6 +57,8 @@ object SpecToListConverter {
       val index = matmul("index").num.toInt
       val connection1 = matmul("connections")(0).num.toInt
       val connection2 = matmul("connections")(1).num.toInt
+      println("operandADim: " + operandADim)
+      println("operandBDim: " + operandBDim)
       (index, Operators.MatMulType(wOperands, wResult, signed, operandADim, operandBDim), List(connection1, connection2))
     }).toList
 

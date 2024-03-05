@@ -1,6 +1,7 @@
 import activation_functions.ReLU
 import chisel3._
 import onnx.Operators._
+import scala_utils.DimensionManipulation.{reverseRows, transpose}
 import systolic_array.MatMul
 
 class AutomaticGeneration(
@@ -51,15 +52,18 @@ class AutomaticGeneration(
   // Connection Logic (Wiring)
   for (i <- 0 until modules.length) {
     val currentModule = modules(i)
-    val connections = connectionList(i)
+    println("Generating connections for: " + currentModule)
+    val connectionIndices = connectionList(i)
     currentModule match {
       case input: InputModule =>
         // Should only happen once
         input.io.ready := io.ready
         input.io.inputs := io.input
       case add: Add =>
-        val connectedModule1 = modules(connections(0))
-        val connectedModule2 = modules(connections(1))
+        val connectedModule1 = modules(connectionIndices(0))
+        val connectedModule2 = modules(connectionIndices(1))
+        println("Connected module 1: " + connectedModule1)
+        println("Connected module 2: " + connectedModule2)
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
@@ -112,29 +116,31 @@ class AutomaticGeneration(
         }
         add.io.ready := ready1 && ready2
       case matMul: MatMul =>
-        val connectedModule1 = modules(connections(0))
-        val connectedModule2 = modules(connections(1))
+        val connectedModule1 = modules(connectionIndices(0))
+        val connectedModule2 = modules(connectionIndices(1))
+        println("Connected module 1: " + connectedModule1)
+        println("Connected module 2: " + connectedModule2)
         val ready1 = Wire(Bool())
         val ready2 = Wire(Bool())
         connectedModule1 match {
           case conInput: InputModule =>
             ready1 := conInput.io.valid
-            matMul.io.inputs := conInput.io.outputs
+            matMul.io.inputs := reverseRows(conInput.io.outputs)
           case conAdd: Add =>
             ready1 := conAdd.io.valid
-            matMul.io.inputs := conAdd.io.result
+            matMul.io.inputs := reverseRows(conAdd.io.result)
           case conMatMul: MatMul =>
             ready1 := conMatMul.io.valid
-            matMul.io.inputs := conMatMul.io.result
+            matMul.io.inputs := reverseRows(conMatMul.io.result)
           case conReLU: ReLU =>
             ready1 := conReLU.io.valid
-            matMul.io.inputs := conReLU.io.result
+            matMul.io.inputs := reverseRows(conReLU.io.result)
           case conInitializer: Initializer =>
             ready1 := conInitializer.io.valid
-            matMul.io.inputs := conInitializer.io.output
+            matMul.io.inputs := reverseRows(conInitializer.io.output)
           case conRound: Rounder =>
             ready1 := conRound.io.valid
-            matMul.io.inputs := conRound.io.output
+            matMul.io.inputs := reverseRows(conRound.io.output)
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -143,22 +149,22 @@ class AutomaticGeneration(
         connectedModule2 match {
           case conInput: InputModule =>
             ready2 := conInput.io.valid
-            matMul.io.weights := conInput.io.outputs
+            matMul.io.weights := transpose(conInput.io.outputs)
           case conAdd: Add =>
             ready2 := conAdd.io.valid
-            matMul.io.weights := conAdd.io.result
+            matMul.io.weights := transpose(conAdd.io.result)
           case conMatMul: MatMul =>
             ready2 := conMatMul.io.valid
-            matMul.io.weights := conMatMul.io.result
+            matMul.io.weights := transpose(conMatMul.io.result)
           case conReLU: ReLU =>
             ready2 := conReLU.io.valid
-            matMul.io.weights := conReLU.io.result
+            matMul.io.weights := transpose(conReLU.io.result)
           case conInitializer: Initializer =>
             ready2 := conInitializer.io.valid
-            matMul.io.weights := conInitializer.io.output
+            matMul.io.weights := transpose(conInitializer.io.output)
           case conRound: Rounder =>
             ready2 := conRound.io.valid
-            matMul.io.weights := conRound.io.output
+            matMul.io.weights := transpose(conRound.io.output)
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -167,7 +173,8 @@ class AutomaticGeneration(
         matMul.io.ready := ready1 && ready2
 
       case relu: ReLU =>
-        val connectedModule = modules(connections(0))
+        val connectedModule = modules(connectionIndices(0))
+        println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             relu.io.input := conInput.io.outputs
@@ -195,7 +202,8 @@ class AutomaticGeneration(
 
       case output: OutputModule =>
         // Should only happen once
-        val connectedModule = modules(connections(0))
+        val connectedModule = modules(connectionIndices(0))
+        println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             output.io.inputs := conInput.io.outputs
@@ -224,7 +232,8 @@ class AutomaticGeneration(
         io.valid := output.io.valid
 
       case rounder: Rounder =>
-        val connectedModule = modules(connections(0))
+        val connectedModule = modules(connectionIndices(0))
+        println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             rounder.io.input := conInput.io.outputs
@@ -253,5 +262,7 @@ class AutomaticGeneration(
       case _ =>
         throw new Exception("Unknown module type")
     }
+
+    println("Connections generated for: " + currentModule)
   }
 }
