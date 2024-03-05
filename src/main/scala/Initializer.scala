@@ -11,12 +11,7 @@ class Initializer(w: Int = 8,
     initializerType.dimensions._2,
     initializerType.data
   )
-
-  println("Initializer")
-  println("rows: " + numberOfRows)
-  println("columns: " + numberOfColumns)
-
-
+  
   val io = IO(new Bundle {
     val output = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
     val valid = Output(Bool()) // indicates that the module should be done
@@ -30,6 +25,4 @@ class Initializer(w: Int = 8,
   }
   io.output := storage
   io.valid := true.B
-
-  println("Initlizier output: " + io.output)
 }
