@@ -1,7 +1,7 @@
 {
   "Input": [
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         1
@@ -12,7 +12,7 @@
   "MatMul": [
     {
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "index": 7,
       "input_dims": [
         [
@@ -27,11 +27,12 @@
       "connections": [
         15,
         16
-      ]
+      ],
+      "signed": true
     },
     {
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "index": 10,
       "input_dims": [
         [
@@ -46,11 +47,12 @@
       "connections": [
         17,
         18
-      ]
+      ],
+      "signed": true
     },
     {
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "index": 13,
       "input_dims": [
         [
@@ -65,13 +67,14 @@
       "connections": [
         19,
         20
-      ]
+      ],
+      "signed": true
     }
   ],
   "Add": [
     {
-      "bit_width_operands": 32,
-      "bit_width_result": 32,
+      "bit_width_operands": 16,
+      "bit_width_result": 16,
       "index": 8,
       "input_dims": [
         [
@@ -86,11 +89,12 @@
       "connections": [
         7,
         3
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
-      "bit_width_result": 32,
+      "bit_width_operands": 16,
+      "bit_width_result": 16,
       "index": 11,
       "input_dims": [
         [
@@ -105,11 +109,12 @@
       "connections": [
         10,
         2
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
-      "bit_width_result": 32,
+      "bit_width_operands": 16,
+      "bit_width_result": 16,
       "index": 14,
       "input_dims": [
         [
@@ -124,13 +129,14 @@
       "connections": [
         13,
         1
-      ]
+      ],
+      "signed": true
     }
   ],
   "Relu": [
     {
-      "bit_width_operands": 32,
-      "bit_width_result": 32,
+      "bit_width_operands": 16,
+      "bit_width_result": 16,
       "index": 9,
       "input_dims": [
         [
@@ -140,11 +146,12 @@
       ],
       "connections": [
         8
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
-      "bit_width_result": 32,
+      "bit_width_operands": 16,
+      "bit_width_result": 16,
       "index": 12,
       "input_dims": [
         [
@@ -154,12 +161,13 @@
       ],
       "connections": [
         11
-      ]
+      ],
+      "signed": true
     }
   ],
   "Rounder": [
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 15,
       "input_dims": [
@@ -170,10 +178,11 @@
       ],
       "connections": [
         0
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 16,
       "input_dims": [
@@ -184,10 +193,11 @@
       ],
       "connections": [
         5
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 17,
       "input_dims": [
@@ -198,10 +208,11 @@
       ],
       "connections": [
         9
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 18,
       "input_dims": [
@@ -212,10 +223,11 @@
       ],
       "connections": [
         4
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 19,
       "input_dims": [
@@ -226,10 +238,11 @@
       ],
       "connections": [
         12
-      ]
+      ],
+      "signed": true
     },
     {
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "index": 20,
       "input_dims": [
@@ -240,62 +253,396 @@
       ],
       "connections": [
         6
-      ]
+      ],
+      "signed": true
     }
   ],
   "Initializer": [
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         1
       ],
-      "index": 1
+      "index": 1,
+      "raw_data": [
+        65452
+      ]
     },
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         16
       ],
-      "index": 2
+      "index": 2,
+      "raw_data": [
+        0,
+        0,
+        65530,
+        107,
+        0,
+        100,
+        125,
+        89,
+        65533,
+        102,
+        97,
+        65422,
+        0,
+        88,
+        84,
+        65526
+      ]
     },
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         16
       ],
-      "index": 3
+      "index": 3,
+      "raw_data": [
+        0,
+        237,
+        0,
+        1,
+        65480,
+        0,
+        292,
+        0,
+        65369,
+        65468,
+        0,
+        65534,
+        0,
+        0,
+        0,
+        65248
+      ]
     },
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         16,
         16
       ],
-      "index": 4
+      "index": 4,
+      "raw_data": [
+        87,
+        75,
+        65483,
+        65483,
+        65518,
+        65515,
+        65535,
+        65521,
+        101,
+        65502,
+        65437,
+        44,
+        65481,
+        65429,
+        15,
+        65532,
+        65457,
+        65427,
+        65520,
+        147,
+        65447,
+        126,
+        88,
+        65513,
+        65484,
+        83,
+        65453,
+        65481,
+        65430,
+        103,
+        69,
+        65511,
+        65507,
+        65452,
+        13,
+        87,
+        65465,
+        47,
+        65435,
+        65527,
+        65442,
+        65446,
+        68,
+        65526,
+        65469,
+        65509,
+        65533,
+        99,
+        46,
+        65508,
+        65448,
+        65466,
+        36,
+        4,
+        65515,
+        65379,
+        69,
+        28,
+        65447,
+        68,
+        65473,
+        65310,
+        76,
+        65515,
+        65530,
+        31,
+        83,
+        65467,
+        65446,
+        93,
+        65425,
+        65416,
+        65506,
+        76,
+        65376,
+        89,
+        70,
+        65364,
+        65430,
+        87,
+        95,
+        35,
+        15,
+        35,
+        63,
+        65523,
+        65454,
+        110,
+        111,
+        65455,
+        97,
+        44,
+        65474,
+        69,
+        48,
+        35,
+        65515,
+        65506,
+        65528,
+        50,
+        65465,
+        227,
+        212,
+        158,
+        1,
+        184,
+        112,
+        65421,
+        65464,
+        59,
+        146,
+        27,
+        90,
+        2,
+        65466,
+        26,
+        97,
+        49,
+        65516,
+        3,
+        51,
+        44,
+        103,
+        27,
+        68,
+        29,
+        65459,
+        65467,
+        9,
+        65469,
+        65528,
+        69,
+        30,
+        65492,
+        77,
+        65494,
+        65534,
+        65305,
+        65504,
+        211,
+        65462,
+        135,
+        36,
+        65484,
+        65438,
+        65502,
+        65468,
+        41,
+        73,
+        60,
+        65423,
+        43,
+        39,
+        65500,
+        65521,
+        65492,
+        47,
+        41,
+        65388,
+        65428,
+        70,
+        65434,
+        68,
+        24,
+        58,
+        65518,
+        65477,
+        65434,
+        70,
+        65460,
+        102,
+        65432,
+        0,
+        78,
+        104,
+        65509,
+        39,
+        78,
+        60,
+        65514,
+        30,
+        65510,
+        101,
+        21,
+        65438,
+        65441,
+        16,
+        13,
+        65486,
+        65534,
+        50,
+        65472,
+        65455,
+        65514,
+        76,
+        61,
+        51,
+        65491,
+        81,
+        65498,
+        65457,
+        39,
+        65507,
+        26,
+        65484,
+        97,
+        65526,
+        88,
+        44,
+        65516,
+        62,
+        54,
+        40,
+        12,
+        7,
+        65464,
+        73,
+        65501,
+        65474,
+        98,
+        53,
+        102,
+        65518,
+        104,
+        65483,
+        65501,
+        25,
+        106,
+        65434,
+        49,
+        65429,
+        65505,
+        12,
+        34,
+        65472,
+        65525,
+        65533,
+        65521,
+        65495,
+        102,
+        65459,
+        65497,
+        65489,
+        65366,
+        44,
+        65346,
+        65372,
+        8,
+        26,
+        65256,
+        70,
+        143,
+        41,
+        65520,
+        65376,
+        23
+      ]
     },
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         16
       ],
-      "index": 5
+      "index": 5,
+      "raw_data": [
+        65431,
+        54,
+        65535,
+        116,
+        147,
+        65447,
+        65533,
+        65528,
+        40,
+        83,
+        65496,
+        96,
+        65430,
+        65451,
+        65517,
+        111
+      ]
     },
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         16,
         1
       ],
-      "index": 6
+      "index": 6,
+      "raw_data": [
+        40,
+        40,
+        75,
+        256,
+        84,
+        65481,
+        242,
+        65328,
+        65456,
+        65269,
+        65362,
+        155,
+        106,
+        65371,
+        269,
+        24
+      ]
     }
   ],
   "Output": [
     {
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "input_dims": [
         1,
         1

@@ -1,6 +1,21 @@
 import json
 from onnx import load
+from onnx import numpy_helper
 import pprint
+
+
+def convertToFixed(number, fixedPoint, width, signed):
+    scaledToFixed = round((number * (2 ** fixedPoint)))
+    max = (2 ** (width))
+    if signed:
+        if number < 0 and scaledToFixed <= 0:
+            scaledToFixed = max + scaledToFixed
+
+    if scaledToFixed >= max:
+        scaledToFixed = 0
+
+    return scaledToFixed
+
 
 with open("models/sinus_float_model_epoch_1000.onnx", "rb") as f:
     onnx_model = load(f)
@@ -16,9 +31,10 @@ graph = {}
 # (5. We need to support at least up to 4D tensors)
 
 bit_width_multiplication = 8
-bit_width_base = bit_width_multiplication*4
-fixed_point_multiplication = 3
+bit_width_base = bit_width_multiplication*2
+fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
+signed = True
 
 
 def promote_dimensions(dim_array):
@@ -60,7 +76,7 @@ for initializer in onnx_model.graph.initializer:
         "name": initializer.name,
         "data_type": initializer.data_type,
         "dims": promote_dimensions(initializer.dims),
-        "raw_data": initializer.raw_data,
+        "raw_data": numpy_helper.to_array(initializer),
         "output": initializer.name,
         "index": index
     }
@@ -213,17 +229,25 @@ for node in graph:
             "bit_width_result": graph[node]["bit_width_result"],
             "index": graph[node]["index"],
             "input_dims": input_dims,
-            "connections": connections
+            "connections": connections,
+            "signed": signed,
         }
 
         scala_dict[operator].append(operator_details)
 
 for initializer in graph:
     if graph[initializer]["type"] == "initializer":
+
+        # flatten the raw data
+        raw_data = graph[initializer]["raw_data"].flatten().tolist()
+        raw_data = [convertToFixed(
+            x, fixed_point_base, bit_width_base, signed) for x in raw_data]
+
         initializer_details = {
             "bit_width_result": graph[initializer]["bit_width_result"],
             "input_dims": graph[initializer]["input_dims"],
             "index": graph[initializer]["index"],
+            "raw_data": raw_data
         }
 
         scala_dict["Initializer"].append(initializer_details)
