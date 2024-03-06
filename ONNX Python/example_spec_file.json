@@ -1,0 +1,120 @@
+{
+  "MatMul": [
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          16,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          16,
+          1
+        ]
+      ],
+      "connections": []
+    }
+  ],
+  "Add": [
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ],
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "connections": []
+    }
+  ],
+  "Relu": [
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    },
+    {
+      "bit_width": 8,
+      "index": 0,
+      "input_dims": [
+        [
+          1,
+          16
+        ]
+      ],
+      "connections": []
+    }
+  ]
+}
