@@ -29,11 +29,8 @@ def promote_dimensions(dim_array):
 
 
 def demote_dimensions(dim_array):
-    print(type(dim_array))
     if isinstance(dim_array, str):
-        print(dim_array)
         return dim_array
-    print(dim_array[0])
     return dim_array[0]
 
 
@@ -56,7 +53,6 @@ for input in onnx_model.graph.input:
         "index": index
     }
     index += 1
-
 
 for initializer in onnx_model.graph.initializer:
     graph[initializer.name] = {
@@ -93,18 +89,23 @@ for node in graph:
         graph[node]["bit_width_operands"] = bit_width_base
         graph[node]["bit_width_result"] = bit_width_base
 
+# Introduce rounders
 rounders = []
 for node in graph:
     # if the bit width of the inputs and the result do not match, we need to introduce a rounder
+    # we are only interested in nodes (operations), not inputs or initializers
     if graph[node]["type"] != "node":
         continue
+
+    # bit width of the inputs to the current node
     bit_width_node = graph[node]["bit_width_operands"]
+    # we need to keep track of the new names of the inputs to the current node
     renamed_inputs = []
-    for input in graph[node]["input"]:
+    for input in graph[node]["input"]:  # for each input to the current node
+        # bit width of the input
         bit_width_input = graph[input]["bit_width_result"]
 
-        if bit_width_input != bit_width_node:
-            print("Introducing rounder for node: " + input)
+        if bit_width_input != bit_width_node:  # if the bit width of the input does not match the bit width of the node
             name = "rounder_" + graph[input]["name"] + \
                 "_to_" + graph[node]["name"]
             rounder_input = (graph[input]["output"])
@@ -128,15 +129,48 @@ for node in graph:
 
 for rounder in rounders:
     graph[rounder["name"]] = rounder
+# Introduced rounders
+
+# Add outputs to the graph as the index has been calculated final
+
+for output in onnx_model.graph.output:
+    output_node = {
+        "type": "output",
+        "name": output.name + "_output",
+        "data_type": output.type.tensor_type.elem_type,
+        "dims": [1, 1],
+        "input": [output.name],
+        "index": index,
+        "bit_width_operand": bit_width_base,
+        "bit_width_result": bit_width_base
+    }
+    index += 1
+    graph[output_node["name"]] = output_node
+
+# find connections to output node
 
 
 # print the graph
-print("Graph:")
 pprint.pprint(graph)
+
+# Connections
+for node in graph:
+    if graph[node]["type"] == "node":
+        connections = []
+        for input in graph[node]["input"]:
+            connections.append(graph[input]["index"])
+        graph[node]["connections"] = connections
+    if graph[node]["type"] == "output":
+        connections = []
+        for input in graph[node]["input"]:
+            connections.append(graph[input]["index"])
+        graph[node]["connections"] = connections
+
+# Connections done
 
 
 def find_dimension(node_name):
-    if graph[node_name]["type"] in ["input", "initializer"]:
+    if graph[node_name]["type"] in ["input", "initializer", "output"]:
         return list(graph[node_name]["dims"])
 
     # we are dealing with a node (operation)
@@ -149,18 +183,19 @@ def find_dimension(node_name):
 
 
 for node in graph:
-    if graph[node]["type"] != "node":
+    if graph[node]["type"] == "node":
         # we are only interested in nodes (operations)
-        continue
+        graph[node]["input_dims"] = []
 
-    graph[node]["input_dims"] = []
+        for input in graph[node]["input"]:
+            input_dims = find_dimension(input)
+            graph[node]["input_dims"].append(input_dims)
 
-    for input in graph[node]["input"]:
-        input_dims = find_dimension(input)
-        graph[node]["input_dims"].append(input_dims)
+    if graph[node]["type"] == "initializer" or graph[node]["type"] == "input" or graph[node]["type"] == "output":
+        graph[node]["input_dims"] = find_dimension(node)
 
-
-supported_operators = ["MatMul", "Add", "Relu"]
+supported_operators = ["Input", "MatMul", "Add",
+                       "Relu", "Rounder", "Initializer", "Output"]
 scala_dict = {k: [] for k in supported_operators}
 
 for node in graph:
@@ -171,17 +206,46 @@ for node in graph:
             break
 
         input_dims = graph[node]["input_dims"]
-        connections = []
+        connections = graph[node]["connections"]
 
         operator_details = {
-            "bit_width": 8,
-            "index": 0,
+            "bit_width_operands": graph[node]["bit_width_operands"],
+            "bit_width_result": graph[node]["bit_width_result"],
+            "index": graph[node]["index"],
             "input_dims": input_dims,
             "connections": connections
         }
 
         scala_dict[operator].append(operator_details)
 
+for initializer in graph:
+    if graph[initializer]["type"] == "initializer":
+        initializer_details = {
+            "bit_width_result": graph[initializer]["bit_width_result"],
+            "input_dims": graph[initializer]["input_dims"],
+            "index": graph[initializer]["index"],
+        }
+
+        scala_dict["Initializer"].append(initializer_details)
+
+for input in graph:
+    if graph[input]["type"] == "input":
+        input_details = {
+            "bit_width_result": graph[input]["bit_width_result"],
+            "input_dims": graph[input]["dims"],
+            "index": graph[input]["index"],
+        }
+        scala_dict["Input"].append(input_details)
+
+for output in graph:
+    if graph[output]["type"] == "output":
+        output_details = {
+            "bit_width_result": graph[output]["bit_width_result"],
+            "input_dims": graph[output]["input_dims"],
+            "index": graph[output]["index"],
+            "connections": graph[output]["connections"]
+        }
+        scala_dict["Output"].append(output_details)
 
 with open("example_spec_file.json", "w") as f:
     json.dump(scala_dict, f, indent=2)
