@@ -152,7 +152,7 @@ for output in onnx_model.graph.output:
         "type": "output",
         "name": output.name + "_output",
         "data_type": output.type.tensor_type.elem_type,
-        "dims": [1, 1],
+        "dims": [1, 1],  # TODO
         "input": [output.name],
         "index": index,
         "bit_width_operand": bit_width_base,
@@ -244,7 +244,7 @@ for initializer in graph:
 
         initializer_details = {
             "bit_width_result": graph[initializer]["bit_width_result"],
-            "input_dims": graph[initializer]["input_dims"],
+            "input_dims": [graph[initializer]["input_dims"]],
             "index": graph[initializer]["index"],
             "connections": [],
             "data": raw_data
@@ -257,7 +257,7 @@ for input in graph:
         input_details = {
             "bit_width_result": graph[input]["bit_width_result"],
             "fixed_point_result": graph[input]["fixed_point_result"],
-            "input_dims": graph[input]["dims"],
+            "input_dims": [graph[input]["dims"]],
             "index": graph[input]["index"],
             "connections": [],
             "signed": signed,
@@ -269,7 +269,7 @@ for output in graph:
         output_details = {
             "bit_width_result": graph[output]["bit_width_result"],
             "fixed_point_result": graph[output]["fixed_point_result"],
-            "input_dims": graph[output]["input_dims"],
+            "input_dims": [graph[output]["input_dims"]],
             "index": graph[output]["index"],
             "connections": graph[output]["connections"],
             "signed": signed

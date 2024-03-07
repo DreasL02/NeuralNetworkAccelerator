@@ -8,17 +8,19 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = false // set to true to print the connections to the console
-  val filepath = "src/main/scala/scala_utils/data/example_spec_file.json"
+  //val filepath = "src/main/scala/scala_utils/data/example_spec_file.json"
+  val filepath = "ONNX Python/example_spec_file.json"
 
   val w = 8
-  val wResult = 32
-  val fixedPoint = 3
+  val wResult = 2 * w
+  val fixedPoint = 4
+  val fixedPointResult = 2 * fixedPoint
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
-  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
+  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPointResult, wResult, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 
@@ -55,12 +57,12 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
         if (printToConsole) {
           println("Test: " + testNum)
           println("Input: " + inputs(testNum))
-          println("Output: " + fixedToFloat(resultFixed, fixedPoint, w, signed))
+          println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
           println("Expected: " + expected(testNum))
           println("Cycles: " + cycleTotal)
           println()
         }
-        results(testNum) = fixedToFloat(resultFixed, fixedPoint, w, signed)
+        results(testNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
 
         // Evaluate
         val a = results(testNum)

@@ -12,17 +12,17 @@ object SpecToListConverter {
     val initializers = json("Initializer").arr
     val add = json("Add").arr
     val matmul = json("MatMul").arr
-    val relu = json("ReLU").arr
-    val round = json("Round").arr
+    val relu = json("Relu").arr
+    val round = json("Rounder").arr
     val inputList = inputs.map(input => {
-      val w = input("bit_width").num.toInt
+      val w = input("bit_width_result").num.toInt
       val dimensions = (input("input_dims")(0)(0).num.toInt, input("input_dims")(0)(1).num.toInt)
       val index = input("index").num.toInt
       (index, Operators.InputType(w, dimensions), List())
     }).toList
 
     val outputList = outputs.map(output => {
-      val w = output("bit_width").num.toInt
+      val w = output("bit_width_result").num.toInt
       val dimensions = (output("input_dims")(0)(0).num.toInt, output("input_dims")(0)(1).num.toInt)
       val index = output("index").num.toInt
       val connectionIndex = output("connections")(0).num.toInt
@@ -31,7 +31,7 @@ object SpecToListConverter {
 
     val initializerList = initializers.map(initializer => {
       val dimensions = (initializer("input_dims")(0)(0).num.toInt, initializer("input_dims")(0)(1).num.toInt)
-      val w = initializer("bit_width").num.toInt
+      val w = initializer("bit_width_result").num.toInt
       val index = initializer("index").num.toInt
       // The data is given as a flat array, so we need to group it into the correct dimensions in row-major order
 
@@ -40,7 +40,7 @@ object SpecToListConverter {
     }).toList
 
     val addList = add.map(add => {
-      val wOperands = add("bit_width").num.toInt
+      val wOperands = add("bit_width_result").num.toInt
       val operandDimensions = (add("input_dims")(0)(0).num.toInt, add("input_dims")(0)(1).num.toInt)
       val index = add("index").num.toInt
       val connection1 = add("connections")(0).num.toInt
@@ -61,7 +61,7 @@ object SpecToListConverter {
     }).toList
 
     val reluList = relu.map(relu => {
-      val wOperands = relu("bit_width").num.toInt
+      val wOperands = relu("bit_width_result").num.toInt
       val signed = relu("signed").bool
       val operandDimensions = (relu("input_dims")(0)(0).num.toInt, relu("input_dims")(0)(1).num.toInt)
       val index = relu("index").num.toInt
@@ -74,7 +74,7 @@ object SpecToListConverter {
       val wResult = round("bit_width_result").num.toInt
       val signed = round("signed").bool
       val operandDimensions = (round("input_dims")(0)(0).num.toInt, round("input_dims")(0)(1).num.toInt)
-      val fixedPoint = round("fixed_point_position").num.toInt
+      val fixedPoint = round("fixed_point_result").num.toInt
       val index = round("index").num.toInt
       val connectionIndex = round("connections")(0).num.toInt
       (index, Operators.RoundType(wOperands, wResult, signed, operandDimensions, fixedPoint), List(connectionIndex))
