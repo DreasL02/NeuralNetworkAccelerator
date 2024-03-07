@@ -22,14 +22,6 @@ with open("models/sinus_float_model_epoch_1000.onnx", "rb") as f:
 
 graph = {}
 
-# Problems
-# 0. We need to give each node a unique index (i.e. a unique name) and we need to keep track of the connections between the nodes. Input node should always have index 0 and output node should always have the highest index.
-# 1. We need the bit width between different nodes (operations) to match (i.e. introduce rounders when they do not). Rounders should be implemented as a separate node in the graph. They should also be given a unique index and connections.
-# 2. We need to introduce a way to specify a appropriate bit width (and fixed point?) for each node (operation) in the graph.
-# 3. We need to convert the raw data from the initializer to fixed point representation and organize it in the way that the Scala code expects it. A single array which can be mapped by row-major order to the 2D array in the Scala code.
-# 4. We should specify the connections between the nodes using the index of the nodes (operations) in the graph.
-# (5. We need to support at least up to 4D tensors)
-
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*2
 fixed_point_multiplication = 4
@@ -101,9 +93,13 @@ for node in graph:
     if (graph[node]["type"] == "node" and graph[node]["op_type"] == "MatMul"):
         graph[node]["bit_width_operands"] = bit_width_multiplication
         graph[node]["bit_width_result"] = bit_width_base
+        graph[node]["fixed_point_operands"] = fixed_point_multiplication
+        graph[node]["fixed_point_result"] = fixed_point_base
     else:
         graph[node]["bit_width_operands"] = bit_width_base
         graph[node]["bit_width_result"] = bit_width_base
+        graph[node]["fixed_point_operands"] = fixed_point_base
+        graph[node]["fixed_point_result"] = fixed_point_base
 
 # Introduce rounders
 rounders = []
@@ -130,6 +126,8 @@ for node in graph:
                 "name": name,
                 "bit_width_operands": bit_width_input,
                 "bit_width_result": bit_width_node,
+                "fixed_point_operands": graph[input]["fixed_point_result"],
+                "fixed_point_result": graph[node]["fixed_point_operands"],
                 "input": [demote_dimensions(rounder_input)],
                 "output": [name],
                 "op_type": "Rounder",
@@ -158,13 +156,12 @@ for output in onnx_model.graph.output:
         "input": [output.name],
         "index": index,
         "bit_width_operand": bit_width_base,
-        "bit_width_result": bit_width_base
+        "bit_width_result": bit_width_base,
+        "fixed_point_operands": fixed_point_base,
+        "fixed_point_result": fixed_point_base
     }
     index += 1
     graph[output_node["name"]] = output_node
-
-# find connections to output node
-
 
 # print the graph
 pprint.pprint(graph)
@@ -227,6 +224,8 @@ for node in graph:
         operator_details = {
             "bit_width_operands": graph[node]["bit_width_operands"],
             "bit_width_result": graph[node]["bit_width_result"],
+            "fixed_point_operands": graph[node]["fixed_point_operands"],
+            "fixed_point_result": graph[node]["fixed_point_result"],
             "index": graph[node]["index"],
             "input_dims": input_dims,
             "connections": connections,
@@ -247,7 +246,8 @@ for initializer in graph:
             "bit_width_result": graph[initializer]["bit_width_result"],
             "input_dims": graph[initializer]["input_dims"],
             "index": graph[initializer]["index"],
-            "raw_data": raw_data
+            "connections": [],
+            "data": raw_data
         }
 
         scala_dict["Initializer"].append(initializer_details)
@@ -256,8 +256,11 @@ for input in graph:
     if graph[input]["type"] == "input":
         input_details = {
             "bit_width_result": graph[input]["bit_width_result"],
+            "fixed_point_result": graph[input]["fixed_point_result"],
             "input_dims": graph[input]["dims"],
             "index": graph[input]["index"],
+            "connections": [],
+            "signed": signed,
         }
         scala_dict["Input"].append(input_details)
 
@@ -265,9 +268,11 @@ for output in graph:
     if graph[output]["type"] == "output":
         output_details = {
             "bit_width_result": graph[output]["bit_width_result"],
+            "fixed_point_result": graph[output]["fixed_point_result"],
             "input_dims": graph[output]["input_dims"],
             "index": graph[output]["index"],
-            "connections": graph[output]["connections"]
+            "connections": graph[output]["connections"],
+            "signed": signed
         }
         scala_dict["Output"].append(output_details)
 
