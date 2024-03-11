@@ -74,13 +74,13 @@ for initializer in onnx_model.graph.initializer:
     }
     index += 1
 
-for node in onnx_model.graph.node:
-    graph[node.output[0]] = {
-        "type": "node",
-        "name": node.name,
-        "input": node.input,
-        "output": node.output,
-        "op_type": node.op_type,
+for operation in onnx_model.graph.node:
+    graph[operation.output[0]] = {
+        "type": "operation",
+        "name": operation.name,
+        "input": operation.input,
+        "output": operation.output,
+        "op_type": operation.op_type,
         "index": index
     }
     index += 1
@@ -90,23 +90,52 @@ for node in onnx_model.graph.node:
 
 # Write bit width and fixed point for each node (operation) in the graph
 for node in graph:
-    if (graph[node]["type"] == "node" and graph[node]["op_type"] == "MatMul"):
-        graph[node]["bit_width_operands"] = bit_width_multiplication
-        graph[node]["bit_width_result"] = bit_width_base
-        graph[node]["fixed_point_operands"] = fixed_point_multiplication
-        graph[node]["fixed_point_result"] = fixed_point_base
+    node_type = graph[node]["type"]
+
+    if (node_type == "operation"):
+        if (graph[node]["op_type"] == "MatMul"):
+            graph[node]["bit_width_operands"] = bit_width_multiplication
+            graph[node]["bit_width_result"] = bit_width_base
+            graph[node]["fixed_point_operands"] = fixed_point_multiplication
+            graph[node]["fixed_point_result"] = fixed_point_base
+        else:
+            graph[node]["bit_width_operands"] = bit_width_base
+            graph[node]["bit_width_result"] = bit_width_base
+            graph[node]["fixed_point_operands"] = fixed_point_base
+            graph[node]["fixed_point_result"] = fixed_point_base
+
+    elif (node_type == "initializer"):
+        output_name = graph[node]["output"]
+        for node_ in graph:
+            if graph[node_]["type"] == "operation" and output_name in graph[node_]["input"]:
+                for input in graph[node_]["input"]:
+                    if input == output_name:
+                        output = graph[node_]
+
+        if output["type"] == "operation" and output["op_type"] == "MatMul":
+            graph[node]["bit_width_operands"] = bit_width_multiplication
+            graph[node]["bit_width_result"] = bit_width_multiplication
+            graph[node]["fixed_point_operands"] = fixed_point_multiplication
+            graph[node]["fixed_point_result"] = fixed_point_multiplication
+        else:
+            graph[node]["bit_width_operands"] = bit_width_base
+            graph[node]["bit_width_result"] = bit_width_base
+            graph[node]["fixed_point_operands"] = fixed_point_base
+            graph[node]["fixed_point_result"] = fixed_point_base
+
     else:
         graph[node]["bit_width_operands"] = bit_width_base
         graph[node]["bit_width_result"] = bit_width_base
         graph[node]["fixed_point_operands"] = fixed_point_base
         graph[node]["fixed_point_result"] = fixed_point_base
 
+
 # Introduce rounders
 rounders = []
 for node in graph:
     # if the bit width of the inputs and the result do not match, we need to introduce a rounder
     # we are only interested in nodes (operations), not inputs or initializers
-    if graph[node]["type"] != "node":
+    if graph[node]["type"] != "operation":
         continue
 
     # bit width of the inputs to the current node
@@ -114,7 +143,6 @@ for node in graph:
     # we need to keep track of the new names of the inputs to the current node
     renamed_inputs = []
     for input in graph[node]["input"]:  # for each input to the current node
-        # bit width of the input
         bit_width_input = graph[input]["bit_width_result"]
 
         if bit_width_input != bit_width_node:  # if the bit width of the input does not match the bit width of the node
@@ -122,7 +150,7 @@ for node in graph:
                 "_to_" + graph[node]["name"]
             rounder_input = (graph[input]["output"])
             rounder = {
-                "type": "node",
+                "type": "operation",
                 "name": name,
                 "bit_width_operands": bit_width_input,
                 "bit_width_result": bit_width_node,
@@ -164,11 +192,11 @@ for output in onnx_model.graph.output:
     graph[output_node["name"]] = output_node
 
 # print the graph
-pprint.pprint(graph)
+# pprint.pprint(graph)
 
 # Connections
 for node in graph:
-    if graph[node]["type"] == "node":
+    if graph[node]["type"] == "operation":
         connections = []
         for input in graph[node]["input"]:
             connections.append(graph[input]["index"])
@@ -186,7 +214,6 @@ def find_dimension(node_name):
     if graph[node_name]["type"] in ["input", "initializer", "output"]:
         return list(graph[node_name]["dims"])
 
-    # we are dealing with a node (operation)
     if graph[node_name]["op_type"] == "MatMul":
         dim_x = find_dimension(graph[node_name]["input"][0])[0]
         dim_y = find_dimension(graph[node_name]["input"][1])[1]
@@ -196,26 +223,27 @@ def find_dimension(node_name):
 
 
 for node in graph:
-    if graph[node]["type"] == "node":
-        # we are only interested in nodes (operations)
+    if graph[node]["type"] == "operation":
         graph[node]["input_dims"] = []
 
         for input in graph[node]["input"]:
             input_dims = find_dimension(input)
             graph[node]["input_dims"].append(input_dims)
 
-    if graph[node]["type"] == "initializer" or graph[node]["type"] == "input" or graph[node]["type"] == "output":
+    if graph[node]["type"] in ["input", "initializer", "output"]:
         graph[node]["input_dims"] = find_dimension(node)
 
-supported_operators = ["Input", "MatMul", "Add",
-                       "Relu", "Rounder", "Initializer", "Output"]
-scala_dict = {k: [] for k in supported_operators}
+supported_nodes = ["Input", "MatMul", "Add",
+                   "Relu", "Rounder", "Initializer", "Output"]
+scala_dict = {k: [] for k in supported_nodes}
 
 for node in graph:
-    if graph[node]["type"] == "node":
+
+    if graph[node]["type"] == "operation":
+
         operator = graph[node]["op_type"]
 
-        if operator not in supported_operators:
+        if operator not in supported_nodes:
             break
 
         input_dims = graph[node]["input_dims"]
@@ -234,44 +262,40 @@ for node in graph:
 
         scala_dict[operator].append(operator_details)
 
-for initializer in graph:
-    if graph[initializer]["type"] == "initializer":
-
+    if graph[node]["type"] == "initializer":
         # flatten the raw data
-        raw_data = graph[initializer]["raw_data"].flatten().tolist()
+        raw_data = graph[node]["raw_data"].flatten().tolist()
         raw_data = [convertToFixed(
-            x, fixed_point_base, bit_width_base, signed) for x in raw_data]
+            x, graph[node]["fixed_point_result"], graph[node]["bit_width_result"], signed) for x in raw_data]
 
         initializer_details = {
-            "bit_width_result": graph[initializer]["bit_width_result"],
-            "input_dims": [graph[initializer]["input_dims"]],
-            "index": graph[initializer]["index"],
+            "bit_width_result": graph[node]["bit_width_result"],
+            "input_dims": [graph[node]["input_dims"]],
+            "index": graph[node]["index"],
             "connections": [],
             "data": raw_data
         }
 
         scala_dict["Initializer"].append(initializer_details)
 
-for input in graph:
-    if graph[input]["type"] == "input":
+    if graph[node]["type"] == "input":
         input_details = {
-            "bit_width_result": graph[input]["bit_width_result"],
-            "fixed_point_result": graph[input]["fixed_point_result"],
-            "input_dims": [graph[input]["dims"]],
-            "index": graph[input]["index"],
+            "bit_width_result": graph[node]["bit_width_result"],
+            "fixed_point_result": graph[node]["fixed_point_result"],
+            "input_dims": [graph[node]["dims"]],
+            "index": graph[node]["index"],
             "connections": [],
             "signed": signed,
         }
         scala_dict["Input"].append(input_details)
 
-for output in graph:
-    if graph[output]["type"] == "output":
+    if graph[node]["type"] == "output":
         output_details = {
-            "bit_width_result": graph[output]["bit_width_result"],
-            "fixed_point_result": graph[output]["fixed_point_result"],
-            "input_dims": [graph[output]["input_dims"]],
-            "index": graph[output]["index"],
-            "connections": graph[output]["connections"],
+            "bit_width_result": graph[node]["bit_width_result"],
+            "fixed_point_result": graph[node]["fixed_point_result"],
+            "input_dims": [graph[node]["input_dims"]],
+            "index": graph[node]["index"],
+            "connections": graph[node]["connections"],
             "signed": signed
         }
         scala_dict["Output"].append(output_details)
