@@ -9,7 +9,9 @@ object Main extends App {
 
   val lists: (List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
 
-  emitVerilog(new AutomaticGeneration(lists._1, lists._2, false, false))
+  val pipelineIO = true
+
+  emitVerilog(new AutomaticGeneration(lists._1, lists._2, pipelineIO, false, false))
 }
 
 

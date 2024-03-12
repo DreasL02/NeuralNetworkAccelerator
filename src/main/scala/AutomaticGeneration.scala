@@ -6,6 +6,7 @@ import scala_utils.DimensionManipulation.{reverseRows, transpose}
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
+                           pipelineIO: Boolean = false,
                            enableDebuggingIO: Boolean = true,
                            printing: Boolean = true
                          ) extends Module {
@@ -21,6 +22,11 @@ class AutomaticGeneration(
     val output = Output(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
     val valid = Output(Bool()) // indicates that the module should be done
   })
+
+  val ready = Wire(Bool())
+  val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
+  val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
+  val valid = Wire(Bool())
 
   // Module Creation
   val modules = listOfNodes.map {
@@ -50,18 +56,18 @@ class AutomaticGeneration(
   }
 
   // Connection Logic (Wiring)
-  for (i <- 0 until modules.length) {
+  for (i <- modules.indices) {
     val currentModule = modules(i)
     if (printing) println("Generating connections for: " + currentModule)
     val connectionIndices = connectionList(i)
     currentModule match {
       case input: InputModule =>
         // Should only happen once
-        input.io.ready := io.ready
-        input.io.inputs := io.input
+        input.io.ready := ready
+        input.io.inputs := inputs
       case add: Add =>
-        val connectedModule1 = modules(connectionIndices(0))
-        val connectedModule2 = modules(connectionIndices(1))
+        val connectedModule1 = modules(connectionIndices.head)
+        val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
           println("Connected module 1: " + connectedModule1)
           println("Connected module 2: " + connectedModule2)
@@ -177,7 +183,7 @@ class AutomaticGeneration(
         matMul.io.ready := ready1 && ready2
 
       case relu: ReLU =>
-        val connectedModule = modules(connectionIndices(0))
+        val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
@@ -206,7 +212,7 @@ class AutomaticGeneration(
 
       case output: OutputModule =>
         // Should only happen once
-        val connectedModule = modules(connectionIndices(0))
+        val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
@@ -232,11 +238,11 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown module connected to output module")
         }
-        io.output := output.io.outputs
-        io.valid := output.io.valid
+        outputs := output.io.outputs
+        valid := output.io.valid
 
       case rounder: Rounder =>
-        val connectedModule = modules(connectionIndices(0))
+        val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
@@ -268,5 +274,18 @@ class AutomaticGeneration(
     }
 
     if (printing) println("Connections generated for: " + currentModule)
+
+    if (pipelineIO) {
+      ready := RegNext(io.ready)
+      inputs := RegNext(io.input)
+      io.output := RegNext(outputs)
+      io.valid := RegNext(valid)
+    } else {
+      ready := io.ready
+      inputs := io.input
+      io.output := outputs
+      io.valid := valid
+    }
+
   }
 }

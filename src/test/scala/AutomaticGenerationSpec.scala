@@ -18,6 +18,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10
+  val pipelineIO = true
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
   val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPointResult, wResult, signed))
@@ -38,7 +39,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   for (testNum <- 0 until numberOfInputs) {
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
-      test(new AutomaticGeneration(lists._1, lists._2, true, printConnections)) { dut =>
+      test(new AutomaticGeneration(lists._1, lists._2, pipelineIO, true, printConnections)) { dut =>
         var cycleTotal = 0
         dut.io.input(0)(0).poke(inputsFixed(testNum).U)
         dut.io.ready.poke(true.B)
