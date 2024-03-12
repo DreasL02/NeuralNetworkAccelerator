@@ -22,15 +22,15 @@ class PureMatrixMultiplication(
     val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
   })
 
-  io.valid := io.ready
+  io.valid := RegNext(io.ready)
 
   val result = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       if (signed) {
-        result(i)(j) := io.inputs(i).zip(io.weights.map(_(j))).map { case (a, b) => a.asSInt * b.asSInt }.reduce(_ + _).asUInt
+        result(i)(j) := RegNext(io.inputs(i).zip(io.weights.map(_(j))).map { case (a, b) => a.asSInt * b.asSInt }.reduce(_ + _).asUInt)
       } else {
-        result(i)(j) := io.inputs(i).zip(io.weights.map(_(j))).map { case (a, b) => a * b }.reduce(_ + _)
+        result(i)(j) := RegNext(io.inputs(i).zip(io.weights.map(_(j))).map { case (a, b) => a * b }.reduce(_ + _))
       }
     }
   }
