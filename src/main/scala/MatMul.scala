@@ -40,18 +40,37 @@ class MatMul(
     val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
   })
 
-  val module = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-  module.io.inputs := io.inputs
-  module.io.weights := transpose(io.weights)
-  module.io.ready := io.ready
+  val config = "Pure"
 
-  io.valid := module.io.valid
-  io.result := module.io.result
+  if (config == "Pure") {
+    val matMul = Module(new PureMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    matMul.io.inputs := io.inputs
+    matMul.io.weights := io.weights
+    matMul.io.ready := io.ready
 
-  if (enableDebuggingIO) {
-    io.debugInputs.get := module.io.debugInputs.get
-    io.debugWeights.get := module.io.debugWeights.get
-    io.debugResults.get := module.io.debugSystolicArrayResults.get
+    io.valid := matMul.io.valid
+    io.result := matMul.io.result
+
+    if (enableDebuggingIO) {
+      // Inputs and weights are unavailable in the PureMatrixMultiplication module so 0s are assigned to the debug signals
+      io.debugInputs.get := VecInit(Seq.fill(numberOfRows)(0.U(w.W)))
+      io.debugWeights.get := VecInit(Seq.fill(numberOfColumns)(0.U(w.W)))
+      io.debugResults.get := matMul.io.result
+    }
+  } else if (config == "SystolicArray") {
+    val module = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    module.io.inputs := io.inputs
+    module.io.weights := transpose(io.weights)
+    module.io.ready := io.ready
+
+    io.valid := module.io.valid
+    io.result := module.io.result
+
+    if (enableDebuggingIO) {
+      io.debugInputs.get := module.io.debugInputs.get
+      io.debugWeights.get := module.io.debugWeights.get
+      io.debugResults.get := module.io.debugSystolicArrayResults.get
+    }
   }
 }
 
