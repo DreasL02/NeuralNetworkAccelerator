@@ -1,7 +1,6 @@
 import activation_functions.ReLU
 import chisel3._
 import module_utils.Adders
-import systolic_array.MatMul
 import scala_utils.Optional.optional
 
 class LayerCalculator(

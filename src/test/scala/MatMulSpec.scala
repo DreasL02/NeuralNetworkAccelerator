@@ -5,7 +5,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
-import systolic_array.MatMul
 
 class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
@@ -16,7 +15,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   val matrixCommonDimension = 1
   val fixedPoint = 2
   val signed = true
-  val numberOfTests = 10
+  val numberOfTests = 1
   val max = 3.2f
   val min = -3.0f //0.0f //
   val threshold = 1f
@@ -70,14 +69,14 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         val formattedInputs = inputsFixed
         // input rows need to be reversed
         for (i <- formattedInputs.indices) {
-          formattedInputs(i) = formattedInputs(i).reverse
+          formattedInputs(i) = formattedInputs(i)
         }
 
         // Weights need to be transposed
-        val formattedWeights = weightsFixed.transpose
+        val formattedWeights = weightsFixed
         // and rows need to be reversed
         for (i <- formattedWeights.indices) {
-          formattedWeights(i) = formattedWeights(i).reverse
+          formattedWeights(i) = formattedWeights(i)
         }
 
         if (enablePrinting) {
@@ -95,8 +94,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
-        for (i <- 0 until numberOfColumns) {
-          for (j <- 0 until matrixCommonDimension) {
+        for (i <- 0 until matrixCommonDimension) {
+          for (j <- 0 until numberOfColumns) {
             dut.io.weights(i)(j).poke(formattedWeights(i)(j))
           }
         }

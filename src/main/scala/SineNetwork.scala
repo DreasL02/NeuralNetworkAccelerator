@@ -1,6 +1,5 @@
 import activation_functions.ReLU
 import chisel3._
-import systolic_array.MatMul
 import scala_utils.DimensionManipulation._
 import scala_utils.Optional._
 
@@ -93,7 +92,7 @@ class SineNetwork(
 
   val mmu1 = Module(new MatMul(w, wResult, 1, 16, 1, signed, enableDebuggingIO))
   mmu1.io.inputs := VecInit(Seq.fill(1)(VecInit(Seq.fill(1)(io.input))))
-  mmu1.io.weights := transpose(weights1)
+  mmu1.io.weights := weights1
   mmu1.io.ready := io.ready
 
   val bias1 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
@@ -110,8 +109,8 @@ class SineNetwork(
   relu1.io.ready := rounder1.io.valid
 
   val mmu2 = Module(new MatMul(w, wResult, 1, 16, 16, signed, enableDebuggingIO))
-  mmu2.io.inputs := reverseRows(relu1.io.result)
-  mmu2.io.weights := transpose(weights2)
+  mmu2.io.inputs := relu1.io.result
+  mmu2.io.weights := weights2
   mmu2.io.ready := relu1.io.valid
 
   val bias2 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
@@ -128,8 +127,8 @@ class SineNetwork(
   relu2.io.ready := rounder2.io.valid
 
   val mmu3 = Module(new MatMul(w, wResult, 1, 1, 16, signed, enableDebuggingIO))
-  mmu3.io.inputs := reverseRows(relu2.io.result)
-  mmu3.io.weights := transpose(weights3)
+  mmu3.io.inputs := relu2.io.result
+  mmu3.io.weights := weights3
   mmu3.io.ready := relu2.io.valid
 
   val bias3 = Module(new Add(wResult, 1, 1, enableDebuggingIO))

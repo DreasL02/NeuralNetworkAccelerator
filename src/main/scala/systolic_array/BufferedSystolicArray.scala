@@ -5,27 +5,17 @@ import chisel3.util.log2Ceil
 import scala_utils.Optional.optional
 import module_utils.ShiftedBuffer
 
-class MatMul(
-              w: Int = 8,
-              wResult: Int = 32,
-              numberOfRows: Int = 4, // number of rows in the result matrix / number of rows in the first matrix
-              numberOfColumns: Int = 4, // number of columns in the result matrix / number of columns in the second matrix
-              commonDimension: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
-              signed: Boolean = true,
-              enableDebuggingIO: Boolean = true
-            ) extends Module {
+class BufferedSystolicArray(
+                             w: Int = 8,
+                             wResult: Int = 32,
+                             numberOfRows: Int = 4, // number of rows in the result matrix / number of rows in the first matrix
+                             numberOfColumns: Int = 4, // number of columns in the result matrix / number of columns in the second matrix
+                             commonDimension: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
+                             signed: Boolean = true,
+                             enableDebuggingIO: Boolean = true
+                           ) extends Module {
 
   // Additional constructor to create a MatMul module from a MatMulType
-  def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(
-    matMulType.wOperands,
-    matMulType.wResult,
-    matMulType.operandADimensions._1,
-    matMulType.operandBDimensions._2,
-    matMulType.operandADimensions._2,
-    matMulType.signed,
-    enableDebuggingIO
-  )
-
   val io = IO(new Bundle {
     val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
     val weights = Input(Vec(numberOfColumns, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
