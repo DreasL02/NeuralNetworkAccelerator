@@ -18,7 +18,7 @@ class LayerCalculator(
     val valid = Output(Bool()) // indicates that the systolic array should be done
 
     val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(numberOfColumns, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
+    val weights = Input(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))) // should only be used when load is true
 
     val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // should only be used when load is true
 
@@ -26,27 +26,27 @@ class LayerCalculator(
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
-    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugMatMulResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
     val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
     val debugRounderInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val bufferedSystolicArray = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-  bufferedSystolicArray.io.ready := io.ready
-  bufferedSystolicArray.io.inputs := io.inputs
-  bufferedSystolicArray.io.weights := io.weights
+  val matMul = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+  matMul.io.ready := io.ready
+  matMul.io.inputs := io.inputs
+  matMul.io.weights := io.weights
 
   if (enableDebuggingIO) {
-    io.debugInputs.get := bufferedSystolicArray.io.debugInputs.get
-    io.debugWeights.get := bufferedSystolicArray.io.debugWeights.get
-    io.debugSystolicArrayResults.get := bufferedSystolicArray.io.debugSystolicArrayResults.get
+    io.debugInputs.get := matMul.io.debugInputs.get
+    io.debugWeights.get := matMul.io.debugWeights.get
+    io.debugMatMulResults.get := matMul.io.debugResults.get
   }
 
   val bufferedBias = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
-  bufferedBias.io.input := bufferedSystolicArray.io.result
+  bufferedBias.io.input := matMul.io.result
   bufferedBias.io.biases := io.biases
-  bufferedBias.io.ready := bufferedSystolicArray.io.valid
+  bufferedBias.io.ready := matMul.io.valid
 
   if (enableDebuggingIO) {
     io.debugBiases.get := bufferedBias.io.debugBiases.get

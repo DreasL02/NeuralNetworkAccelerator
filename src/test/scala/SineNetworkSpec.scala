@@ -6,7 +6,7 @@ import scala_utils.FixedPointConversion._
 
 class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
-  val printToConsole = false // set to true to print the results to the console
+  val printToConsole = true // set to true to print the results to the console
 
   // Load the weights and biases into the ROMs from the files stored in the scala_utils/data folder
   val weightsL1 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_w1.txt")
@@ -16,9 +16,9 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val weightsL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_w3.txt")
   val biasesL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_b3.txt")
 
-  val w = 8
-  val wResult = 32
-  val fixedPoint = 4
+  val w = 16
+  val wResult = 4 * w
+  val fixedPoint = 10
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10

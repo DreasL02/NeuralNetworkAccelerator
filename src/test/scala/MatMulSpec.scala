@@ -10,9 +10,9 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
-  val numberOfRows = 1
+  val numberOfRows = 2
   val numberOfColumns = 16
-  val matrixCommonDimension = 1
+  val matrixCommonDimension = 2
   val fixedPoint = 2
   val signed = true
   val numberOfTests = 1
@@ -66,37 +66,24 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           printMatrixMultiplication(inputsFloat, weightsFloat, multiplicationResultFloat, "GOLDEN MODEL CALCULATION IN RECONVERTED FLOATING")
 
 
-        val formattedInputs = inputsFixed
-        // input rows need to be reversed
-        for (i <- formattedInputs.indices) {
-          formattedInputs(i) = formattedInputs(i)
-        }
-
-        // Weights need to be transposed
-        val formattedWeights = weightsFixed
-        // and rows need to be reversed
-        for (i <- formattedWeights.indices) {
-          formattedWeights(i) = formattedWeights(i)
-        }
-
         if (enablePrinting) {
           println("FORMATTED INPUTS")
-          print(matrixToString(formattedInputs))
+          print(matrixToString(inputsFixed))
           println("FORMATTED WEIGHTS")
-          print(matrixToString(formattedWeights))
+          print(matrixToString(weightsFixed))
         }
 
         // Setup the dut by loading the inputs and weights into the buffers by indicating that the producer is ready
         dut.io.ready.poke(true.B)
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until matrixCommonDimension) {
-            dut.io.inputs(i)(j).poke(formattedInputs(i)(j))
+            dut.io.inputs(i)(j).poke(inputsFixed(i)(j))
           }
         }
 
         for (i <- 0 until matrixCommonDimension) {
           for (j <- 0 until numberOfColumns) {
-            dut.io.weights(i)(j).poke(formattedWeights(i)(j))
+            dut.io.weights(i)(j).poke(weightsFixed(i)(j))
           }
         }
 
@@ -123,7 +110,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
             println("DEBUG SYSTOLIC ARRAY RESULTS")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
-                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
+                print(dut.io.debugResults.get(i)(j).peek().litValue)
                 print(" ")
               }
               println()

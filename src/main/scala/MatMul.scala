@@ -34,14 +34,14 @@ class MatMul(
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
-    val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
 
     val valid = Output(Bool()) // indicates that the systolic array should be done
     val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
   })
 
   val module = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-  module.io.inputs := reverseRows(io.inputs)
+  module.io.inputs := io.inputs
   module.io.weights := transpose(io.weights)
   module.io.ready := io.ready
 
@@ -51,7 +51,7 @@ class MatMul(
   if (enableDebuggingIO) {
     io.debugInputs.get := module.io.debugInputs.get
     io.debugWeights.get := module.io.debugWeights.get
-    io.debugSystolicArrayResults.get := module.io.debugSystolicArrayResults.get
+    io.debugResults.get := module.io.debugSystolicArrayResults.get
   }
 }
 

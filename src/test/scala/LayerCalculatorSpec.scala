@@ -72,26 +72,11 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         if (enablePrinting)
           printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, reluResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
-        val formattedInputs = inputsFixed
-        // input rows need to be reversed
-        for (i <- formattedInputs.indices) {
-          formattedInputs(i) = formattedInputs(i).reverse
-        }
-
-        // Weights need to be transposed
-        val formattedWeights = weightsFixed.transpose
-        // and rows need to be reversed
-        for (i <- formattedWeights.indices) {
-          formattedWeights(i) = formattedWeights(i).reverse
-        }
-
-        // nothing to do with biases
-
         if (enablePrinting) {
           println("FORMATTED INPUTS")
-          print(matrixToString(formattedInputs))
+          print(matrixToString(inputsFixed))
           println("FORMATTED WEIGHTS")
-          print(matrixToString(formattedWeights))
+          print(matrixToString(weightsFixed))
         }
 
         // Setup the dut by indicating that the producer is ready
@@ -99,13 +84,13 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until commonDimension) {
-            dut.io.inputs(i)(j).poke(formattedInputs(i)(j))
+            dut.io.inputs(i)(j).poke(inputsFixed(i)(j))
           }
         }
 
-        for (i <- 0 until numberOfColumns) {
-          for (j <- 0 until commonDimension) {
-            dut.io.weights(i)(j).poke(formattedWeights(i)(j))
+        for (i <- 0 until commonDimension) {
+          for (j <- 0 until numberOfColumns) {
+            dut.io.weights(i)(j).poke(weightsFixed(i)(j))
           }
         }
 
@@ -125,7 +110,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
             println("DEBUG SYSTOLIC ARRAY RESULTS")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
-                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
+                print(dut.io.debugMatMulResults.get(i)(j).peek().litValue)
                 print(" ")
               }
               println()
