@@ -1,5 +1,6 @@
 import activation_functions.ReLU
 import chisel3._
+import chisel3.util.DecoupledIO
 import onnx.Operators._
 import scala_utils.DimensionManipulation.{reverseRows, transpose}
 
@@ -11,24 +12,24 @@ class AutomaticGeneration(
                            printing: Boolean = true
                          ) extends Module {
 
-  /*
+
   val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
   val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
 
 
   val io = IO(new Bundle {
     // initializers
-    val ready = Input(Bool()) // indicates that the producer has new data to be processed
-    val input = Input(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
-
-    val output = Output(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
-    val valid = Output(Bool()) // indicates that the module should be done
+    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W)))))
+    val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
   })
 
-  val ready = Wire(Bool())
   val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
+  val inputReady = Wire(Bool())
+  val inputValid = Wire(Bool())
+
   val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
-  val valid = Wire(Bool())
+  val outputReady = Wire(Bool())
+  val outputValid = Wire(Bool())
 
   // Module Creation
   val modules = listOfNodes.map {
@@ -63,10 +64,13 @@ class AutomaticGeneration(
     if (printing) println("Generating connections for: " + currentModule)
     val connectionIndices = connectionList(i)
     currentModule match {
+
       case input: InputModule =>
         // Should only happen once
-        input.io.ready := ready
-        input.io.inputs := inputs
+        input.io.inputChannel.bits := inputs
+        input.io.inputChannel.valid := inputValid
+        inputReady := input.io.inputChannel.ready
+
       case add: Add =>
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
@@ -74,27 +78,19 @@ class AutomaticGeneration(
           println("Connected module 1: " + connectedModule1)
           println("Connected module 2: " + connectedModule2)
         }
-        val ready1 = Wire(Bool())
-        val ready2 = Wire(Bool())
         connectedModule1 match {
           case conInput: InputModule =>
-            ready1 := conInput.io.valid
-            add.io.input := conInput.io.outputs
+            add.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            ready1 := conAdd.io.valid
-            add.io.input := conAdd.io.result
+            add.io.inputChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            ready1 := conMatMul.io.valid
-            add.io.input := conMatMul.io.result
+            add.io.inputChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            ready1 := conReLU.io.valid
-            add.io.input := conReLU.io.result
+            add.io.inputChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            ready1 := conInitializer.io.valid
-            add.io.input := conInitializer.io.output
+            add.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            ready1 := conRound.io.valid
-            add.io.input := conRound.io.output
+            add.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
@@ -102,29 +98,23 @@ class AutomaticGeneration(
         }
         connectedModule2 match {
           case conInput: InputModule =>
-            ready2 := conInput.io.valid
-            add.io.biases := conInput.io.outputs
+            add.io.biasChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            ready2 := conAdd.io.valid
-            add.io.biases := conAdd.io.result
+            add.io.biasChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            ready2 := conMatMul.io.valid
-            add.io.biases := conMatMul.io.result
+            add.io.biasChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            ready2 := conReLU.io.valid
-            add.io.biases := conReLU.io.result
+            add.io.biasChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            ready2 := conInitializer.io.valid
-            add.io.biases := conInitializer.io.output
+            add.io.biasChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            ready2 := conRound.io.valid
-            add.io.biases := conRound.io.output
+            add.io.biasChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
             throw new Exception("Unknown module connected to add module inputs")
         }
-        add.io.ready := ready1 && ready2
+
       case matMul: MatMul =>
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
@@ -132,77 +122,57 @@ class AutomaticGeneration(
           println("Connected module 1: " + connectedModule1)
           println("Connected module 2: " + connectedModule2)
         }
-        val ready1 = Wire(Bool())
-        val ready2 = Wire(Bool())
-        connectedModule1 match { // matmuls inputs are row-reversed
+        connectedModule1 match {
           case conInput: InputModule =>
-            ready1 := conInput.io.valid
-            matMul.io.inputs := conInput.io.outputs
+            matMul.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            ready1 := conAdd.io.valid
-            matMul.io.inputs := conAdd.io.result
+            matMul.io.inputChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            ready1 := conMatMul.io.valid
-            matMul.io.inputs := conMatMul.io.result
+            matMul.io.inputChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            ready1 := conReLU.io.valid
-            matMul.io.inputs := conReLU.io.result
+            matMul.io.inputChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            ready1 := conInitializer.io.valid
-            matMul.io.inputs := conInitializer.io.output
+            matMul.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            ready1 := conRound.io.valid
-            matMul.io.inputs := conRound.io.output
+            matMul.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
             throw new Exception("Unknown module connected to matmul module inputs")
         }
-        connectedModule2 match { // matmuls weights are transposed
+        connectedModule2 match {
           case conInput: InputModule =>
-            ready2 := conInput.io.valid
-            matMul.io.weights := conInput.io.outputs
+            matMul.io.weightChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            ready2 := conAdd.io.valid
-            matMul.io.weights := conAdd.io.result
+            matMul.io.weightChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            ready2 := conMatMul.io.valid
-            matMul.io.weights := conMatMul.io.result
+            matMul.io.weightChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            ready2 := conReLU.io.valid
-            matMul.io.weights := conReLU.io.result
+            matMul.io.weightChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            ready2 := conInitializer.io.valid
-            matMul.io.weights := conInitializer.io.output
+            matMul.io.weightChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            ready2 := conRound.io.valid
-            matMul.io.weights := conRound.io.output
+            matMul.io.weightChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
             throw new Exception("Unknown module connected to matmul module inputs")
         }
-        matMul.io.ready := ready1 && ready2
 
       case relu: ReLU =>
         val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
-            relu.io.input := conInput.io.outputs
-            relu.io.ready := conInput.io.valid
+            relu.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            relu.io.input := conAdd.io.result
-            relu.io.ready := conAdd.io.valid
+            relu.io.inputChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            relu.io.input := conMatMul.io.result
-            relu.io.ready := conMatMul.io.valid
+            relu.io.inputChannel <> conMatMul.io.resultChannel
           case conInitializer: Initializer =>
-            relu.io.input := conInitializer.io.output
-            relu.io.ready := conInitializer.io.valid
+            relu.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            relu.io.input := conRound.io.output
-            relu.io.ready := conRound.io.valid
+            relu.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a relu module")
           case _ =>
@@ -218,53 +188,42 @@ class AutomaticGeneration(
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
-            output.io.inputs := conInput.io.outputs
-            output.io.ready := conInput.io.valid
+            output.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            output.io.inputs := conAdd.io.result
-            output.io.ready := conAdd.io.valid
+            output.io.inputChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            output.io.inputs := conMatMul.io.result
-            output.io.ready := conMatMul.io.valid
+            output.io.inputChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            output.io.inputs := conReLU.io.result
-            output.io.ready := conReLU.io.valid
+            output.io.inputChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            output.io.inputs := conInitializer.io.output
-            output.io.ready := conInitializer.io.valid
+            output.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            output.io.inputs := conRound.io.output
-            output.io.ready := conRound.io.valid
+            output.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an output module")
           case _ =>
             throw new Exception("Unknown module connected to output module")
         }
-        outputs := output.io.outputs
-        valid := output.io.valid
+        outputs := output.io.outputChannel.bits
+        outputValid := output.io.outputChannel.valid
+        output.io.outputChannel.ready := outputReady
 
       case rounder: Rounder =>
         val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
-            rounder.io.input := conInput.io.outputs
-            rounder.io.ready := conInput.io.valid
+            rounder.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add =>
-            rounder.io.input := conAdd.io.result
-            rounder.io.ready := conAdd.io.valid
+            rounder.io.inputChannel <> conAdd.io.resultChannel
           case conMatMul: MatMul =>
-            rounder.io.input := conMatMul.io.result
-            rounder.io.ready := conMatMul.io.valid
+            rounder.io.inputChannel <> conMatMul.io.resultChannel
           case conReLU: ReLU =>
-            rounder.io.input := conReLU.io.result
-            rounder.io.ready := conReLU.io.valid
+            rounder.io.inputChannel <> conReLU.io.resultChannel
           case conInitializer: Initializer =>
-            rounder.io.input := conInitializer.io.output
-            rounder.io.ready := conInitializer.io.valid
+            rounder.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder =>
-            rounder.io.input := conRound.io.output
-            rounder.io.ready := conRound.io.valid
+            rounder.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a rounder module")
           case _ =>
@@ -278,16 +237,21 @@ class AutomaticGeneration(
     if (printing) println("Connections generated for: " + currentModule)
 
     if (pipelineIO) {
-      ready := RegNext(io.ready)
-      inputs := RegNext(io.input)
-      io.output := RegNext(outputs)
-      io.valid := RegNext(valid)
-    } else {
-      ready := io.ready
-      inputs := io.input
-      io.output := outputs
-      io.valid := valid
-    }
+      inputs := RegNext(io.inputChannel.bits)
+      inputValid := RegNext(io.inputChannel.valid)
+      io.inputChannel.ready := RegNext(inputReady)
 
-  }*/
+      io.outputChannel.bits := RegNext(outputs)
+      io.outputChannel.valid := RegNext(outputValid)
+      outputReady := RegNext(io.outputChannel.ready)
+    } else {
+      inputs := io.inputChannel.bits
+      inputValid := io.inputChannel.valid
+      io.inputChannel.ready := inputReady
+
+      io.outputChannel.bits := outputs
+      io.outputChannel.valid := outputValid
+      outputReady := io.outputChannel.ready
+    }
+  }
 }

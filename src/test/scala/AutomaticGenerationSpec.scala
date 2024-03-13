@@ -5,7 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
-  /*
+
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = false // set to true to print the connections to the console
@@ -26,7 +26,6 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 
-
   val lists: (List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
 
   // Print the lists
@@ -42,11 +41,12 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
       test(new AutomaticGeneration(lists._1, lists._2, pipelineIO, true, printConnections)) { dut =>
         var cycleTotal = 0
-        dut.io.input(0)(0).poke(inputsFixed(testNum).U)
-        dut.io.ready.poke(true.B)
+        dut.io.inputChannel.bits(0)(0).poke(inputsFixed(testNum).U)
+        dut.io.inputChannel.valid.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
         dut.clock.step()
         cycleTotal += 1
-        while (!dut.io.valid.peek().litToBoolean) {
+        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
 
@@ -54,7 +54,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
             fail("Timeout")
           }
         }
-        val resultFixed = dut.io.output.peek().litValue
+        val resultFixed = dut.io.outputChannel.bits.peek().litValue
 
         if (printToConsole) {
           println("Test: " + testNum)
@@ -95,6 +95,4 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
-
-   */
 }
