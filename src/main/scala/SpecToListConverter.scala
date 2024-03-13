@@ -34,11 +34,9 @@ object SpecToListConverter {
       val w = initializer("bit_width_result").num.toInt
       val index = initializer("index").num.toInt
       // The data is given as a flat array, so we need to group it into the correct dimensions in row-major order
-
-      val data = initializer("data").arr.map(_.num.toInt).toSeq.grouped(dimensions._2).toSeq
-      // TODO: This is a bit of a hack and will not work for large numbers
-      val bigIntData = data.map(_.map(BigInt(_)).toArray).toArray
-      (index, Operators.InitializerType(dimensions, w, bigIntData), List())
+      val data = initializer("data").arr.map(_.num).toArray.grouped(dimensions._2).toArray
+      val dataBigInt = data.map(_.map(_.toLong).map(BigInt(_)))
+      (index, Operators.InitializerType(dimensions, w, dataBigInt), List())
     }).toList
 
     val addList = add.map(add => {
