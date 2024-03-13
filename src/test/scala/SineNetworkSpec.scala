@@ -5,8 +5,9 @@ import scala_utils.FileReader._
 import scala_utils.FixedPointConversion._
 
 class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
+
   val printToFile = false // set to true to print the results to a file
-  val printToConsole = false // set to true to print the results to the console
+  val printToConsole = true // set to true to print the results to the console
 
   // Load the weights and biases into the ROMs from the files stored in the scala_utils/data folder
   val weightsL1 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_w1.txt")
@@ -16,9 +17,9 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val weightsL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_w3.txt")
   val biasesL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_b3.txt")
 
-  val w = 8
-  val wResult = 32
-  val fixedPoint = 4
+  val w = 16
+  val wResult = 4 * w
+  val fixedPoint = 10
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10
@@ -42,14 +43,16 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   for (testNum <- 0 until numberOfInputs) {
-    "SineNetwork should behave correctly for test %d (input = %f)".format(testNum, inputs(testNum)) in {
+    "SineNetwork should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
       test(new SineNetwork(w, wResult, signed, fixedPoint, weights, biases, true)) { dut =>
         var cycleTotal = 0
-        dut.io.input.poke(inputsFixed(testNum).U)
-        dut.io.ready.poke(true.B)
+        dut.io.inputChannel.bits(0)(0).poke(inputsFixed(testNum).U)
+        dut.io.inputChannel.valid.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
+
         dut.clock.step()
         cycleTotal += 1
-        while (!dut.io.valid.peek().litToBoolean) {
+        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
 
@@ -57,7 +60,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
             fail("Timeout")
           }
         }
-        val resultFixed = dut.io.output.peek().litValue
+        val resultFixed = dut.io.outputChannel.bits(0)(0).peek().litValue
 
         if (printToConsole) {
           println("Input: " + inputs(testNum))
@@ -96,4 +99,6 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+
 }

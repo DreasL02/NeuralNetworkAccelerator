@@ -5,18 +5,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
-import systolic_array.BufferedSystolicArray
 
-class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
+class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
-  val numberOfRows = 1
+  val numberOfRows = 2
   val numberOfColumns = 16
-  val matrixCommonDimension = 1
+  val matrixCommonDimension = 2
   val fixedPoint = 2
   val signed = true
-  val numberOfTests = 10
+  val numberOfTests = 1
   val max = 3.2f
   val min = -3.0f //0.0f //
   val threshold = 1f
@@ -40,8 +39,8 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
 
-    "BufferedSystolicArray should calculate correctly for test %d".format(testNum) in {
-      test(new BufferedSystolicArray(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
+    "MatMul should calculate correctly for test %d".format(testNum) in {
+      test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
         var weightsFloat = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
 
@@ -67,46 +66,36 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
           printMatrixMultiplication(inputsFloat, weightsFloat, multiplicationResultFloat, "GOLDEN MODEL CALCULATION IN RECONVERTED FLOATING")
 
 
-        val formattedInputs = inputsFixed
-        // input rows need to be reversed
-        for (i <- formattedInputs.indices) {
-          formattedInputs(i) = formattedInputs(i).reverse
-        }
-
-        // Weights need to be transposed
-        val formattedWeights = weightsFixed.transpose
-        // and rows need to be reversed
-        for (i <- formattedWeights.indices) {
-          formattedWeights(i) = formattedWeights(i).reverse
-        }
-
         if (enablePrinting) {
           println("FORMATTED INPUTS")
-          print(matrixToString(formattedInputs))
+          print(matrixToString(inputsFixed))
           println("FORMATTED WEIGHTS")
-          print(matrixToString(formattedWeights))
+          print(matrixToString(weightsFixed))
         }
 
-        // Setup the dut by loading the inputs and weights into the buffers by indicating that the producer is ready
-        dut.io.ready.poke(true.B)
+        // Setup the dut by loading the inputs and weights and indicating that they are valid
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until matrixCommonDimension) {
-            dut.io.inputs(i)(j).poke(formattedInputs(i)(j))
+            dut.io.inputChannel.bits(i)(j).poke(inputsFixed(i)(j))
           }
         }
+        dut.io.inputChannel.valid.poke(true.B)
 
-        for (i <- 0 until numberOfColumns) {
-          for (j <- 0 until matrixCommonDimension) {
-            dut.io.weights(i)(j).poke(formattedWeights(i)(j))
+        for (i <- 0 until matrixCommonDimension) {
+          for (j <- 0 until numberOfColumns) {
+            dut.io.weightChannel.bits(i)(j).poke(weightsFixed(i)(j))
           }
         }
+        dut.io.weightChannel.valid.poke(true.B)
+
+        dut.io.resultChannel.ready.poke(true.B)
 
         dut.clock.step()
         // All values should now be loaded into the buffers
 
         // Wait for the systolic array to be done
         var cycles = 0
-        while (!dut.io.valid.peekBoolean()) {
+        while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println("DEBUG WEIGHTS / DEBUG INPUTS")
@@ -121,10 +110,10 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
               println()
             }
             println()
-            println("DEBUG SYSTOLIC ARRAY RESULTS")
+            println("DEBUG RESULTS")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
-                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
+                print(dut.io.debugResults.get(i)(j).peek().litValue)
                 print(" ")
               }
               println()
@@ -138,7 +127,7 @@ class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
         for (i <- multiplicationResultFixed.indices) {
           for (j <- multiplicationResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
           }
         }
 

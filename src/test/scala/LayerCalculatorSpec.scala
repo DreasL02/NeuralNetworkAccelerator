@@ -7,6 +7,7 @@ import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
+
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -72,60 +73,48 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         if (enablePrinting)
           printMatrixMAC(inputsFloat, weightsFloat, biasesFloat, additionResultFloat, reluResultFloat, "GOLDEN MODEL CALCULATION IN PURE FLOATING")
 
-        val formattedInputs = inputsFixed
-        // input rows need to be reversed
-        for (i <- formattedInputs.indices) {
-          formattedInputs(i) = formattedInputs(i).reverse
-        }
-
-        // Weights need to be transposed
-        val formattedWeights = weightsFixed.transpose
-        // and rows need to be reversed
-        for (i <- formattedWeights.indices) {
-          formattedWeights(i) = formattedWeights(i).reverse
-        }
-
-        // nothing to do with biases
-
         if (enablePrinting) {
           println("FORMATTED INPUTS")
-          print(matrixToString(formattedInputs))
+          print(matrixToString(inputsFixed))
           println("FORMATTED WEIGHTS")
-          print(matrixToString(formattedWeights))
+          print(matrixToString(weightsFixed))
         }
 
-        // Setup the dut by indicating that the producer is ready
-        dut.io.ready.poke(true.B)
-
+        // Setup the DUT
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until commonDimension) {
-            dut.io.inputs(i)(j).poke(formattedInputs(i)(j))
+            dut.io.inputChannel.bits(i)(j).poke(inputsFixed(i)(j))
           }
         }
+        dut.io.inputChannel.valid.poke(true.B)
 
-        for (i <- 0 until numberOfColumns) {
-          for (j <- 0 until commonDimension) {
-            dut.io.weights(i)(j).poke(formattedWeights(i)(j))
+        for (i <- 0 until commonDimension) {
+          for (j <- 0 until numberOfColumns) {
+            dut.io.weightChannel.bits(i)(j).poke(weightsFixed(i)(j))
           }
         }
+        dut.io.weightChannel.valid.poke(true.B)
 
         for (i <- biasesFixed.indices) {
           for (j <- biasesFixed(0).indices) {
-            dut.io.biases(i)(j).poke(biasesFixed(i)(j))
+            dut.io.biasChannel.bits(i)(j).poke(biasesFixed(i)(j))
           }
         }
+        dut.io.biasChannel.valid.poke(true.B)
+
+        dut.io.resultChannel.ready.poke(true.B)
 
         dut.clock.step()
         // All values should now be loaded
 
         var cycles = 0
-        while (!dut.io.valid.peekBoolean()) {
+        while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println("DEBUG SYSTOLIC ARRAY RESULTS")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
-                print(dut.io.debugSystolicArrayResults.get(i)(j).peek().litValue)
+                print(dut.io.debugMatMulResults.get(i)(j).peek().litValue)
                 print(" ")
               }
               println()
@@ -164,7 +153,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(additionResultFixed.length, additionResultFixed(0).length)(0)
         for (i <- additionResultFixed.indices) {
           for (j <- additionResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
           }
         }
 
@@ -192,4 +181,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+
 }
