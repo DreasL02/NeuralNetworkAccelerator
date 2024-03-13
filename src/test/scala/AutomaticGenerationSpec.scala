@@ -19,13 +19,12 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10
-  val pipelineIO = false
+  val pipelineIO = true
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
   val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPointResult, wResult, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
-
 
   val lists: (List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
 
@@ -96,6 +95,4 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
-
-
 }

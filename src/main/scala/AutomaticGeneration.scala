@@ -23,6 +23,14 @@ class AutomaticGeneration(
     val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
   })
 
+  val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
+  val inputReady = Wire(Bool())
+  val inputValid = Wire(Bool())
+
+  val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
+  val outputReady = Wire(Bool())
+  val outputValid = Wire(Bool())
+
   // Module Creation
   val modules = listOfNodes.map {
     case inputType: InputType =>
@@ -59,7 +67,9 @@ class AutomaticGeneration(
 
       case input: InputModule =>
         // Should only happen once
-        input.io.inputChannel <> io.inputChannel
+        input.io.inputChannel.bits := inputs
+        input.io.inputChannel.valid := inputValid
+        inputReady := input.io.inputChannel.ready
 
       case add: Add =>
         val connectedModule1 = modules(connectionIndices.head)
@@ -194,8 +204,9 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown module connected to output module")
         }
-        output.io.outputChannel <> io.outputChannel
-
+        outputs := output.io.outputChannel.bits
+        outputValid := output.io.outputChannel.valid
+        output.io.outputChannel.ready := outputReady
 
       case rounder: Rounder =>
         val connectedModule = modules(connectionIndices.head)
@@ -226,10 +237,21 @@ class AutomaticGeneration(
     if (printing) println("Connections generated for: " + currentModule)
 
     if (pipelineIO) {
-      println("PipelineIO is disabled for now")
+      inputs := RegNext(io.inputChannel.bits)
+      inputValid := RegNext(io.inputChannel.valid)
+      io.inputChannel.ready := RegNext(inputReady)
+
+      io.outputChannel.bits := RegNext(outputs)
+      io.outputChannel.valid := RegNext(outputValid)
+      outputReady := RegNext(io.outputChannel.ready)
     } else {
+      inputs := io.inputChannel.bits
+      inputValid := io.inputChannel.valid
+      io.inputChannel.ready := inputReady
 
+      io.outputChannel.bits := outputs
+      io.outputChannel.valid := outputValid
+      outputReady := io.outputChannel.ready
     }
-
   }
 }

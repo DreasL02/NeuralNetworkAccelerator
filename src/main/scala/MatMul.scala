@@ -37,7 +37,7 @@ class MatMul(
     val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val config = "SystolicArray"
+  val config = "Pure"
 
   if (config == "Pure") {
     val pure = Module(new PureMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
