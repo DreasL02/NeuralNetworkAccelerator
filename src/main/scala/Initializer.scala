@@ -4,7 +4,7 @@ import chisel3.util.DecoupledIO
 class Initializer(w: Int = 8,
                   numberOfRows: Int = 4,
                   numberOfColumns: Int = 4,
-                  data: Seq[Seq[BigInt]],
+                  data: Array[Array[BigInt]],
                  ) extends Module {
 
   def this(initializerType: onnx.Operators.InitializerType) = this(
@@ -26,5 +26,5 @@ class Initializer(w: Int = 8,
   }
 
   io.outputChannel.bits := storage
-  io.outputChannel.ready := true.B
+  io.outputChannel.valid := true.B
 }

@@ -37,7 +37,7 @@ object SpecToListConverter {
 
       val data = initializer("data").arr.map(_.num.toInt).toSeq.grouped(dimensions._2).toSeq
       // TODO: This is a bit of a hack and will not work for large numbers
-      val bigIntData = data.map(row => row.map(BigInt(_)))
+      val bigIntData = data.map(_.map(BigInt(_)).toArray).toArray
       (index, Operators.InitializerType(dimensions, w, bigIntData), List())
     }).toList
 

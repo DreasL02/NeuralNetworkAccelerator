@@ -49,7 +49,7 @@ class Rounder(
 
     }
   }
-  
-  io.resultChannel.ready := io.inputChannel.ready // Output is ready as soon as input is ready
-  io.inputChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
+
+  io.resultChannel.valid := io.inputChannel.valid // Output is valid as soon as input is valid
+  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
 }

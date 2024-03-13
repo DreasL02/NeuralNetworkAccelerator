@@ -7,7 +7,7 @@ import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
-  /*
+
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -80,32 +80,35 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
           print(matrixToString(weightsFixed))
         }
 
-        // Setup the dut by indicating that the producer is ready
-        dut.io.ready.poke(true.B)
-
+        // Setup the DUT
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until commonDimension) {
-            dut.io.inputs(i)(j).poke(inputsFixed(i)(j))
+            dut.io.inputChannel.bits(i)(j).poke(inputsFixed(i)(j))
           }
         }
+        dut.io.inputChannel.valid.poke(true.B)
 
         for (i <- 0 until commonDimension) {
           for (j <- 0 until numberOfColumns) {
-            dut.io.weights(i)(j).poke(weightsFixed(i)(j))
+            dut.io.weightChannel.bits(i)(j).poke(weightsFixed(i)(j))
           }
         }
+        dut.io.weightChannel.valid.poke(true.B)
 
         for (i <- biasesFixed.indices) {
           for (j <- biasesFixed(0).indices) {
-            dut.io.biases(i)(j).poke(biasesFixed(i)(j))
+            dut.io.biasChannel.bits(i)(j).poke(biasesFixed(i)(j))
           }
         }
+        dut.io.biasChannel.valid.poke(true.B)
+
+        dut.io.resultChannel.ready.poke(true.B)
 
         dut.clock.step()
         // All values should now be loaded
 
         var cycles = 0
-        while (!dut.io.valid.peekBoolean()) {
+        while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println("DEBUG SYSTOLIC ARRAY RESULTS")
@@ -150,7 +153,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(additionResultFixed.length, additionResultFixed(0).length)(0)
         for (i <- additionResultFixed.indices) {
           for (j <- additionResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
           }
         }
 
@@ -179,5 +182,5 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-   */
+
 }

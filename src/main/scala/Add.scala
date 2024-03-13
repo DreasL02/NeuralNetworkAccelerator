@@ -30,7 +30,7 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
     io.debugBiases.get := io.biasChannel.bits
   }
 
-  io.resultChannel.ready := io.inputChannel.ready && io.biasChannel.ready // Output is valid as soon as both inputs are ready
-  io.inputChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
-  io.biasChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new biases when the result channel is ready and valid
+  io.resultChannel.valid := io.inputChannel.valid && io.biasChannel.valid // Output is valid as soon as both inputs are valid
+  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
+  io.biasChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new biases when the result channel is ready and valid
 }

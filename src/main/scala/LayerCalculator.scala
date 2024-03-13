@@ -1,5 +1,6 @@
 import activation_functions.ReLU
 import chisel3._
+import chisel3.util.DecoupledIO
 import module_utils.Adders
 import scala_utils.Optional.optional
 
@@ -14,17 +15,14 @@ class LayerCalculator(
                        fixedPoint: Int = 0,
                        enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
-  /*
+
   val io = IO(new Bundle {
-    val ready = Input(Bool()) // load values
-    val valid = Output(Bool()) // indicates that the systolic array should be done
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
+    val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))
 
-    val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))) // should only be used when load is true
+    val biasChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
 
-    val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // should only be used when load is true
-
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))) // result of layer
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
@@ -35,9 +33,8 @@ class LayerCalculator(
   })
 
   val matMul = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-  matMul.io.ready := io.ready
-  matMul.io.inputs := io.inputs
-  matMul.io.weights := io.weights
+  matMul.io.inputChannel <> io.inputChannel
+  matMul.io.weightChannel <> io.weightChannel
 
   if (enableDebuggingIO) {
     io.debugInputs.get := matMul.io.debugInputs.get
@@ -45,33 +42,27 @@ class LayerCalculator(
     io.debugMatMulResults.get := matMul.io.debugResults.get
   }
 
-  val bufferedBias = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
-  bufferedBias.io.input := matMul.io.result
-  bufferedBias.io.biases := io.biases
-  bufferedBias.io.ready := matMul.io.valid
+  val add = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
+  add.io.inputChannel <> matMul.io.resultChannel
+  add.io.biasChannel <> io.biasChannel
+
 
   if (enableDebuggingIO) {
-    io.debugBiases.get := bufferedBias.io.debugBiases.get
-    io.debugRounderInputs.get := bufferedBias.io.result
+    io.debugBiases.get := add.io.debugBiases.get
+    io.debugRounderInputs.get := add.io.resultChannel.bits
   }
 
   val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
-  rounder.io.input := bufferedBias.io.result
-  rounder.io.ready := bufferedBias.io.valid
+  rounder.io.inputChannel <> add.io.resultChannel
 
   if (enableDebuggingIO) {
-    io.debugReLUInputs.get := rounder.io.output
+    io.debugReLUInputs.get := rounder.io.resultChannel.bits
   }
 
   // ReLU
-  val rectifier = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
-  rectifier.io.input := rounder.io.output
-  rectifier.io.ready := rounder.io.valid
+  val reLU = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
+  reLU.io.inputChannel <> rounder.io.resultChannel
 
   // Result of computations
-  io.result := rectifier.io.result
-  io.valid := rectifier.io.valid
-
-
-   */
+  io.resultChannel <> reLU.io.resultChannel
 }

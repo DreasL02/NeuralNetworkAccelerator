@@ -13,7 +13,7 @@ object Operators {
     require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
   }
 
-  case class InitializerType(dimensions: (Int, Int), w: Int, data: Seq[Seq[BigInt]]) {
+  case class InitializerType(dimensions: (Int, Int), w: Int, data: Array[Array[BigInt]]) {
     require(w > 0, "w must be greater than 0")
     require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
     require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
