@@ -1,20 +1,21 @@
 import chisel3._
+import chisel3.util.DecoupledIO
 
 class Initializer(w: Int = 8,
                   numberOfRows: Int = 4,
                   numberOfColumns: Int = 4,
-                  data: Seq[Seq[Int]],
+                  data: Seq[Seq[BigInt]],
                  ) extends Module {
+
   def this(initializerType: onnx.Operators.InitializerType) = this(
     initializerType.w,
     initializerType.dimensions._1,
     initializerType.dimensions._2,
     initializerType.data
   )
-  
+
   val io = IO(new Bundle {
-    val output = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
-    val valid = Output(Bool()) // indicates that the module should be done
+    val outputChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
   })
 
   val storage: Vec[Vec[UInt]] = VecInit.fill(numberOfRows, numberOfColumns)(0.U(w.W))
@@ -23,6 +24,7 @@ class Initializer(w: Int = 8,
       storage(i)(j) := data(i)(j).U
     }
   }
-  io.output := storage
-  io.valid := true.B
+
+  io.outputChannel.bits := storage
+  io.outputChannel.ready := true.B
 }

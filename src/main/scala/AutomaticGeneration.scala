@@ -11,8 +11,10 @@ class AutomaticGeneration(
                            printing: Boolean = true
                          ) extends Module {
 
+  /*
   val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
   val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
+
 
   val io = IO(new Bundle {
     // initializers
@@ -287,5 +289,5 @@ class AutomaticGeneration(
       io.valid := valid
     }
 
-  }
+  }*/
 }

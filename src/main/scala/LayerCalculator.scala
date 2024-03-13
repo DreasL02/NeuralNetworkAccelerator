@@ -3,6 +3,7 @@ import chisel3._
 import module_utils.Adders
 import scala_utils.Optional.optional
 
+
 class LayerCalculator(
                        w: Int = 8,
                        wResult: Int = 32,
@@ -13,6 +14,7 @@ class LayerCalculator(
                        fixedPoint: Int = 0,
                        enableDebuggingIO: Boolean = true // enable debug signals for testing
                      ) extends Module {
+  /*
   val io = IO(new Bundle {
     val ready = Input(Bool()) // load values
     val valid = Output(Bool()) // indicates that the systolic array should be done
@@ -69,4 +71,7 @@ class LayerCalculator(
   // Result of computations
   io.result := rectifier.io.result
   io.valid := rectifier.io.valid
+
+
+   */
 }

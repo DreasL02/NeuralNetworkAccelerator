@@ -7,6 +7,7 @@ import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 
 class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -177,4 +178,6 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+   */
 }

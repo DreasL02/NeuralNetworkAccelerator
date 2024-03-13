@@ -1,5 +1,5 @@
 import chisel3._
-import chisel3.util.log2Ceil
+import chisel3.util.{DecoupledIO, log2Ceil}
 import module_utils.ShiftedBuffer
 import scala_utils.DimensionManipulation.{reverseRows, transpose}
 import scala_utils.Optional.optional
@@ -27,49 +27,42 @@ class MatMul(
   )
 
   val io = IO(new Bundle {
-    val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))) // should only be used when load is true
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
+    val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))
 
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // result of layer
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
     val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
-
-    val valid = Output(Bool()) // indicates that the systolic array should be done
-    val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
   })
 
-  val config = "Pure"
+  val config = "SystolicArray"
 
   if (config == "Pure") {
-    val matMul = Module(new PureMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-    matMul.io.inputs := io.inputs
-    matMul.io.weights := io.weights
-    matMul.io.ready := io.ready
-
-    io.valid := matMul.io.valid
-    io.result := matMul.io.result
+    val pure = Module(new PureMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    pure.io.inputChannel <> io.inputChannel
+    pure.io.weightChannel <> io.weightChannel
+    pure.io.resultChannel <> io.resultChannel
 
     if (enableDebuggingIO) {
       // Inputs and weights are unavailable in the PureMatrixMultiplication module so 0s are assigned to the debug signals
       io.debugInputs.get := VecInit(Seq.fill(numberOfRows)(0.U(w.W)))
       io.debugWeights.get := VecInit(Seq.fill(numberOfColumns)(0.U(w.W)))
-      io.debugResults.get := matMul.io.result
+      io.debugResults.get := pure.io.resultChannel.bits
     }
   } else if (config == "SystolicArray") {
-    val module = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
-    module.io.inputs := io.inputs
-    module.io.weights := transpose(io.weights)
-    module.io.ready := io.ready
-
-    io.valid := module.io.valid
-    io.result := module.io.result
+    val systolic = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    systolic.io.inputChannel <> io.inputChannel
+    systolic.io.weightChannel <> io.weightChannel
+    systolic.io.resultChannel <> io.resultChannel
 
     if (enableDebuggingIO) {
-      io.debugInputs.get := module.io.debugInputs.get
-      io.debugWeights.get := module.io.debugWeights.get
-      io.debugResults.get := module.io.debugSystolicArrayResults.get
+      io.debugInputs.get := systolic.io.debugInputs.get
+      io.debugWeights.get := systolic.io.debugWeights.get
+      io.debugResults.get := systolic.io.debugSystolicArrayResults.get
+    } else if (config == "OneAtATimeMatrixMultiplication") {
+
     }
   }
 }

@@ -5,6 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = false // set to true to print the connections to the console
@@ -94,4 +95,6 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+   */
 }

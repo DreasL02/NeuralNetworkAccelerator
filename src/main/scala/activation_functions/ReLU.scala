@@ -1,6 +1,7 @@
 package activation_functions
 
 import chisel3._
+import chisel3.util.DecoupledIO
 
 class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: Boolean = true) extends Module {
   def this(reluType: onnx.Operators.ReLUType) = this(
@@ -11,24 +12,23 @@ class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: 
   )
 
   val io = IO(new Bundle {
-    val input = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
-
-    val valid = Output(Bool()) // indicates that the module should be done
-    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
+    
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
   })
 
   for (row <- 0 until numberOfRows) {
     for (column <- 0 until numberOfColumns) {
-      io.result(row)(column) := io.input(row)(column) //default is the same value
+      io.resultChannel.bits(row)(column) := io.inputChannel.bits(row)(column) //default is the same value
 
       if (signed) { //if the values are signed
-        when(io.input(row)(column) >> (w - 1).U === 1.U) { //if signed bit (@msb) is 1, the result is negative
-          io.result(row)(column) := 0.U //ReLU gives 0
+        when(io.inputChannel.bits(row)(column) >> (w - 1).U === 1.U) { //if signed bit (@msb) is 1, the result is negative
+          io.resultChannel.bits(row)(column) := 0.U //ReLU gives 0
         }
       }
     }
   }
 
-  io.valid := io.ready
+  io.resultChannel.ready := io.inputChannel.ready // Output is ready as soon as input is ready
+  io.inputChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
 }

@@ -73,26 +73,29 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           print(matrixToString(weightsFixed))
         }
 
-        // Setup the dut by loading the inputs and weights into the buffers by indicating that the producer is ready
-        dut.io.ready.poke(true.B)
+        // Setup the dut by loading the inputs and weights and indicating that they are valid
         for (i <- 0 until numberOfRows) {
           for (j <- 0 until matrixCommonDimension) {
-            dut.io.inputs(i)(j).poke(inputsFixed(i)(j))
+            dut.io.inputChannel.bits(i)(j).poke(inputsFixed(i)(j))
           }
         }
+        dut.io.inputChannel.valid.poke(true.B)
 
         for (i <- 0 until matrixCommonDimension) {
           for (j <- 0 until numberOfColumns) {
-            dut.io.weights(i)(j).poke(weightsFixed(i)(j))
+            dut.io.weightChannel.bits(i)(j).poke(weightsFixed(i)(j))
           }
         }
+        dut.io.weightChannel.valid.poke(true.B)
+
+        dut.io.resultChannel.ready.poke(true.B)
 
         dut.clock.step()
         // All values should now be loaded into the buffers
 
         // Wait for the systolic array to be done
         var cycles = 0
-        while (!dut.io.valid.peekBoolean()) {
+        while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println("DEBUG WEIGHTS / DEBUG INPUTS")
@@ -107,7 +110,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
               println()
             }
             println()
-            println("DEBUG SYSTOLIC ARRAY RESULTS")
+            println("DEBUG RESULTS")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
                 print(dut.io.debugResults.get(i)(j).peek().litValue)
@@ -124,7 +127,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
         for (i <- multiplicationResultFixed.indices) {
           for (j <- multiplicationResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.result(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
           }
         }
 

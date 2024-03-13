@@ -11,7 +11,6 @@ class MatrixROM(w: Int = 8, numberOfEntries: Int = 16, initialMatrixMemoryState:
     val dataRead = Output(Vec(numberOfEntries, UInt(w.W)))
   })
 
-  println("im here 1")
 
   // Initialize memories using the vectorized initial states
   val matrixMemory = for (i <- initialMatrixMemoryState.indices) yield {

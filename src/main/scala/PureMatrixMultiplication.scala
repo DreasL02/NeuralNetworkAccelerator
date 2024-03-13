@@ -1,5 +1,5 @@
 import chisel3._
-import chisel3.util.log2Ceil
+import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.Optional._
 
 
@@ -13,29 +13,28 @@ class PureMatrixMultiplication(
                                 enableDebuggingIO: Boolean = true
                               ) extends Module {
   val io = IO(new Bundle {
-    val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))) // should only be used when load is true
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
+    val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))
 
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // result of layer
-
-    val valid = Output(Bool()) // indicates that the systolic array should be done
-    val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   })
 
-  io.valid := RegNext(RegNext(io.ready))
-
-  val inputs = RegNext(io.inputs)
-  val weights = RegNext(io.weights)
+  val inputs = RegNext(io.inputChannel.bits)
+  val weights = RegNext(io.weightChannel.bits)
 
   val result = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       if (signed) {
-        result(i)(j) := RegNext(inputs(i).zip(weights.map(_(j))).map { case (a, b) => a.asSInt * b.asSInt }.reduce(_ + _).asUInt)
+        result(i)(j) := inputs(i).zip(weights.map(_(j))).map { case (a, b) => a.asSInt * b.asSInt }.reduce(_ + _).asUInt
       } else {
-        result(i)(j) := RegNext(inputs(i).zip(weights.map(_(j))).map { case (a, b) => a * b }.reduce(_ + _))
+        result(i)(j) := inputs(i).zip(weights.map(_(j))).map { case (a, b) => a * b }.reduce(_ + _)
       }
     }
   }
-  io.result := result
+  io.resultChannel.bits := RegNext(result)
+
+  io.resultChannel.valid := RegNext(RegNext(io.inputChannel.valid)) && RegNext(RegNext(io.weightChannel.valid))
+  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+  io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
 }

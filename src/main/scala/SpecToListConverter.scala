@@ -36,7 +36,9 @@ object SpecToListConverter {
       // The data is given as a flat array, so we need to group it into the correct dimensions in row-major order
 
       val data = initializer("data").arr.map(_.num.toInt).toSeq.grouped(dimensions._2).toSeq
-      (index, Operators.InitializerType(dimensions, w, data), List())
+      // TODO: This is a bit of a hack and will not work for large numbers
+      val bigIntData = data.map(row => row.map(BigInt(_)))
+      (index, Operators.InitializerType(dimensions, w, bigIntData), List())
     }).toList
 
     val addList = add.map(add => {

@@ -13,6 +13,7 @@ class SineNetwork(
                    val enableDebuggingIO: Boolean = true // enable debug signals for testing
                  )
   extends Module {
+  /*
   val io = IO(new Bundle {
     val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
     val valid = Output(Bool()) // indicates that the module should be done
@@ -174,4 +175,6 @@ class SineNetwork(
     io.debugReLU1Output.get := relu1.io.result
     io.debugReLU2Output.get := relu2.io.result
   }
+
+   */
 }

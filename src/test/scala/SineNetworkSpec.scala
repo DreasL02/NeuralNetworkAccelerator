@@ -5,6 +5,7 @@ import scala_utils.FileReader._
 import scala_utils.FixedPointConversion._
 
 class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
+  /*
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
 
@@ -96,4 +97,6 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
     }
   }
+
+   */
 }

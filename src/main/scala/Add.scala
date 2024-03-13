@@ -1,5 +1,5 @@
 import chisel3._
-
+import chisel3.util.DecoupledIO
 import module_utils.Adders
 import scala_utils.Optional.optional
 
@@ -13,25 +13,24 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
   )
 
   val io = IO(new Bundle {
-    val input = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
-    val biases = Input(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
+    val biasChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
 
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
 
     val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
-
-    val valid = Output(Bool()) // indicates that the module should be done
-    val ready = Input(Bool()) // indicates that the module is ready to receive new inputs
   })
 
   val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
-  adders.io.operandA := io.input
-  adders.io.operandB := io.biases
-  io.result := adders.io.result
+  adders.io.operandA := io.inputChannel.bits
+  adders.io.operandB := io.biasChannel.bits
+  io.resultChannel.bits := adders.io.result
 
   if (enableDebuggingIO) {
-    io.debugBiases.get := io.biases
+    io.debugBiases.get := io.biasChannel.bits
   }
 
-  io.valid := io.ready
+  io.resultChannel.ready := io.inputChannel.ready && io.biasChannel.ready // Output is valid as soon as both inputs are ready
+  io.inputChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
+  io.biasChannel.valid := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new biases when the result channel is ready and valid
 }
