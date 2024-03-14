@@ -22,17 +22,24 @@ class PureMatrixMultiplication(
   val inputs = RegNext(io.inputChannel.bits)
   val weights = RegNext(io.weightChannel.bits)
 
-  val result = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
+  val multiplicationResultsRegisters = VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(RegInit(0.U(wResult.W)))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
-      if (signed) {
-        result(i)(j) := inputs(i).zip(weights.map(_(j))).map { case (a, b) => a.asSInt * b.asSInt }.reduce(_ + _).asUInt
-      } else {
-        result(i)(j) := inputs(i).zip(weights.map(_(j))).map { case (a, b) => a * b }.reduce(_ + _)
+      for (k <- 0 until commonDimension) {
+        if (signed) {
+          multiplicationResultsRegisters(i)(j)(k) := inputs(i)(k).asSInt * weights(k)(j).asSInt
+        } else {
+          multiplicationResultsRegisters(i)(j)(k) := inputs(i)(k) * weights(k)(j)
+        }
       }
     }
   }
-  io.resultChannel.bits := RegNext(result)
+
+  // Adder trees to sum all the multiplication results for each element in the result matrix
+
+
+
+
 
   io.resultChannel.valid := RegNext(RegNext(io.inputChannel.valid)) && RegNext(RegNext(io.weightChannel.valid))
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid

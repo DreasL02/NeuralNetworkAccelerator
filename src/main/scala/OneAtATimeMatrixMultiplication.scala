@@ -1,5 +1,6 @@
 import chisel3._
-import chisel3.util.log2Ceil
+import chisel3.util.{DecoupledIO, log2Ceil}
+import scala_utils.Optional.optional
 
 class OneAtATimeMatrixMultiplication(
                                       w: Int = 8,
@@ -12,46 +13,17 @@ class OneAtATimeMatrixMultiplication(
                                     ) extends Module {
 
   val io = IO(new Bundle {
-    val inputs = Input(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))) // should only be used when load is true
-    val weights = Input(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))) // should only be used when load is true
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
+    val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))
 
-    val result = Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))) // result of layer
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
-    val valid = Output(Bool()) // indicates that the systolic array should be done
-    val ready = Input(Bool()) // indicates that the systolic array is ready to receive new inputs
+    val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
+    val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
+    val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
   val cyclesUntilValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
-
-  def risingEdge(x: Bool): Bool = x && !RegNext(x) // detect rising edge
-
-  def timer(max: Int, reset: Bool): Bool = { // timer that counts up to max and stays there until reset manually by asserting reset
-    val x = RegInit(0.U(log2Ceil(max + 1).W))
-    val done = x === max.U // done when x reaches max
-    x := Mux(reset, 0.U, Mux(done || !io.ready, x, x + 1.U)) // reset when reset is asserted, otherwise increment if not done
-    done
-  }
-
-  val load = risingEdge(io.ready) // load when io.ready goes high
-
-  io.valid := timer(cyclesUntilValid, load) // valid when timer is done
-
-  val flatInputs = io.inputs.flatten
-  val flatWeights = io.weights.flatten
-  val flatResults = RegInit(VecInit(Seq.fill(numberOfRows * numberOfColumns)(0.U(wResult.W))))
-
-  val singleResult = Wire(UInt(wResult.W))
-
-  val addrInputs = RegInit(0.U(log2Ceil(numberOfRows * commonDimension).W))
-  val addrWeights = RegInit(0.U(log2Ceil(commonDimension * numberOfColumns).W))
-  val addrResults = RegInit(0.U(log2Ceil(numberOfRows * numberOfColumns).W))
-
-
-  if (signed) {
-    singleResult := flatInputs(0).asSInt * flatWeights(0).asSInt + flatResults(0).asSInt
-  } else {
-    singleResult := flatInputs(0) * flatWeights(0) + flatResults(0)
-  }
 
 
 }
