@@ -35,7 +35,7 @@ class PureMatrixMultiplication(
     }
   }
 
-  io.resultChannel.valid := adderTrees.map(_.map(_.resultChannel.valid)).flatten.reduce(_ && _)
+  io.resultChannel.valid := adderTrees.map(_.map(_.resultChannel.valid)).flatten.reduce(_ && _) // All adder trees must be valid for the result to be valid
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
   io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
 }

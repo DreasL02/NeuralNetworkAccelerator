@@ -19,7 +19,7 @@ class ComponentMultiplier(
   val inputs = RegNext(io.inputChannel.bits)
   val weights = RegNext(io.weightChannel.bits)
 
-  val multiplicationResultsRegisters = VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(RegInit(0.U(wResult.W)))
+  val multiplicationResultsRegisters = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       for (k <- 0 until commonDimension) {
@@ -33,7 +33,7 @@ class ComponentMultiplier(
   }
 
   io.resultChannel.bits := multiplicationResultsRegisters
-  io.resultChannel.valid := RegNext(RegNext(io.inputChannel.valid)) && RegNext(RegNext(io.weightChannel.valid))
+  io.resultChannel.valid := RegNext(RegNext(RegNext(io.inputChannel.valid))) && RegNext(RegNext(RegNext(io.weightChannel.valid)))
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
   io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
 }
