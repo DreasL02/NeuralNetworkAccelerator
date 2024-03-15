@@ -1,3 +1,5 @@
+package maximum_parallel_matmul
+
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.SmallModules._

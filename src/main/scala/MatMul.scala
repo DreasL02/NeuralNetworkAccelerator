@@ -1,9 +1,8 @@
 import chisel3._
-import chisel3.util.{DecoupledIO, log2Ceil}
-import module_utils.ShiftedBuffer
-import scala_utils.DimensionManipulation.{reverseRows, transpose}
+import chisel3.util.{DecoupledIO}
 import scala_utils.Optional.optional
-import systolic_array.{BufferedSystolicArray, SystolicArray}
+import systolic_array.{BufferedSystolicArray}
+import maximum_parallel_matmul.{MaximumParallelMatrixMultiplication}
 
 class MatMul(
               w: Int = 8,
@@ -37,10 +36,10 @@ class MatMul(
     val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val config = "Pure"
+  val config = "ParallelMatrixMultiplication"
 
-  if (config == "Pure") {
-    val pure = Module(new PureMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+  if (config == "ParallelMatrixMultiplication") {
+    val pure = Module(new MaximumParallelMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
     pure.io.inputChannel <> io.inputChannel
     pure.io.weightChannel <> io.weightChannel
     pure.io.resultChannel <> io.resultChannel
