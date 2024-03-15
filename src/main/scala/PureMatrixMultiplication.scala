@@ -19,29 +19,23 @@ class PureMatrixMultiplication(
     val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   })
 
-  val inputs = RegNext(io.inputChannel.bits)
-  val weights = RegNext(io.weightChannel.bits)
+  val componentMultiplier = Module(new ComponentMultiplier(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed))
+  componentMultiplier.io.inputChannel <> io.inputChannel
+  componentMultiplier.io.weightChannel <> io.weightChannel
 
-  val multiplicationResultsRegisters = VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(RegInit(0.U(wResult.W)))
+  val adderTrees = VecInit.fill(numberOfRows, numberOfColumns)(Module(new AdderTree(wResult, commonDimension)).io)
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
-      for (k <- 0 until commonDimension) {
-        if (signed) {
-          multiplicationResultsRegisters(i)(j)(k) := inputs(i)(k).asSInt * weights(k)(j).asSInt
-        } else {
-          multiplicationResultsRegisters(i)(j)(k) := inputs(i)(k) * weights(k)(j)
-        }
-      }
+      adderTrees(i)(j).inputChannel.bits := componentMultiplier.io.resultChannel.bits(i)(j)
+      adderTrees(i)(j).inputChannel.valid := componentMultiplier.io.resultChannel.valid
+      componentMultiplier.io.resultChannel.ready := adderTrees(i)(j).inputChannel.ready
+      adderTrees(i)(j).resultChannel.ready := io.resultChannel.ready
+
+      io.resultChannel.bits(i)(j) := adderTrees(i)(j).resultChannel.bits
     }
   }
 
-  // Adder trees to sum all the multiplication results for each element in the result matrix
-
-
-
-
-
-  io.resultChannel.valid := RegNext(RegNext(io.inputChannel.valid)) && RegNext(RegNext(io.weightChannel.valid))
+  io.resultChannel.valid := adderTrees.map(_.map(_.resultChannel.valid)).flatten.reduce(_ && _)
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
   io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
 }

@@ -51,7 +51,7 @@ class AdderTree(
 
   io.resultChannel.bits := data(numberOfStages - 1)(0)
 
-  val cyclesUntilOutputValid: Int = numberOfStages - 2 // number of cycles until the adder tree is done and the result is valid
+  val cyclesUntilOutputValid: Int = numberOfStages - 1 // number of cycles until the adder tree is done and the result is valid
 
   val readyToCompute = io.inputChannel.valid
 
