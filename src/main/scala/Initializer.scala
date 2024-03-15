@@ -21,7 +21,7 @@ class Initializer(w: Int = 8,
   val storage: Vec[Vec[UInt]] = VecInit.fill(numberOfRows, numberOfColumns)(0.U(w.W))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
-      storage(i)(j) := data(i)(j).U
+      storage(i)(j) := data(i)(j).U(w.W)
     }
   }
 

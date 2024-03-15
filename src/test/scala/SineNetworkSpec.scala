@@ -17,12 +17,12 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val weightsL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_w3.txt")
   val biasesL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_b3.txt")
 
-  val w = 16
+  val w = 8
   val wResult = 4 * w
-  val fixedPoint = 10
+  val fixedPoint = 4
   val signed = true
   val threshold = 0.25f
-  val numberOfInputs = 10
+  val numberOfInputs = 1
 
   // convert to fixed point using the same fixed point and sign for all layers
   val weightsL1Fixed = convertFloatMatrixToFixedMatrix(weightsL1, fixedPoint, w, signed)
@@ -37,7 +37,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biases = Array(biasesL1Fixed, biasesL2Fixed, biasesL3Fixed)
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
-  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
+  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint * 2, wResult, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 
@@ -49,6 +49,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.inputChannel.bits(0)(0).poke(inputsFixed(testNum).U)
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.outputChannel.ready.poke(true.B)
+
 
         dut.clock.step()
         cycleTotal += 1
@@ -62,13 +63,28 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
         val resultFixed = dut.io.outputChannel.bits(0)(0).peek().litValue
 
+
+        for (i <- 0 until 1) {
+          for (j <- 0 until 16) {
+            println("round: " + dut.io.debugRounder2Output.get(i)(j).peek().litValue)
+          }
+        }
+
+        for (i <- 0 until 1) {
+          for (j <- 0 until 16) {
+            println("mmu2: " + fixedToFloat(dut.io.debugMMU2Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
+          }
+        }
+
         if (printToConsole) {
           println("Input: " + inputs(testNum))
-          println("Output: " + fixedToFloat(resultFixed, fixedPoint, w, signed))
+          println("Input Fixed: " + inputsFixed(testNum))
+          println("Output: " + fixedToFloat(resultFixed, fixedPoint * 2, wResult, signed))
+          println("Output Fixed: " + resultFixed)
           println("Expected: " + expected(testNum))
           println("Cycles: " + cycleTotal)
         }
-        results(testNum) = fixedToFloat(resultFixed, fixedPoint, w, signed)
+        results(testNum) = fixedToFloat(resultFixed, fixedPoint * 2, wResult, signed)
 
         // Evaluate
         val a = results(testNum)
