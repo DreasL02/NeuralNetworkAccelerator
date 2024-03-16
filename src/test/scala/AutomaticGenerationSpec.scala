@@ -60,6 +60,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
           println("Test: " + testNum)
           println("Input: " + inputs(testNum))
           println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
+          println("Output Fixed: " + resultFixed)
           println("Expected: " + expected(testNum))
           println("Cycles: " + cycleTotal)
           println()

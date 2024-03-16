@@ -36,7 +36,7 @@ class MatMul(
     val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val config = "ParallelMatrixMultiplication"
+  val config = "SystolicArray"
 
   if (config == "ParallelMatrixMultiplication") {
     val pure = Module(new MaximumParallelMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
