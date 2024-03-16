@@ -131,7 +131,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
-        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed)
+        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
         if (enablePrinting) {
           println("DONE IN %d CYCLES".format(cycles))
           println("RESULT IN FLOATING POINT")
