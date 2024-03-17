@@ -2,6 +2,7 @@ package systolic_array
 
 import chisel3._
 import chisel3.util.{Fill, log2Ceil}
+import module_utils.SmallModules.mult
 
 // Inspired by:
 // https://github.com/kazutomo/Chisel-MatMul/tree/master
@@ -30,20 +31,10 @@ class ProcessingElement(
   val aReg = RegInit(0.U(w.W))
   val bReg = RegInit(0.U(w.W))
   val cReg = RegInit(0.U(wResult.W))
-
-  val multiplicationOperation = Wire(UInt(wResult.W))
-
-  if (signed) {
-    val signedMul = Wire(UInt((w + w).W))
-    signedMul := (io.aIn.asSInt * io.bIn.asSInt).asUInt
-    multiplicationOperation := Fill(wResult - (w + w), signedMul(w + w - 1)) ## signedMul
-  } else {
-    multiplicationOperation := io.aIn * io.bIn
-  }
-
+  
   aReg := io.aIn // stagger the inputs
   bReg := io.bIn // stagger the inputs
-  cReg := multiplicationOperation + cReg // MAC operation
+  cReg := mult(io.aIn, io.bIn, w, wResult, signed) + cReg // MAC operation
 
   io.aOut := aReg
   io.bOut := bReg

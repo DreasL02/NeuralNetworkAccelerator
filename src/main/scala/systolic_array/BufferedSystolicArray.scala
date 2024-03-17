@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.Optional.optional
 import module_utils.ShiftedBuffer
-import scala_utils.SmallModules.{risingEdge, timer}
+import module_utils.SmallModules.{risingEdge, timer}
 
 
 class BufferedSystolicArray(

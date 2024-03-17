@@ -22,7 +22,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val fixedPoint = 4
   val signed = true
   val threshold = 0.25f
-  val numberOfInputs = 1
+  val numberOfInputs = 10
 
   // convert to fixed point using the same fixed point and sign for all layers
   val weightsL1Fixed = convertFloatMatrixToFixedMatrix(weightsL1, fixedPoint, w, signed)
@@ -62,19 +62,6 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
         val resultFixed = dut.io.outputChannel.bits(0)(0).peek().litValue
-
-
-        for (i <- 0 until 1) {
-          for (j <- 0 until 16) {
-            println("round: " + dut.io.debugRounder2Output.get(i)(j).peek().litValue)
-          }
-        }
-
-        for (i <- 0 until 1) {
-          for (j <- 0 until 16) {
-            println("mmu2: " + fixedToFloat(dut.io.debugMMU2Result.get(i)(j).peek().litValue, fixedPoint * 2, w * 2, signed))
-          }
-        }
 
         if (printToConsole) {
           println("Input: " + inputs(testNum))

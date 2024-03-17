@@ -1,5 +1,6 @@
 import chisel3._
 import chisel3.util.Fill
+import module_utils.SmallModules.mult
 
 
 class ElementWiseMultiplier(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDimension: Int = 4, signed: Boolean = true) extends Module {
@@ -11,17 +12,7 @@ class ElementWiseMultiplier(w: Int = 8, wBig: Int = 32, xDimension: Int = 4, yDi
 
   for (row <- 0 until xDimension) {
     for (column <- 0 until yDimension) {
-      val multiplicationOperation = Wire(UInt(wBig.W))
-
-      if (signed) {
-        val signedMul = Wire(UInt((w + w).W))
-        signedMul := (io.inputs(row)(column).asSInt * io.weights(row)(column).asSInt).asUInt
-        multiplicationOperation := Fill(wBig - (w + w), signedMul(w + w - 1)) ## signedMul
-      } else {
-        multiplicationOperation := io.inputs(row)(column) * io.weights(row)(column)
-      }
-
-      io.result(row)(column) := multiplicationOperation
+      io.result(row)(column) := mult(io.inputs(row)(column), io.weights(row)(column), w, wBig, signed)
     }
   }
 }

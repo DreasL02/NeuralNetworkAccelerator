@@ -2,6 +2,7 @@ package maximum_parallel_matmul
 
 import chisel3._
 import chisel3.util.{DecoupledIO, Fill}
+import module_utils.SmallModules.mult
 
 class ComponentMultiplier(
                            w: Int = 8,
@@ -25,13 +26,7 @@ class ComponentMultiplier(
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       for (k <- 0 until commonDimension) {
-        if (signed) {
-          val signedMul = Wire(UInt((w + w).W))
-          signedMul := (io.inputChannel.bits(i)(k).asSInt * io.weightChannel.bits(k)(j).asSInt).asUInt
-          multiplicationResultsRegisters(i)(j)(k) := Fill(wResult - (w + w), signedMul(w + w - 1)) ## signedMul
-        } else {
-          multiplicationResultsRegisters(i)(j)(k) := inputs(i)(k) * weights(k)(j)
-        }
+        multiplicationResultsRegisters(i)(j)(k) := mult(inputs(i)(k), weights(k)(j), w, wResult, signed)
       }
     }
   }

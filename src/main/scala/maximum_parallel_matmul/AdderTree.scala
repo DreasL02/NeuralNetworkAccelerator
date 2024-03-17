@@ -2,7 +2,7 @@ package maximum_parallel_matmul
 
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
-import scala_utils.SmallModules._
+import module_utils.SmallModules._
 
 // Inspired by https://github.com/pConst/basic_verilog/blob/master/adder_tree.sv
 

@@ -36,7 +36,7 @@ class MaximumParallelMatrixMultiplication(
     }
   }
 
-  io.resultChannel.valid := adderTrees.map(_.map(_.resultChannel.valid)).flatten.reduce(_ && _) // All adder trees must be valid for the result to be valid
+  io.resultChannel.valid := adderTrees.flatMap(_.map(_.resultChannel.valid)).reduce(_ && _) // All adder trees must be valid for the result to be valid
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
   io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
 }
