@@ -35,6 +35,7 @@ class MatMul(
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
     val debugResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
     val debugCounters = optional(enableDebuggingIO, Output(Vec(3, UInt(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W))))
+    val debugCycleInputs = optional(enableDebuggingIO, Output(Vec(3, UInt(wResult.W))))
   })
 
   val config = "OneAtATimeMatrixMultiplication"
@@ -51,6 +52,7 @@ class MatMul(
       io.debugWeights.get := VecInit(Seq.fill(numberOfColumns)(0.U(w.W)))
       io.debugResults.get := pure.io.resultChannel.bits
       io.debugCounters.get := VecInit(Seq.fill(3)(0.U(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W)))
+      io.debugCycleInputs.get := VecInit(Seq.fill(3)(0.U(wResult.W)))
     }
   } else if (config == "SystolicArray") {
     val systolic = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
@@ -63,6 +65,7 @@ class MatMul(
       io.debugWeights.get := systolic.io.debugWeights.get
       io.debugResults.get := systolic.io.debugSystolicArrayResults.get
       io.debugCounters.get := VecInit(Seq.fill(3)(0.U(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W)))
+      io.debugCycleInputs.get := VecInit(Seq.fill(3)(0.U(wResult.W)))
     }
   }
   else if (config == "OneAtATimeMatrixMultiplication") {
@@ -76,6 +79,7 @@ class MatMul(
       io.debugWeights.get := VecInit(Seq.fill(numberOfColumns)(0.U(w.W)))
       io.debugResults.get := oneAtATime.io.resultChannel.bits
       io.debugCounters.get := oneAtATime.io.debugCounters.get
+      io.debugCycleInputs.get := oneAtATime.io.debugCycleInputs.get
     }
   }
 }

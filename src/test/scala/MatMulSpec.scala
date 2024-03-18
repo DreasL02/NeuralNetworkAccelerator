@@ -22,7 +22,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val printing = Array.fill(numberOfTests)(false)
   val printWeightsAndInputs = false // only supported for systolic array
-  val printCounters = false
+  val printCounters = true // only supported for one at a time matrix multiplication
 
   // We can enable printing for a specific test by setting the index to true
   printing(0) = true
@@ -121,6 +121,11 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
               println("Row Counter: %d".format(dut.io.debugCounters.get(0).peek().litValue))
               println("Column Counter: %d".format(dut.io.debugCounters.get(1).peek().litValue))
               println("Common Counter: %d".format(dut.io.debugCounters.get(2).peek().litValue))
+              println()
+              println("CYCLE INPUTS")
+              println("Cycle Input: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(0).peek().litValue, fixedPoint, w, signed)))
+              println("Cycle Weight: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(1).peek().litValue, fixedPoint, w, signed)))
+              println("Stored Result: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(2).peek().litValue, fixedPoint * 2, wResult, signed)))
               println()
             }
 

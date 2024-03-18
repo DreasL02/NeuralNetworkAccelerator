@@ -19,11 +19,12 @@ class OneAtATimeMatrixMultiplication(
 
     val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
+    val debugCycleInputs = optional(enableDebuggingIO, Output(Vec(3, UInt(wResult.W))))
     val debugCounters = optional(enableDebuggingIO, Output(Vec(3, UInt(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W))))
   })
 
   // Number of cycles required to compute the result matrix: numberOfRows * numberOfColumns * commonDimension
-  val cyclesUntilOutputValid = numberOfRows * numberOfColumns * commonDimension
+  val cyclesUntilOutputValid = numberOfRows * numberOfColumns * commonDimension + 1 // number of cycles until the matrix multiplication is done and the result is valid
 
   val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
 
@@ -44,12 +45,6 @@ class OneAtATimeMatrixMultiplication(
   val columnCounter = RegInit(0.U(log2Ceil(numberOfColumns).W))
   val commonCounter = RegInit(0.U(log2Ceil(commonDimension).W))
 
-  when(load) {
-    commonCounter := 0.U
-    rowCounter := 0.U
-    columnCounter := 0.U
-  }
-
   when(commonCounter === (commonDimension - 1).U) {
     commonCounter := 0.U
     when(columnCounter === (numberOfColumns - 1).U) {
@@ -66,10 +61,19 @@ class OneAtATimeMatrixMultiplication(
     commonCounter := commonCounter + 1.U
   }
 
-  val cycleInput = inputsReg(rowCounter)(commonCounter)
-  val cycleWeight = weightsReg(commonCounter)(columnCounter)
+  when(load) {
+    commonCounter := 0.U
+    rowCounter := 0.U
+    columnCounter := 0.U
+  }
 
-  resultsReg(rowCounter)(columnCounter) := mult(cycleInput, cycleWeight, w, wResult, signed) + resultsReg(rowCounter)(columnCounter)
+  val cycleInput = RegNext(inputsReg(rowCounter)(commonCounter)) // Register the input to be used in the next cycle to isolate the look-up logic
+  val cycleWeight = RegNext(weightsReg(commonCounter)(columnCounter))
+  val storedResult = resultsReg(RegNext(rowCounter))(RegNext(columnCounter))
+
+  when(!doneWithComputation) {
+    resultsReg(RegNext(rowCounter))(RegNext(columnCounter)) := mult(cycleInput, cycleWeight, w, wResult, signed) + storedResult
+  }
 
   io.resultChannel.bits := resultsReg
 
@@ -81,5 +85,9 @@ class OneAtATimeMatrixMultiplication(
     io.debugCounters.get(0) := rowCounter
     io.debugCounters.get(1) := columnCounter
     io.debugCounters.get(2) := commonCounter
+
+    io.debugCycleInputs.get(0) := cycleInput
+    io.debugCycleInputs.get(1) := cycleWeight
+    io.debugCycleInputs.get(2) := storedResult
   }
 }
