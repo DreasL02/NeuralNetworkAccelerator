@@ -19,7 +19,12 @@ object SmallModules {
     if (signed) {
       val signedMul = Wire(UInt((2 * wOperands).W))
       signedMul := (a.asSInt * b.asSInt).asUInt
-      multiplicationOperation := Fill(wResult - (2 * wOperands), signedMul(2 * wOperands - 1)) ## signedMul // sign extend to wResult
+      if (wResult > 2 * wOperands) {
+        val signExtension = Fill(wResult - (2 * wOperands), signedMul(2 * wOperands - 1))
+        multiplicationOperation := signExtension ## signedMul // sign extend to wResult
+      } else {
+        multiplicationOperation := signedMul
+      }
     } else {
       multiplicationOperation := a * b
     }
