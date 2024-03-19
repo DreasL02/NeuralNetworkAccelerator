@@ -54,7 +54,8 @@ class MatMul(
       io.debugCounters.get := VecInit(Seq.fill(3)(0.U(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W)))
       io.debugCycleInputs.get := VecInit(Seq.fill(3)(0.U(wResult.W)))
     }
-  } else if (config == "SystolicArray") {
+  }
+  else if (config == "SystolicArray") {
     val systolic = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
     systolic.io.inputChannel <> io.inputChannel
     systolic.io.weightChannel <> io.weightChannel
