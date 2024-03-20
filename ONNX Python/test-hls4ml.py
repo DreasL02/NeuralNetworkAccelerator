@@ -1,15 +1,17 @@
 import hls4ml
+import keras
+import pprint
 
-# Fetch a keras model from our example repository
-# This will download our example model to your working directory and return an example configuration file
-config = hls4ml.utils.fetch_example_model('KERAS_3layer.json')
+model = keras.saving.load_model('models/out.keras')
+config = hls4ml.utils.config_from_keras_model(model)
 
-# You can print the configuration to see some default parameters
-print(config)
+ # You can print the configuration to see some default parameters
+pprint.pprint(model)
+pprint.pprint(config)
 
-# Convert it to a hls project
+ # Convert it to a hls project
 hls_model = hls4ml.converters.keras_to_hls(config)
 
-hls_model.build()
+#hls_model.build()
 
-hls4ml.report.read_vivado_report('my-hls-test')
+#hls4ml.report.read_vivado_report('my-hls-test-sinus')
