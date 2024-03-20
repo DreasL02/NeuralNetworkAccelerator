@@ -4,6 +4,8 @@ import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.Optional.optional
 import module_utils.ShiftedBuffer
+import module_utils.SmallModules.{risingEdge, timer}
+
 
 class BufferedSystolicArray(
                              w: Int = 8,
@@ -28,15 +30,6 @@ class BufferedSystolicArray(
   })
 
   val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
-
-  def risingEdge(x: Bool): Bool = x && !RegNext(x) // detect rising edge
-
-  def timer(max: Int, reset: Bool, tickUp: Bool): Bool = { // timer that counts up to max and stays there until reset manually by asserting reset
-    val x = RegInit(0.U(log2Ceil(max + 1).W))
-    val done = x === max.U // done when x reaches max
-    x := Mux(reset, 0.U, Mux(done || !tickUp, x, x + 1.U)) // reset when reset is asserted, otherwise increment if not done
-    done
-  }
 
   val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
 

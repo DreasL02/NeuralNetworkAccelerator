@@ -18,7 +18,6 @@ class AutomaticGeneration(
 
 
   val io = IO(new Bundle {
-    // initializers
     val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W)))))
     val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
   })

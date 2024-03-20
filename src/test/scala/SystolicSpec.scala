@@ -123,7 +123,7 @@ class SystolicSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         // width and fixed point are doubled because the result is the sum of two fixed point numbers and no rounding is done
-        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed)
+        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
 
 
         if (enablePrinting) {

@@ -11,8 +11,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   val w = 8
   val wResult = 4 * w
   val numberOfRows = 2
-  val numberOfColumns = 16
-  val matrixCommonDimension = 2
+  val numberOfColumns = 3
+  val matrixCommonDimension = 4
   val fixedPoint = 2
   val signed = true
   val numberOfTests = 1
@@ -21,6 +21,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   val threshold = 1f
 
   val printing = Array.fill(numberOfTests)(false)
+  val printWeightsAndInputs = false // only supported for systolic array
+  val printCounters = true // only supported for one at a time matrix multiplication
 
   // We can enable printing for a specific test by setting the index to true
   printing(0) = true
@@ -98,19 +100,36 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
-            println("DEBUG WEIGHTS / DEBUG INPUTS")
-            print("  ")
-            for (i <- 0 until numberOfColumns) {
-              print(dut.io.debugWeights.get(i).peek().litValue)
-              print(" ")
-            }
             println()
-            for (i <- 0 until numberOfRows) {
-              print(dut.io.debugInputs.get(i).peek().litValue)
+            if (printWeightsAndInputs) {
+              println("DEBUG WEIGHTS / DEBUG INPUTS")
+              print("  ")
+              for (i <- 0 until numberOfColumns) {
+                print(dut.io.debugWeights.get(i).peek().litValue)
+                print(" ")
+              }
+              println()
+              for (i <- 0 until numberOfRows) {
+                print(dut.io.debugInputs.get(i).peek().litValue)
+                println()
+              }
               println()
             }
-            println()
-            println("DEBUG RESULTS")
+
+            if (printCounters) {
+              println("COUNTERS")
+              println("Row Counter: %d".format(dut.io.debugCounters.get(0).peek().litValue))
+              println("Column Counter: %d".format(dut.io.debugCounters.get(1).peek().litValue))
+              println("Common Counter: %d".format(dut.io.debugCounters.get(2).peek().litValue))
+              println()
+              println("CYCLE INPUTS")
+              println("Cycle Input: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(0).peek().litValue, fixedPoint, w, signed)))
+              println("Cycle Weight: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(1).peek().litValue, fixedPoint, w, signed)))
+              println("Stored Result: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(2).peek().litValue, fixedPoint * 2, wResult, signed)))
+              println()
+            }
+
+            println("DEBUG RESULTS - Fixed")
             for (i <- 0 until numberOfRows) {
               for (j <- 0 until numberOfColumns) {
                 print(dut.io.debugResults.get(i)(j).peek().litValue)
@@ -118,6 +137,17 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
               }
               println()
             }
+            println()
+            println("DEBUG RESULTS - Float")
+            val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
+            for (i <- multiplicationResultFixed.indices) {
+              for (j <- multiplicationResultFixed(0).indices) {
+                resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
+              }
+            }
+            val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
+            print(matrixToString(resultFloat))
+            println()
           }
           cycles = cycles + 1
           dut.clock.step()
@@ -131,7 +161,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
-        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, w * 2, signed)
+        val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
         if (enablePrinting) {
           println("DONE IN %d CYCLES".format(cycles))
           println("RESULT IN FLOATING POINT")

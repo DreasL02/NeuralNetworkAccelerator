@@ -8,8 +8,8 @@ object FixedPointConversion {
   def fixedToFloat(fixedRepresentation: BigInt, fixedPointFractionalBits: Int, width: Int, signed: Boolean): Float = {
     var scaledToFloat = fixedRepresentation
     if (signed) {
-      while (scaledToFloat >= Math.pow(2, width - 1).toInt) {
-        scaledToFloat = scaledToFloat - Math.pow(2, width).toInt
+      while (scaledToFloat >= BigInt(Math.pow(2, width - 1).toLong)) {
+        scaledToFloat = scaledToFloat - BigInt(Math.pow(2, width).toLong)
       }
     }
     scaledToFloat.toFloat / (1 << fixedPointFractionalBits).toFloat

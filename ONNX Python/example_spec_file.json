@@ -1,7 +1,7 @@
 {
   "Input": [
     {
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "fixed_point_result": 8,
       "input_dims": [
         [
@@ -17,7 +17,7 @@
   "MatMul": [
     {
       "bit_width_operands": 8,
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "fixed_point_operands": 4,
       "fixed_point_result": 8,
       "index": 7,
@@ -39,7 +39,7 @@
     },
     {
       "bit_width_operands": 8,
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "fixed_point_operands": 4,
       "fixed_point_result": 8,
       "index": 10,
@@ -61,7 +61,7 @@
     },
     {
       "bit_width_operands": 8,
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "fixed_point_operands": 4,
       "fixed_point_result": 8,
       "index": 13,
@@ -84,8 +84,8 @@
   ],
   "Add": [
     {
-      "bit_width_operands": 16,
-      "bit_width_result": 16,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
       "fixed_point_operands": 8,
       "fixed_point_result": 8,
       "index": 8,
@@ -106,8 +106,8 @@
       "signed": true
     },
     {
-      "bit_width_operands": 16,
-      "bit_width_result": 16,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
       "fixed_point_operands": 8,
       "fixed_point_result": 8,
       "index": 11,
@@ -128,8 +128,8 @@
       "signed": true
     },
     {
-      "bit_width_operands": 16,
-      "bit_width_result": 16,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
       "fixed_point_operands": 8,
       "fixed_point_result": 8,
       "index": 14,
@@ -152,8 +152,8 @@
   ],
   "Relu": [
     {
-      "bit_width_operands": 16,
-      "bit_width_result": 16,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
       "fixed_point_operands": 8,
       "fixed_point_result": 8,
       "index": 9,
@@ -169,8 +169,8 @@
       "signed": true
     },
     {
-      "bit_width_operands": 16,
-      "bit_width_result": 16,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
       "fixed_point_operands": 8,
       "fixed_point_result": 8,
       "index": 12,
@@ -188,7 +188,7 @@
   ],
   "Rounder": [
     {
-      "bit_width_operands": 16,
+      "bit_width_operands": 32,
       "bit_width_result": 8,
       "fixed_point_operands": 8,
       "fixed_point_result": 4,
@@ -205,7 +205,7 @@
       "signed": true
     },
     {
-      "bit_width_operands": 16,
+      "bit_width_operands": 32,
       "bit_width_result": 8,
       "fixed_point_operands": 8,
       "fixed_point_result": 4,
@@ -222,7 +222,7 @@
       "signed": true
     },
     {
-      "bit_width_operands": 16,
+      "bit_width_operands": 32,
       "bit_width_result": 8,
       "fixed_point_operands": 8,
       "fixed_point_result": 4,
@@ -241,7 +241,7 @@
   ],
   "Initializer": [
     {
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "input_dims": [
         [
           1,
@@ -251,11 +251,11 @@
       "index": 1,
       "connections": [],
       "data": [
-        65452
+        4294967212
       ]
     },
     {
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "input_dims": [
         [
           1,
@@ -267,24 +267,24 @@
       "data": [
         0,
         0,
-        65530,
+        4294967290,
         107,
         0,
         100,
         125,
         89,
-        65533,
+        4294967293,
         102,
         97,
-        65422,
+        4294967182,
         0,
         88,
         84,
-        65526
+        4294967286
       ]
     },
     {
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "input_dims": [
         [
           1,
@@ -298,18 +298,18 @@
         237,
         0,
         1,
-        65480,
+        4294967240,
         0,
         292,
         0,
-        65369,
-        65468,
+        4294967129,
+        4294967228,
         0,
-        65534,
+        4294967294,
         0,
         0,
         0,
-        65248
+        4294967008
       ]
     },
     {
@@ -642,7 +642,7 @@
   ],
   "Output": [
     {
-      "bit_width_result": 16,
+      "bit_width_result": 32,
       "fixed_point_result": 8,
       "input_dims": [
         [

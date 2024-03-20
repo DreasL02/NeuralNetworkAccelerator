@@ -13,7 +13,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val filepath = "ONNX Python/example_spec_file.json"
 
   val w = 8
-  val wResult = 2 * w
+  val wResult = 4 * w
   val fixedPoint = 4
   val fixedPointResult = 2 * fixedPoint
   val signed = true
@@ -60,6 +60,7 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
           println("Test: " + testNum)
           println("Input: " + inputs(testNum))
           println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
+          println("Output Fixed: " + resultFixed)
           println("Expected: " + expected(testNum))
           println("Cycles: " + cycleTotal)
           println()

@@ -23,7 +23,7 @@ with open("models/sinus_float_model_epoch_1000.onnx", "rb") as f:
 graph = {}
 
 bit_width_multiplication = 8
-bit_width_base = bit_width_multiplication*2
+bit_width_base = bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True
