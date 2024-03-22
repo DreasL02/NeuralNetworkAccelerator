@@ -12,9 +12,9 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   //val filepath = "src/main/scala/scala_utils/data/example_spec_file.json"
   val filepath = "ONNX Python/example_spec_file.json"
 
-  val w = 8
+  val w = 10
   val wResult = 4 * w
-  val fixedPoint = 4
+  val fixedPoint = 6
   val fixedPointResult = 2 * fixedPoint
   val signed = true
   val threshold = 0.25f

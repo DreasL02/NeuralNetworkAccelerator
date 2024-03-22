@@ -2,6 +2,7 @@ import chisel3._
 import chisel3.util.{DecoupledIO, Fill}
 import module_utils.SmallModules.mult
 
+// Hadamard product
 
 class ElementWiseMultiplier(
                              w: Int = 8,
