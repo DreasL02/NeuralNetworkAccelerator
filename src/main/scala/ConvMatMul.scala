@@ -62,7 +62,7 @@ class ConvMatMul(
   val zeroPaddedKernel = Wire(Vec(paddedDimensions._1, Vec(paddedDimensions._2, UInt(w.W))))
   for (i <- 0 until paddedDimensions._1) {
     for (j <- 0 until paddedDimensions._2) {
-      if (i < kernelDimensions._1 || i >= kernelDimensions._1 + inputDimensions._1 || j < kernelDimensions._2 || j >= kernelDimensions._2 + inputDimensions._2) {
+      if (i < kernelDimensions._1 || i >= kernelDimensions._1 + kernelDimensions._1 || j < kernelDimensions._2 || j >= kernelDimensions._2 + kernelDimensions._2) {
         zeroPaddedKernel(i)(j) := 0.U
       } else {
         zeroPaddedKernel(i)(j) := io.kernelChannel.bits(i - kernelDimensions._1)(j - kernelDimensions._2)

@@ -119,6 +119,23 @@ object MatrixUtils {
     str
   }
 
+  def tensorToString(m: Array[Array[Array[Array[BigInt]]]]): String = {
+    var str = ""
+    for (i <- m.indices) {
+      for (j <- m(0).indices) {
+        for (k <- m(0)(0).indices) {
+          for (l <- m(0)(0)(0).indices) {
+            str = str + "%d ".format(m(i)(j)(k)(l))
+          }
+          str = str + "\n"
+        }
+        str = str + "\n"
+      }
+      str = str + "\n"
+    }
+    str
+  }
+
 
   def printMatrixMultiplication(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]], mr: Array[Array[BigInt]], text: String): Unit = {
     println("--- %s ----".format(text))

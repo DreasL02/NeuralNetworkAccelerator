@@ -1,6 +1,7 @@
 package onnx
 
 object Operators {
+
   case class InputType(w: Int, dimensions: (Int, Int)) {
     require(w > 0, "w must be greater than 0")
     require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
