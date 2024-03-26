@@ -15,6 +15,10 @@ class MatMul4d(
 
   assert(dimensionsInput._1 == dimensionsWeight._1, "The first dimension of the input and weight matrices must be the same")
   assert(dimensionsInput._2 == dimensionsWeight._2, "The second dimension of the input and weight matrices must be the same")
+  assert(dimensionsInput._4 == dimensionsWeight._3, "The fourth dimension of the input and third of the weight matrices must be the same")
+  
+  // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
+
   val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)
 
   val io = IO(new Bundle {
@@ -24,20 +28,6 @@ class MatMul4d(
     val outputChannel = new DecoupledIO(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Vec(dimensionsOutput._3, Vec(dimensionsOutput._4, UInt(wResult.W))))))
   })
 
-
-  println("dimensionsInput")
-  println(dimensionsInput)
-  println("dimensionsWeight")
-  println(dimensionsWeight)
-  println("dimensionsOutput")
-  println(dimensionsOutput)
-
-
-  // Multiply the elements as in numpy matmul using the 2d matmul module
-  // We need in total dimensionsOutput._1 * dimensionsOutput._2 instances of the 2d matmul module
-
-
-  // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
 
   val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
   val weightReadies = Wire(Vec(dimensionsWeight._1, Vec(dimensionsWeight._2, Bool())))
