@@ -2,13 +2,14 @@ import chisel3._
 import chisel3.util.DecoupledIO
 import maximum_parallel_matmul.AdderTree
 
-class SingleChannelConvolution(w: Int = 8,
-                               wResult: Int = 32,
-                               inputDimensions: (Int, Int) = (32, 32), // the dimensions of the input matrix
-                               kernelDimensions: (Int, Int) = (3, 3), // the dimensions of the kernel matrix
-                               signed: Boolean = true, // whether the input and kernel matrices are signed
-                               strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-                               pads: (Int, Int) = (0, 0) // the padding to use for the convolution
+class SingleChannelConvolution(
+                                w: Int = 8,
+                                wResult: Int = 32,
+                                inputDimensions: (Int, Int) = (32, 32), // the dimensions of the input matrix
+                                kernelDimensions: (Int, Int) = (3, 3), // the dimensions of the kernel matrix
+                                signed: Boolean = true, // whether the input and kernel matrices are signed
+                                strides: (Int, Int) = (1, 1), // the stride to use for the convolution
+                                pads: (Int, Int) = (0, 0) // the padding to use for the convolution
                               ) extends Module {
 
   // Equation: https://builtin.com/machine-learning/fully-connected-layer

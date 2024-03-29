@@ -1,7 +1,5 @@
 import chisel3._
 import chisel3.util.DecoupledIO
-import maximum_parallel_matmul.MaximumParallelMatrixMultiplication
-import scala_utils.Optional
 
 class MatMul4d(
                 w: Int = 8,
@@ -16,7 +14,7 @@ class MatMul4d(
   assert(dimensionsInput._1 == dimensionsWeight._1, "The first dimension of the input and weight matrices must be the same")
   assert(dimensionsInput._2 == dimensionsWeight._2, "The second dimension of the input and weight matrices must be the same")
   assert(dimensionsInput._4 == dimensionsWeight._3, "The fourth dimension of the input and third of the weight matrices must be the same")
-  
+
   // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
 
   val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)
