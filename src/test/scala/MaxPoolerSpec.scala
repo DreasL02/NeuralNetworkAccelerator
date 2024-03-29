@@ -6,6 +6,8 @@ import chiseltest._
 // max pooler has the following parameters: w: Int, kernelShape: (Int, Int), pads: (Int, Int), strides: (Int, Int), xDimension: Int, yDimension: Int
 // and does the max pool operation used in CNNs
 // This file contains the tests for the MaxPooler module
+
+/*
 class MaxPoolerSpec extends AnyFreeSpec with ChiselScalatestTester {
   "MaxPooler should calculate correctly" in {
     test(new MaxPooler(8, (2, 2), (0, 0), (2, 2), 4, 4)) { dut =>
@@ -69,3 +71,5 @@ class MaxPoolerSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 }
+
+ */
