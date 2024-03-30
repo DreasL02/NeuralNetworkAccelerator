@@ -1,0 +1,13 @@
+{
+  "Input": [],
+  "Output": [],
+  "Rounder": [],
+  "Conv": [],
+  "MatMul": [],
+  "MaxPool": [],
+  "Reshape": [],
+  "Relu": [],
+  "Constant": [],
+  "Div": [],
+  "Add": []
+}

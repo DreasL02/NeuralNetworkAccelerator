@@ -5,13 +5,15 @@ import pprint
 
 # -------------------------------------------- Configuration --------------------------------------------
 
-# model_path = "models/sinus_float_model_epoch_1000.onnx"
-model_path = "models/mnist-1.onnx"
+model_path = "models/sinus_float_model_epoch_1000.onnx"
+# model_path = "models/mnist-1.onnx"
 export_path = "json/wip.json"
+
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
+signed = True  # True if the model is signed, False if the model is unsigned
 
 # -------------------------------------------- Configuration end --------------------------------------------
 
@@ -182,6 +184,8 @@ for stage in graph:
 # pprint.pprint(graph)
 # -------------------------------------------- Introduce rounders --------------------------------------------
 rounders = []
+
+# TODO: handle different fixed point values for inputs and operands
 
 for stage in graph:
     if graph[stage]["op_type"] in static_stages:
@@ -370,12 +374,15 @@ for stage in graph:
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
 pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
-scala_dict = {k: [] for k in chisel_operators}
+# Dictionary only containing the absolute necessary information for the Chisel generator for each module
+# Index is used instead of name to ensure that the order is preserved
+#
+chisel_dict = {k: [] for k in chisel_operators}
 
 
 # -------------------------------------------- Generate JSON dict end --------------------------------------------
 
 # -------------------------------------------- Generate JSON --------------------------------------------
 with open(export_path, "w") as f:
-    json.dump(scala_dict, f, indent=2)
+    json.dump(chisel_dict, f, indent=2)
 # -------------------------------------------- Generate JSON end --------------------------------------------
