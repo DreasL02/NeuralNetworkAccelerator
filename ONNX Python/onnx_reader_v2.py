@@ -81,6 +81,7 @@ with open(model_path, "rb") as model_file:
 # pprint.pprint(onnx_model.graph)
 
 # -------------------------------------------- Graph creation --------------------------------------------
+# Create a dictionary containing all the stages in the model with all the necessary information and with a unique index
 
 graph = {}
 
@@ -136,6 +137,7 @@ for node in onnx_model.graph.node:
 # -------------------------------------------- Graph creation end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Bit Width application --------------------------------------------
+# Apply the bit width and fixed point values to the stages in the graph dictionary
 for stage in graph:
     stage_op_type = graph[stage]["op_type"]
     bit_width_set = False
@@ -183,6 +185,7 @@ for stage in graph:
 # -------------------------------------------- Bit Width application end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Introduce rounders --------------------------------------------
+# Introduction of rounders to handle different bit widths between stages
 rounders = []
 
 # TODO: handle different fixed point values for inputs and operands
@@ -231,6 +234,7 @@ for rounder in rounders:
 # -------------------------------------------- Introduce rounders end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Introduce output --------------------------------------------
+# Add the output stage to the graph dictionary
 if len(onnx_model.graph.output) > 1:
     raise Exception("Models with multiple outputs are not supported")
 
@@ -266,6 +270,7 @@ graph[output_stage["name"]] = output_stage
 # pprint.pprint(graph)
 
 # -------------------------------------------- Connections --------------------------------------------
+# Insert the connections between the stages in the graph dictionary using the index of the stages
 for stage in graph:
     if graph[stage]["op_type"] in static_stages:
         graph[stage]["connections"] = []
@@ -278,6 +283,7 @@ for stage in graph:
 # -------------------------------------------- Connections end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Calculate dimensions --------------------------------------------
+# Calculate the input dimensions for each stage and store them in the graph dictionary
 
 
 def find_dimension(stage_name):
@@ -306,7 +312,8 @@ def find_dimension(stage_name):
     if graph[stage_name]["op_type"] == "Conv":
         # Input 1: a x b x c x d (a: batch size, b: number of input channels, c: height, d: width)
         # Input 2: e x b x f x g (e: number of output channels, b: number of input channels, f: height, g: width)
-        # Attributes: padding, strides (default: 1), auto_pad (default: NOTSET). Assumed to be 2D convolution.
+        # Attributes: padding, strides (default: 1), auto_pad (default: NOTSET).
+        # Dilations, group (default: 1) are not supported. 2D convolution is assumed.
         # Output: a x e x h x i (h: height, i: width)
         # h = (c - f + 2*padding[0]) / strides[0] + 1
         # i = (d - g + 2*padding[1]) / strides[1] + 1
@@ -338,6 +345,12 @@ def find_dimension(stage_name):
             padding = [0, 0]  # TODO: handle this properly
         elif auto_pad == "SAME_LOWER":
             padding = [0, 0]  # TODO: handle this properly
+
+        if len(padding) != 2:
+            raise Exception("Padding must be a 2 element array")
+
+        if len(strides) != 2:
+            raise Exception("Strides must be a 2 element array")
 
         a = input1[0]
         e = input2[0]
@@ -376,13 +389,15 @@ pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
 # Index is used instead of name to ensure that the order is preserved
-#
+# Vast majority of attributes are reduced to only the necessary ones
+
 chisel_dict = {k: [] for k in chisel_operators}
 
 
 # -------------------------------------------- Generate JSON dict end --------------------------------------------
 
 # -------------------------------------------- Generate JSON --------------------------------------------
+# Write the chisel_dict to the JSON file
 with open(export_path, "w") as f:
     json.dump(chisel_dict, f, indent=2)
 # -------------------------------------------- Generate JSON end --------------------------------------------
