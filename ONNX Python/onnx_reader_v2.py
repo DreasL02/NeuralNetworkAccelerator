@@ -3,11 +3,17 @@ from onnx import load
 from onnx import numpy_helper
 import pprint
 
+# -------------------------------------------- Configuration --------------------------------------------
+
 model_path = "models/mnist-1.onnx"
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
+
+# -------------------------------------------- Configuration end --------------------------------------------
+
+# -------------------------------------------- Constants --------------------------------------------
 
 # full list: https://github.com/onnx/onnx/blob/main/docs/IR.md#graphs
 supported_graphs = ["node", "input", "initializer", "output"]
@@ -15,10 +21,15 @@ supported_graphs = ["node", "input", "initializer", "output"]
 supported_node_operations = ["Conv", "MatMul", "MaxPool",
                              "Reshape", "Relu", "Constant", "Div", "Add"]
 
-
+# stages that use multiplication (and thus need a lower bit width than the base bit width)
 stages_using_multiplication = ["Conv", "MatMul", "Div"]
 
+# stages that don't have inputs
 static_stages = ["Initializer", "Constant", "Input"]
+
+# -------------------------------------------- Constants end --------------------------------------------
+
+# -------------------------------------------- Helper functions --------------------------------------------
 
 
 def convertToFixedPoint(number, fixedPoint, width, signed):
@@ -58,7 +69,10 @@ def demote_dimensions(dim_array):
         return dim_array
     return dim_array[0]
 
+# -------------------------------------------- Helper functions end --------------------------------------------
 
+
+# -------------------------------------------- Graph creation --------------------------------------------
 with open(model_path, "rb") as model_file:
     onnx_model = load(model_file)
 
@@ -66,7 +80,6 @@ graph = {}
 
 index = 0
 
-# -------------------------------------------- Graph creation --------------------------------------------
 for input in onnx_model.graph.input:
     graph[input.name] = {
         "type": "input",
@@ -163,17 +176,17 @@ pprint.pprint(graph)
 rounders = []
 
 for stage in graph:
-    if graph[stage] in static_stages:
+    if graph[stage]["op_type"] in static_stages:
         continue  # skip static stages as they don't have inputs
 
-    bit_width_stage = graph[stage]["bit_width_operands"]
+    bit_width_of_stage_operands = graph[stage]["bit_width_operands"]
 
     input_storage = []
-
     for input in graph[stage]["input"]:
         bit_width_input = graph[input]["bit_width_result"]
 
-        if bit_width_input != bit_width_stage:
+        if bit_width_input != bit_width_of_stage_operands:
+            # add rounder
             name = "rounder_" + graph[input]["name"] + \
                 "_to_" + graph[stage]["name"]
             rounder_input = (graph[input]["output"])
@@ -187,9 +200,9 @@ for stage in graph:
                 "op_type": "Rounder",
                 "index": index,
                 "bit_width_operands": bit_width_input,
-                "bit_width_result": bit_width_stage,
+                "bit_width_result": bit_width_of_stage_operands,
                 "fixed_point_operands": graph[input]["fixed_point_result"],
-                "fixed_point_result": graph[node]["fixed_point_operands"],
+                "fixed_point_result": graph[stage]["fixed_point_operands"],
             }
             index += 1
             rounders.append(rounder)
