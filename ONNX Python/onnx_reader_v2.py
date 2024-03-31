@@ -1,7 +1,9 @@
 import json
 from onnx import load
 from onnx import numpy_helper
+import numpy as np
 import pprint
+import base64
 
 # -------------------------------------------- Configuration --------------------------------------------
 
@@ -31,9 +33,10 @@ stages_using_multiplication = ["Conv", "MatMul", "Div"]
 # stages that don't have inputs
 static_stages = ["Initializer", "Constant", "Input"]
 
-# Chisel operators that are supported for automatic generation
-chisel_operators = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
-                    "Reshape", "Relu", "Constant", "Div", "Add"]
+# Chisel module that are supported for automatic generation.
+# Note that some modules are used for multiple operations, e.g. Initializer is used for both Constant and Initializer
+chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
+                  "Reshape", "Relu", "Div", "Add", "Initializer"]
 
 # -------------------------------------------- Constants end --------------------------------------------
 
@@ -54,6 +57,8 @@ def convertToFixedPoint(number, fixedPoint, width, signed):
 
 
 def promoteDimsTo4d(dims):
+    # replace all 0 or negative values with 1
+    dims = [1 if x <= 0 else x for x in dims]
     if len(dims) > 4:
         raise Exception("Dimensions with more than 4 dimensions not supported")
     while len(dims) < 4:
@@ -98,6 +103,7 @@ for input in onnx_model.graph.input:
         "attributes": [],
         "index": index
     }
+
     index += 1
 
 for initializer in onnx_model.graph.initializer:
@@ -108,9 +114,10 @@ for initializer in onnx_model.graph.initializer:
         "output": initializer.name,
         "dims": promoteDimsTo4d(initializer.dims),
         "op_type": "Initializer",
-        "attributes": [initializer.raw_data],
+        "attributes": [numpy_helper.to_array(initializer)],
         "index": index
     }
+
     index += 1
 
 for node in onnx_model.graph.node:
@@ -319,6 +326,7 @@ def find_dimension(stage_name):
         # i = (d - g + 2*padding[1]) / strides[1] + 1
         input1 = find_dimension(graph[stage_name]["input"][0])
         input2 = find_dimension(graph[stage_name]["input"][1])
+
         # find padding, strides
         padding = [0, 0]
         strides = [1, 1]
@@ -385,17 +393,114 @@ for stage in graph:
 
 
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
-pprint.pprint(graph)
+# pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
 # Index is used instead of name to ensure that the order is preserved
 # Vast majority of attributes are reduced to only the necessary ones
 
-chisel_dict = {k: [] for k in chisel_operators}
+chisel_dict = {k: [] for k in chisel_modules + ["Parameters"]}
+
+chisel_dict["Parameters"].append({
+    "bit_width_base": bit_width_base,
+    "fixed_point_base": fixed_point_base,
+    "bit_width_multiplication": bit_width_multiplication,
+    "fixed_point_multiplication": fixed_point_multiplication,
+    "signed": signed
+})
+
+for stage in graph:
+    current_stage = graph[stage]
+
+    if current_stage["op_type"] == "Input":
+        chisel_dict["Input"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "dims": current_stage["dims"],
+        })
+
+    elif current_stage["op_type"] == "Output":
+        chisel_dict["Output"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_operands"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"]
+        })
+
+    elif current_stage["op_type"] in ["Rounder", "Div", "MatMul"]:
+        chisel_dict[current_stage["op_type"]].append({
+            "index": current_stage["index"],
+            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_result": current_stage["bit_width_result"],
+            "fixed_point_operands": current_stage["fixed_point_operands"],
+            "fixed_point_result": current_stage["fixed_point_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"]
+        })
+
+    elif current_stage["op_type"] in ["Add", "Relu"]:
+        chisel_dict[current_stage["op_type"]].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"]
+        })
+
+    elif current_stage["op_type"] == "Conv":
+        chisel_dict["Conv"].append({
+        })
+
+    elif current_stage["op_type"] == "MaxPool":
+        chisel_dict["MaxPool"].append({
+        })
+
+    elif current_stage["op_type"] == "Reshape":
+        chisel_dict["Reshape"].append({
+
+        })
+
+    elif current_stage["op_type"] == "Constant":
+        dims = None
+        for attribute in current_stage["attributes"]:
+            if attribute.name == "value":
+                if attribute.t.dims == []:
+                    dims = [1, 1, 1, attribute.t.float_data.__len__()]
+                else:
+                    dims = promoteDimsTo4d(attribute.t.dims)
+
+        raw_data = None
+        for attribute in current_stage["attributes"]:
+            if attribute.name == "value":
+                raw_data = attribute.t.float_data.flatten().tolist()
+                raw_data = [convertToFixedPoint(
+                    x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
+
+        chisel_dict["Initializer"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "dims": dims,
+            "raw_data": raw_data
+        })
+
+    elif current_stage["op_type"] == "Initializer":
+        raw_data = current_stage["attributes"][0].flatten().tolist()
+        raw_data = [convertToFixedPoint(
+            x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
+
+        chisel_dict["Initializer"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "dims": current_stage["dims"],
+            "raw_data": raw_data
+        })
+
+    else:
+        raise Exception("Unsupported stage type: " +
+                        current_stage["op_type"] + ". It does not have a corresponding Chisel module")
 
 
 # -------------------------------------------- Generate JSON dict end --------------------------------------------
-
+pprint.pprint(chisel_dict)
 # -------------------------------------------- Generate JSON --------------------------------------------
 # Write the chisel_dict to the JSON file
 with open(export_path, "w") as f:
