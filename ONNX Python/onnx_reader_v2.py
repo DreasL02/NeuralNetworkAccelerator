@@ -7,8 +7,8 @@ import base64
 
 # -------------------------------------------- Configuration --------------------------------------------
 
-model_path = "models/sinus_float_model_epoch_1000.onnx"
-# model_path = "models/mnist-1.onnx"
+# model_path = "models/sinus_float_model_epoch_1000.onnx"
+model_path = "models/mnist-1.onnx"
 export_path = "json/wip.json"
 
 bit_width_multiplication = 8
@@ -43,7 +43,7 @@ chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
 # -------------------------------------------- Helper functions --------------------------------------------
 
 
-def convertToFixedPoint(number, fixedPoint, width, signed):
+def convert_to_fixed_point(number, fixedPoint, width, signed):
     scaledToFixed = round((number * (2 ** fixedPoint)))
     max = (2 ** (width))
     if signed:
@@ -56,9 +56,9 @@ def convertToFixedPoint(number, fixedPoint, width, signed):
     return scaledToFixed
 
 
-def promoteDimsTo4d(dims):
-    # replace all 0 or negative values with 1
-    dims = [1 if x <= 0 else x for x in dims]
+def promote_dims_to_4d(dims):
+    # replace all 0, none or negative values with 1
+    dims = [1 if (x is None or x <= 0) else x for x in dims]
     if len(dims) > 4:
         raise Exception("Dimensions with more than 4 dimensions not supported")
     while len(dims) < 4:
@@ -66,7 +66,7 @@ def promoteDimsTo4d(dims):
     return dims
 
 
-def shapeToDims(shape):
+def shape_to_dims(shape):
     dims = []
     for i in shape.dim:
         dims.append(i.dim_value)
@@ -98,7 +98,7 @@ for input in onnx_model.graph.input:
         "name": input.name,
         "input": "???",
         "output": input.name,
-        "dims": promoteDimsTo4d(shapeToDims(input.type.tensor_type.shape)),
+        "dims": promote_dims_to_4d(shape_to_dims(input.type.tensor_type.shape)),
         "op_type": "Input",
         "attributes": [],
         "index": index
@@ -112,7 +112,7 @@ for initializer in onnx_model.graph.initializer:
         "name": initializer.name,
         "input": "???",
         "output": initializer.name,
-        "dims": promoteDimsTo4d(initializer.dims),
+        "dims": promote_dims_to_4d(initializer.dims),
         "op_type": "Initializer",
         "attributes": [numpy_helper.to_array(initializer)],
         "index": index
@@ -132,7 +132,7 @@ for node in onnx_model.graph.node:
         "input": node.input,
         "output": node.output,
         # temporary dimension, actual dims are calculated in the later step
-        "dims": [1, 1, 1, 1],
+        "dims": [0, 0, 0, 0],
         "op_type": node.op_type,
         "attributes": attributes,
         "index": index
@@ -218,7 +218,7 @@ for stage in graph:
                 "input": [demote_dimensions(rounder_input)],
                 "output": [name],
                 # temporary dimension, actual dims are calculated in the later step
-                "dims": [1, 1, 1, 1],
+                "dims": [0, 0, 0, 0],
                 "op_type": "Rounder",
                 "index": index,
                 "bit_width_operands": bit_width_input,
@@ -263,7 +263,7 @@ output_stage = {
     "name": output_name + "_output",
     "input": [output_name],
     "output": "???",
-    "dims": promoteDimsTo4d(shapeToDims(onnx_model.graph.output[0].type.tensor_type.shape)),
+    "dims": promote_dims_to_4d(shape_to_dims(onnx_model.graph.output[0].type.tensor_type.shape)),
     "op_type": "Output",
     "index": index,
     "bit_width_operands": output_producer["bit_width_result"],
@@ -294,19 +294,21 @@ for stage in graph:
 
 
 def find_dimension(stage_name):
-    if graph[stage_name]["op_type"] == "Constant":
-        for attribute in graph[stage_name]["attributes"]:
-            if attribute.name == "value":
-                if attribute.t.dims == []:  # some times the dims are seemingly empty, in that case we treat it as a scalar
-                    return [1, 1, 1, attribute.t.float_data.__len__()]
-                return promoteDimsTo4d(attribute.t.dims)
-
-    # not including Constant
-    if graph[stage_name]["op_type"] in (static_stages + ["Output"]):
-        # should have been found in a previous steps
+    # if the dimensions are already calculated, return them
+    if graph[stage_name]["dims"] != [0, 0, 0, 0]:
+        if graph[stage_name]["dims"].__len__() != 4:
+            raise Exception("Only 4d tensors are supported")
         return list(graph[stage_name]["dims"])
 
-    if graph[stage_name]["op_type"] == "MatMul":
+    elif graph[stage_name]["op_type"] == "Constant":
+        for attribute in graph[stage_name]["attributes"]:
+            if attribute.name == "value":
+                if attribute.t.dims == []:  # some times the dims are seemingly empty, in that case we treat it as a 1d tensor
+                    new_dims = [1, 1, 1, attribute.t.float_data.__len__()]
+                else:
+                    new_dims = promote_dims_to_4d(attribute.t.dims)
+
+    elif graph[stage_name]["op_type"] == "MatMul":
         # a x b x n x m * a x b x m x p = a x b x n x p
         input1 = find_dimension(graph[stage_name]["input"][0])
         input2 = find_dimension(graph[stage_name]["input"][1])
@@ -314,9 +316,9 @@ def find_dimension(stage_name):
         b = input1[1]
         n = input1[2]
         p = input2[3]
-        return [a, b, n, p]
+        new_dims = [a, b, n, p]
 
-    if graph[stage_name]["op_type"] == "Conv":
+    elif graph[stage_name]["op_type"] == "Conv":
         # Input 1: a x b x c x d (a: batch size, b: number of input channels, c: height, d: width)
         # Input 2: e x b x f x g (e: number of output channels, b: number of input channels, f: height, g: width)
         # Attributes: padding, strides (default: 1), auto_pad (default: NOTSET).
@@ -366,21 +368,26 @@ def find_dimension(stage_name):
         d = input1[3]
         f = input2[2]
         g = input2[3]
-        h = (c - f + 2*padding[0]) / strides[0] + 1
-        i = (d - g + 2*padding[1]) / strides[1] + 1
-        return [a, e, h, i]
+        h = round((c - f + 2*padding[0]) / strides[0] + 1)
+        i = round((d - g + 2*padding[1]) / strides[1] + 1)
+        new_dims = [a, e, h, i]
 
-    if graph[stage_name]["op_type"] == "MaxPool":
-        return [1, 1, 1, 1]  # TODO: handle this properly
+    elif graph[stage_name]["op_type"] == "MaxPool":
+        new_dims = [1, 1, 1, 1]  # TODO: handle this properly
 
-    if graph[stage_name]["op_type"] == "Reshape":
+    elif graph[stage_name]["op_type"] == "Reshape":
         shape = []
         for attribute in graph[stage_name]["attributes"]:
             if attribute.name == "shape":
                 shape = attribute.ints
-        return promoteDimsTo4d(shape)
+        new_dims = promote_dims_to_4d(shape)
 
-    return find_dimension(graph[stage_name]["input"][0])
+    else:
+        new_dims = find_dimension(graph[stage_name]["input"][0])
+
+    # store the newly calculated dimensions in the graph dictionary
+    graph[stage_name]["dims"] = new_dims
+    return new_dims
 
 
 for stage in graph:
@@ -427,13 +434,22 @@ for stage in graph:
             "input_dims": current_stage["input_dims"]
         })
 
-    elif current_stage["op_type"] in ["Rounder", "Div", "MatMul"]:
+    elif current_stage["op_type"] in ["Rounder", "Div"]:
         chisel_dict[current_stage["op_type"]].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"],
             "bit_width_result": current_stage["bit_width_result"],
             "fixed_point_operands": current_stage["fixed_point_operands"],
             "fixed_point_result": current_stage["fixed_point_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"]
+        })
+
+    elif current_stage["op_type"] == "MatMul":
+        chisel_dict["MatMul"].append({
+            "index": current_stage["index"],
+            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"]
         })
@@ -455,8 +471,17 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "Reshape":
-        chisel_dict["Reshape"].append({
+        dims = None
+        for attribute in current_stage["attributes"]:
+            if attribute.name == "shape":
+                dims = promote_dims_to_4d(attribute.ints)
 
+        chisel_dict["Reshape"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"],
+            "dims": dims
         })
 
     elif current_stage["op_type"] == "Constant":
@@ -466,13 +491,13 @@ for stage in graph:
                 if attribute.t.dims == []:
                     dims = [1, 1, 1, attribute.t.float_data.__len__()]
                 else:
-                    dims = promoteDimsTo4d(attribute.t.dims)
+                    dims = promote_dims_to_4d(attribute.t.dims)
 
         raw_data = None
         for attribute in current_stage["attributes"]:
             if attribute.name == "value":
-                raw_data = attribute.t.float_data.flatten().tolist()
-                raw_data = [convertToFixedPoint(
+                raw_data = attribute.t.float_data
+                raw_data = [convert_to_fixed_point(
                     x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
         chisel_dict["Initializer"].append({
@@ -484,7 +509,7 @@ for stage in graph:
 
     elif current_stage["op_type"] == "Initializer":
         raw_data = current_stage["attributes"][0].flatten().tolist()
-        raw_data = [convertToFixedPoint(
+        raw_data = [convert_to_fixed_point(
             x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
         chisel_dict["Initializer"].append({
