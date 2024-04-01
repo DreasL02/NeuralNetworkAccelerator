@@ -33,7 +33,9 @@ stages_using_multiplication = ["Conv", "MatMul", "Div"]
 # stages that don't have inputs
 static_stages = ["Initializer", "Constant", "Input"]
 
-inffered_stages = ["Rounder", "Broadcaster"]
+# stages that are not defined in the ONNX specification but are used in the Chisel generator
+# (e.g. to handle different bit widths between stages)
+inferred_stages = ["Rounder", "Broadcaster"]
 
 # stages that (can) broadcast their inputs (https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md)
 broadcast_operations = ["Add", "And", "Div", "Equal", "Greater", "Less", "Max", "Mean", "Min",
@@ -298,7 +300,7 @@ def find_dimension(stage_name):
 
         for attribute in graph[stage_name]["attributes"]:
             if attribute.name == "auto_pad":
-                auto_pad = attribute.s
+                auto_pad = attribute.s.decode("utf-8")
             if attribute.name == "pads":
                 padding = (np.array(attribute.ints)).tolist()
             if attribute.name == "strides":
@@ -311,12 +313,15 @@ def find_dimension(stage_name):
                     raise Exception("Group other than 1 is not supported")
 
         if auto_pad == "VALID":
-            # TODO: check if this is correct, can't find any information on this
             padding = [0, 0]
         elif auto_pad == "SAME_UPPER":
-            padding = [0, 0]  # TODO: handle this properly
+            # TODO: check if this is correct
+            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
         elif auto_pad == "SAME_LOWER":
-            padding = [0, 0]  # TODO: handle this properly
+            # TODO: check if this is correct
+            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
 
             # if padding is larger than 2d tensor but all values over 2 are 0, then we assume it is a 2d tensor
         if padding.__len__() > 2:
@@ -383,11 +388,15 @@ def find_dimension(stage_name):
                         "Storage order other than 0 is not supported")
 
         if auto_pad == "VALID":
-            padding = [0, 0]  # TODO: check if this is correct
+            padding = [0, 0]
         elif auto_pad == "SAME_UPPER":
-            padding = [0, 0]
+            # TODO: check if this is correct
+            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
         elif auto_pad == "SAME_LOWER":
-            padding = [0, 0]
+            # TODO: check if this is correct
+            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
 
         if len(kernel_shape) != 2:
             raise Exception("Kernel shape must be a 2 element array")
