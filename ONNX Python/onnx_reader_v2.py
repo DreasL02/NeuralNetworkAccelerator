@@ -435,8 +435,10 @@ def find_dimension(stage_name):
                 shape = attribute.ints
         new_dims = promote_dims_to_4d(shape)
 
-    # https://numpy.org/doc/stable/user/basics.broadcasting.html
     elif graph[stage_name]["op_type"] in broadcast_operations:
+        # The dimensions of the two inputs may not match, in which case a broadcaster is added
+        # to match the dimensions of the two inputs.
+        # It is assumed that input1 is the larger tensor and input2 is the smaller or equal tensor
         input1 = find_dimension(graph[stage_name]["input"][0])
         input2 = find_dimension(graph[stage_name]["input"][1])
 
@@ -444,7 +446,7 @@ def find_dimension(stage_name):
             # add broadcaster
             name = "broadcaster_" + \
                 graph[stage_name]["input"][1] + "_to_" + \
-                graph[stage_name]["input"][0]
+                graph[stage_name]["input"][0] + "_dimensions"
             broadcaster = {
                 "type": "broadcaster",
                 "name": name,
@@ -460,9 +462,8 @@ def find_dimension(stage_name):
                 "input_dims": [input2],
             }
             index += 1
-            broadcasters.append(broadcaster)
-            graph[stage_name]["input"][1] = demote_dimensions(
-                broadcaster["output"])
+            broadcasters.append(broadcaster) # broadcaster is added to the graph later to avoid changing the graph while iterating over it
+            graph[stage_name]["input"][1] = demote_dimensions(broadcaster["output"])
 
         new_dims = input1
 
