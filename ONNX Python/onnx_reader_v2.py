@@ -1,4 +1,5 @@
 import json
+from math import ceil, floor
 from onnx import load
 from onnx import numpy_helper
 import numpy as np
@@ -313,15 +314,16 @@ def find_dimension(stage_name):
                     raise Exception("Group other than 1 is not supported")
 
         if auto_pad == "VALID":
+            # Valid padding means no padding
             padding = [0, 0]
         elif auto_pad == "SAME_UPPER":
             # TODO: check if this is correct
-            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
-                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
+            padding = [ceil((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       ceil((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
         elif auto_pad == "SAME_LOWER":
             # TODO: check if this is correct
-            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
-                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
+            padding = [floor((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
+                       floor((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
 
             # if padding is larger than 2d tensor but all values over 2 are 0, then we assume it is a 2d tensor
         if padding.__len__() > 2:
@@ -346,8 +348,8 @@ def find_dimension(stage_name):
         d = input1[3]
         f = input2[2]
         g = input2[3]
-        h = round((c - f + 2*padding[0]) / strides[0] + 1)
-        i = round((d - g + 2*padding[1]) / strides[1] + 1)
+        h = floor((c - f + 2*padding[0]) / strides[0] + 1)
+        i = floor((d - g + 2*padding[1]) / strides[1] + 1)
         new_dims = [a, e, h, i]
 
     elif graph[stage_name]["op_type"] == "MaxPool":
@@ -391,12 +393,12 @@ def find_dimension(stage_name):
             padding = [0, 0]
         elif auto_pad == "SAME_UPPER":
             # TODO: check if this is correct
-            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
-                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
+            padding = [ceil((strides[0]*(input[2]-1) - input[2] + kernel_shape[0]) / 2),
+                       ceil((strides[1]*(input[3]-1) - input[3] + kernel_shape[1]) / 2)]
         elif auto_pad == "SAME_LOWER":
             # TODO: check if this is correct
-            padding = [round((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
-                       round((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
+            padding = [floor((strides[0]*(input[2]-1) - input[2] + kernel_shape[0]) / 2),
+                       floor((strides[1]*(input[3]-1) - input[3] + kernel_shape[1]) / 2)]
 
         if len(kernel_shape) != 2:
             raise Exception("Kernel shape must be a 2 element array")
@@ -423,8 +425,8 @@ def find_dimension(stage_name):
         b = input[1]
         c = input[2]
         d = input[3]
-        e = round((c - kernel_shape[0] + 2*padding[0]) / strides[0] + 1)
-        f = round((d - kernel_shape[1] + 2*padding[1]) / strides[1] + 1)
+        e = floor((c - kernel_shape[0] + 2*padding[0]) / strides[0] + 1)
+        f = floor((d - kernel_shape[1] + 2*padding[1]) / strides[1] + 1)
 
         new_dims = [a, b, e, f]
 
@@ -462,8 +464,10 @@ def find_dimension(stage_name):
                 "input_dims": [input2],
             }
             index += 1
-            broadcasters.append(broadcaster) # broadcaster is added to the graph later to avoid changing the graph while iterating over it
-            graph[stage_name]["input"][1] = demote_dimensions(broadcaster["output"])
+            # broadcaster is added to the graph later to avoid changing the graph while iterating over it
+            broadcasters.append(broadcaster)
+            graph[stage_name]["input"][1] = demote_dimensions(
+                broadcaster["output"])
 
         new_dims = input1
 
@@ -476,15 +480,18 @@ def find_dimension(stage_name):
 
 
 for stage in graph:
-    if graph[stage]["op_type"] in static_stages + ["Output"]:
-        graph[stage]["input_dims"] = find_dimension(stage)
+    find_dimension(stage)
+
+for broadcaster in broadcasters:
+    graph[broadcaster["name"]] = broadcaster
+
+for stage in graph:
+    if graph[stage]["op_type"] in static_stages:
+        continue  # skip stages that don't have defined inputs
     else:
         graph[stage]["input_dims"] = []
         for input in graph[stage]["input"]:
             graph[stage]["input_dims"].append(find_dimension(input))
-
-for broadcaster in broadcasters:
-    graph[broadcaster["name"]] = broadcaster
 
 
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
