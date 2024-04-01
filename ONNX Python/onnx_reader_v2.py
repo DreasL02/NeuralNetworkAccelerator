@@ -318,7 +318,15 @@ def find_dimension(stage_name):
         elif auto_pad == "SAME_LOWER":
             padding = [0, 0]  # TODO: handle this properly
 
-        if len(padding) != 2:
+            # if padding is larger than 2d tensor but all values over 2 are 0, then we assume it is a 2d tensor
+        if padding.__len__() > 2:
+            for i in range(2, padding.__len__()):
+                if padding[i] != 0:
+                    raise Exception(
+                        "Padding larger than 2d tensor not supported")
+            padding = padding[:2]
+
+        if len(padding) < 2:
             raise Exception("Padding must be a 2 element array")
 
         if len(strides) != 2:
@@ -338,7 +346,78 @@ def find_dimension(stage_name):
         new_dims = [a, e, h, i]
 
     elif graph[stage_name]["op_type"] == "MaxPool":
-        new_dims = [1, 1, 1, 1]  # TODO: handle this properly
+        # Input: a x b x c x d
+        # Attributes: kernel_shape, pads (default: 0), strides (default: 1), auto_pad (default: NOTSET),
+        # ceil_mode (default: 0), dilations (default: 1), storage_order (default: 0) are not supported and assumed to be default values.
+        # 2D max pooling is assumed.
+        # Output: a x b x e x f
+        # e = (c - kernel_shape[0] + 2*pads[0]) / strides[0] + 1
+        # f = (d - kernel_shape[1] + 2*pads[1]) / strides[1] + 1
+
+        input = find_dimension(graph[stage_name]["input"][0])
+
+        # find kernel_shape, padding, strides
+        kernel_shape = [1, 1]
+        padding = [0, 0]
+        strides = [1, 1]
+        auto_pad = "NOTSET"
+
+        for attribute in graph[stage_name]["attributes"]:
+            if attribute.name == "kernel_shape":
+                kernel_shape = (np.array(attribute.ints)).tolist()
+            if attribute.name == "pads":
+                padding = (np.array(attribute.ints)).tolist()
+            if attribute.name == "strides":
+                strides = (np.array(attribute.ints)).tolist()
+            if attribute.name == "auto_pad":
+                auto_pad = attribute.s
+            if attribute.name == "ceil_mode":
+                if attribute.i != 0:
+                    raise Exception("Ceil mode other than 0 is not supported")
+            if attribute.name == "dilations":
+                if attribute.ints != [1, 1]:
+                    raise Exception("Dilations other than 1 are not supported")
+            if attribute.name == "storage_order":
+                if attribute.i != 0:
+                    raise Exception(
+                        "Storage order other than 0 is not supported")
+
+        if auto_pad == "VALID":
+            padding = [0, 0]  # TODO: check if this is correct
+        elif auto_pad == "SAME_UPPER":
+            padding = [0, 0]
+        elif auto_pad == "SAME_LOWER":
+            padding = [0, 0]
+
+        if len(kernel_shape) != 2:
+            raise Exception("Kernel shape must be a 2 element array")
+
+        # if padding is larger than 2d tensor but all values over 2 are 0, then we assume it is a 2d tensor
+        if padding.__len__() > 2:
+            for i in range(2, padding.__len__()):
+                if padding[i] != 0:
+                    raise Exception(
+                        "Padding larger than 2d tensor not supported")
+            padding = padding[:2]
+
+        if len(padding) < 2:
+            raise Exception("Padding must be a 2 element array")
+
+        if len(strides) != 2:
+            raise Exception("Strides must be a 2 element array")
+
+        graph[stage_name]["extra"].append(padding)
+        graph[stage_name]["extra"].append(strides)
+        graph[stage_name]["extra"].append(kernel_shape)
+
+        a = input[0]
+        b = input[1]
+        c = input[2]
+        d = input[3]
+        e = round((c - kernel_shape[0] + 2*padding[0]) / strides[0] + 1)
+        f = round((d - kernel_shape[1] + 2*padding[1]) / strides[1] + 1)
+
+        new_dims = [a, b, e, f]
 
     elif graph[stage_name]["op_type"] == "Reshape":
         shape = []
@@ -523,6 +602,14 @@ for stage in graph:
 
     elif current_stage["op_type"] == "MaxPool":
         chisel_dict["MaxPool"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"],
+            "dims": current_stage["dims"],
+            "padding": current_stage["extra"][0],
+            "strides": current_stage["extra"][1],
+            "kernel_shape": current_stage["extra"][2],
         })
 
     elif current_stage["op_type"] == "Reshape":
@@ -535,14 +622,6 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "Constant":
-        dims = None
-        for attribute in current_stage["attributes"]:
-            if attribute.name == "value":
-                if attribute.t.dims == []:
-                    dims = [1, 1, 1, attribute.t.float_data.__len__()]
-                else:
-                    dims = promote_dims_to_4d(attribute.t.dims)
-
         raw_data = None
         for attribute in current_stage["attributes"]:
             if attribute.name == "value":
@@ -553,7 +632,7 @@ for stage in graph:
         chisel_dict["Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
-            "dims": dims,
+            "dims": current_stage["dims"],
             "raw_data": raw_data
         })
 
