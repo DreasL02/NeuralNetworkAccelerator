@@ -13,12 +13,12 @@
   ],
   "Output": [
     {
-      "index": 29,
+      "index": 32,
       "bit_width": 32,
       "connections": [
         24
       ],
-      "input_dims": [
+      "dims": [
         1,
         1,
         1,
@@ -101,8 +101,80 @@
     }
   ],
   "Conv": [
-    {},
-    {}
+    {
+      "index": 4,
+      "bit_width_operands": 8,
+      "bit_width_result": 32,
+      "connections": [
+        25,
+        3
+      ],
+      "input_dims": [
+        [
+          1,
+          1,
+          28,
+          28
+        ],
+        [
+          8,
+          1,
+          5,
+          5
+        ]
+      ],
+      "dims": [
+        1,
+        8,
+        24,
+        24
+      ],
+      "padding": [
+        0,
+        0
+      ],
+      "strides": [
+        1,
+        1
+      ]
+    },
+    {
+      "index": 12,
+      "bit_width_operands": 8,
+      "bit_width_result": 32,
+      "connections": [
+        26,
+        11
+      ],
+      "input_dims": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          16,
+          8,
+          5,
+          5
+        ]
+      ],
+      "dims": [
+        1,
+        16,
+        -3,
+        -3
+      ],
+      "padding": [
+        0,
+        0
+      ],
+      "strides": [
+        1,
+        1
+      ]
+    }
   ],
   "MatMul": [
     {
@@ -302,7 +374,7 @@
       "fixed_point_result": 8,
       "connections": [
         0,
-        1
+        29
       ],
       "input_dims": [
         [
@@ -326,7 +398,7 @@
       "bit_width": 32,
       "connections": [
         4,
-        7
+        30
       ],
       "input_dims": [
         [
@@ -348,7 +420,7 @@
       "bit_width": 32,
       "connections": [
         12,
-        15
+        31
       ],
       "input_dims": [
         [
@@ -6466,6 +6538,74 @@
         4294967283,
         22,
         4294967282
+      ]
+    }
+  ],
+  "Broadcaster": [
+    {
+      "index": 29,
+      "bit_width_operands": 8,
+      "bit_width_result": 8,
+      "connections": [
+        1
+      ],
+      "input_dims": [
+        [
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "dims": [
+        1,
+        1,
+        28,
+        28
+      ]
+    },
+    {
+      "index": 30,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
+      "connections": [
+        7
+      ],
+      "input_dims": [
+        [
+          1,
+          1,
+          1,
+          8
+        ]
+      ],
+      "dims": [
+        1,
+        8,
+        24,
+        24
+      ]
+    },
+    {
+      "index": 31,
+      "bit_width_operands": 32,
+      "bit_width_result": 32,
+      "connections": [
+        15
+      ],
+      "input_dims": [
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ],
+      "dims": [
+        1,
+        16,
+        -3,
+        -3
       ]
     }
   ],

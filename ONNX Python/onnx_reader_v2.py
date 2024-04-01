@@ -33,10 +33,16 @@ stages_using_multiplication = ["Conv", "MatMul", "Div"]
 # stages that don't have inputs
 static_stages = ["Initializer", "Constant", "Input"]
 
+inffered_stages = ["Rounder", "Broadcaster"]
+
+# stages that (can) broadcast their inputs (https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md)
+broadcast_operations = ["Add", "And", "Div", "Equal", "Greater", "Less", "Max", "Mean", "Min",
+                        "Mul", "Or", "Pow", "Sub", "Sum", "Xor"]
+
 # Chisel module that are supported for automatic generation.
 # Note that some modules are used for multiple operations, e.g. Initializer is used for both Constant and Initializer
 chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
-                  "Reshape", "Relu", "Div", "Add", "Initializer"]
+                  "Reshape", "Relu", "Div", "Add", "Initializer", "Broadcaster"]
 
 # -------------------------------------------- Constants end --------------------------------------------
 
@@ -101,6 +107,7 @@ for input in onnx_model.graph.input:
         "dims": promote_dims_to_4d(shape_to_dims(input.type.tensor_type.shape)),
         "op_type": "Input",
         "attributes": [],
+        "extra": [],
         "index": index
     }
 
@@ -115,6 +122,7 @@ for initializer in onnx_model.graph.initializer:
         "dims": promote_dims_to_4d(initializer.dims),
         "op_type": "Initializer",
         "attributes": [numpy_helper.to_array(initializer)],
+        "extra": [],
         "index": index
     }
 
@@ -135,6 +143,7 @@ for node in onnx_model.graph.node:
         "dims": [0, 0, 0, 0],
         "op_type": node.op_type,
         "attributes": attributes,
+        "extra": [],
         "index": index
     }
     index += 1
@@ -240,60 +249,13 @@ for rounder in rounders:
 
 # -------------------------------------------- Introduce rounders end --------------------------------------------
 # pprint.pprint(graph)
-# -------------------------------------------- Introduce output --------------------------------------------
-# Add the output stage to the graph dictionary
-if len(onnx_model.graph.output) > 1:
-    raise Exception("Models with multiple outputs are not supported")
-
-output_name = onnx_model.graph.output[0].name
-
-# Find the stage that produces the output
-output_producer = None
-for stage in graph:
-    for output in graph[stage]["output"]:
-        if output == output_name:
-            output_producer = graph[stage]
-            break
-
-if output_producer is None:
-    raise Exception("Output stage not found")
-
-output_stage = {
-    "type": "output",
-    "name": output_name + "_output",
-    "input": [output_name],
-    "output": "???",
-    "dims": promote_dims_to_4d(shape_to_dims(onnx_model.graph.output[0].type.tensor_type.shape)),
-    "op_type": "Output",
-    "index": index,
-    "bit_width_operands": output_producer["bit_width_result"],
-    "bit_width_result": output_producer["bit_width_result"],
-    "fixed_point_operands": output_producer["fixed_point_result"],
-    "fixed_point_result": output_producer["fixed_point_result"],
-}
-index += 1
-graph[output_stage["name"]] = output_stage
-# -------------------------------------------- Introduce output end --------------------------------------------
-# pprint.pprint(graph)
-
-# -------------------------------------------- Connections --------------------------------------------
-# Insert the connections between the stages in the graph dictionary using the index of the stages
-for stage in graph:
-    if graph[stage]["op_type"] in static_stages:
-        graph[stage]["connections"] = []
-        continue  # skip static stages as they don't have inputs
-
-    connections = []
-    for input in graph[stage]["input"]:
-        connections.append(graph[input]["index"])
-    graph[stage]["connections"] = connections
-# -------------------------------------------- Connections end --------------------------------------------
-# pprint.pprint(graph)
 # -------------------------------------------- Calculate dimensions --------------------------------------------
+broadcasters = []
 # Calculate the input dimensions for each stage and store them in the graph dictionary
 
 
 def find_dimension(stage_name):
+    global index
     # if the dimensions are already calculated, return them
     if graph[stage_name]["dims"] != [0, 0, 0, 0]:
         if graph[stage_name]["dims"].__len__() != 4:
@@ -338,9 +300,9 @@ def find_dimension(stage_name):
             if attribute.name == "auto_pad":
                 auto_pad = attribute.s
             if attribute.name == "pads":
-                padding = attribute.ints
+                padding = (np.array(attribute.ints)).tolist()
             if attribute.name == "strides":
-                strides = attribute.ints
+                strides = (np.array(attribute.ints)).tolist()
             if attribute.name == "dilations":
                 if attribute.ints != [1, 1]:
                     raise Exception("Dilations other than 1 are not supported")
@@ -362,6 +324,9 @@ def find_dimension(stage_name):
         if len(strides) != 2:
             raise Exception("Strides must be a 2 element array")
 
+        graph[stage_name]["extra"].append(padding)
+        graph[stage_name]["extra"].append(strides)
+
         a = input1[0]
         e = input2[0]
         c = input1[2]
@@ -382,6 +347,37 @@ def find_dimension(stage_name):
                 shape = attribute.ints
         new_dims = promote_dims_to_4d(shape)
 
+    # https://numpy.org/doc/stable/user/basics.broadcasting.html
+    elif graph[stage_name]["op_type"] in broadcast_operations:
+        input1 = find_dimension(graph[stage_name]["input"][0])
+        input2 = find_dimension(graph[stage_name]["input"][1])
+
+        if input1 != input2:
+            # add broadcaster
+            name = "broadcaster_" + \
+                graph[stage_name]["input"][1] + "_to_" + \
+                graph[stage_name]["input"][0]
+            broadcaster = {
+                "type": "broadcaster",
+                "name": name,
+                "input": [demote_dimensions(graph[stage_name]["input"][1])],
+                "output": [name],
+                "dims": input1,
+                "op_type": "Broadcaster",
+                "index": index,
+                "bit_width_operands": graph[stage_name]["bit_width_operands"],
+                "bit_width_result": graph[stage_name]["bit_width_operands"],
+                "fixed_point_operands": graph[stage_name]["fixed_point_operands"],
+                "fixed_point_result": graph[stage_name]["fixed_point_operands"],
+                "input_dims": [input2],
+            }
+            index += 1
+            broadcasters.append(broadcaster)
+            graph[stage_name]["input"][1] = demote_dimensions(
+                broadcaster["output"])
+
+        new_dims = input1
+
     else:
         new_dims = find_dimension(graph[stage_name]["input"][0])
 
@@ -398,8 +394,59 @@ for stage in graph:
         for input in graph[stage]["input"]:
             graph[stage]["input_dims"].append(find_dimension(input))
 
+for broadcaster in broadcasters:
+    graph[broadcaster["name"]] = broadcaster
+
 
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
+# pprint.pprint(graph)
+# -------------------------------------------- Introduce output --------------------------------------------
+# Add the output stage to the graph dictionary
+if len(onnx_model.graph.output) > 1:
+    raise Exception("Models with multiple outputs are not supported")
+
+output_name = onnx_model.graph.output[0].name
+
+# Find the stage that produces the output
+output_producer = None
+for stage in graph:
+    for output in graph[stage]["output"]:
+        if output == output_name:
+            output_producer = graph[stage]
+            break
+
+if output_producer is None:
+    raise Exception("Output stage not found")
+
+output_stage = {
+    "type": "output",
+    "name": output_name + "_output",
+    "input": [output_name],
+    "output": "???",
+    "dims": promote_dims_to_4d(shape_to_dims(onnx_model.graph.output[0].type.tensor_type.shape)),
+    "op_type": "Output",
+    "index": index,
+    "bit_width_operands": output_producer["bit_width_result"],
+    "bit_width_result": output_producer["bit_width_result"],
+    "fixed_point_operands": output_producer["fixed_point_result"],
+    "fixed_point_result": output_producer["fixed_point_result"],
+}
+index += 1
+graph[output_stage["name"]] = output_stage
+# -------------------------------------------- Introduce output end --------------------------------------------
+# pprint.pprint(graph)
+# -------------------------------------------- Connections --------------------------------------------
+# Insert the connections between the stages in the graph dictionary using the index of the stages
+for stage in graph:
+    if graph[stage]["op_type"] in static_stages:
+        graph[stage]["connections"] = []
+        continue  # skip static stages as they don't have inputs
+
+    connections = []
+    for input in graph[stage]["input"]:
+        connections.append(graph[input]["index"])
+    graph[stage]["connections"] = connections
+# -------------------------------------------- Connections end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
@@ -431,7 +478,7 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_operands"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"]
+            "dims": current_stage["dims"]
         })
 
     elif current_stage["op_type"] in ["Rounder", "Div"]:
@@ -459,11 +506,19 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"]
+            "input_dims": current_stage["input_dims"],
         })
 
     elif current_stage["op_type"] == "Conv":
         chisel_dict["Conv"].append({
+            "index": current_stage["index"],
+            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_result": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"],
+            "dims": current_stage["dims"],
+            "padding": current_stage["extra"][0],
+            "strides": current_stage["extra"][1],
         })
 
     elif current_stage["op_type"] == "MaxPool":
@@ -471,17 +526,12 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "Reshape":
-        dims = None
-        for attribute in current_stage["attributes"]:
-            if attribute.name == "shape":
-                dims = promote_dims_to_4d(attribute.ints)
-
         chisel_dict["Reshape"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"],
-            "dims": dims
+            "dims": current_stage["dims"]
         })
 
     elif current_stage["op_type"] == "Constant":
@@ -517,6 +567,16 @@ for stage in graph:
             "bit_width": current_stage["bit_width_result"],
             "dims": current_stage["dims"],
             "raw_data": raw_data
+        })
+
+    elif current_stage["op_type"] == "Broadcaster":
+        chisel_dict["Broadcaster"].append({
+            "index": current_stage["index"],
+            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_result": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_dims": current_stage["input_dims"],
+            "dims": current_stage["dims"]
         })
 
     else:
