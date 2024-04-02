@@ -1,15 +1,15 @@
 import json
-from math import ceil, floor
-from onnx import load
-from onnx import numpy_helper
 import numpy as np
 import pprint
-import base64
+
+from math import ceil, floor
+from onnx import load, numpy_helper
 
 # -------------------------------------------- Configuration --------------------------------------------
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
-model_path = "models/mnist-1.onnx"
+model_path = "models/mnist-12.onnx"
+# model_path = "models/tinyyolov2-7.onnx"
 export_path = "json/wip.json"
 
 bit_width_multiplication = 8
@@ -23,13 +23,14 @@ signed = True  # True if the model is signed, False if the model is unsigned
 # -------------------------------------------- Constants --------------------------------------------
 
 # full list: https://github.com/onnx/onnx/blob/main/docs/IR.md#graphs
-supported_graphs = ["node", "input", "initializer", "output"]
+# + node, but that is handled in more detail below
+supported_graphs = ["Input", "Initializer", "Output"]
 # full list: https://github.com/onnx/onnx/blob/main/docs/Operators.md
 supported_node_operations = ["Conv", "MatMul", "MaxPool",
-                             "Reshape", "Relu", "Constant", "Div", "Add"]
+                             "Reshape", "Relu", "Constant",  "Add"]
 
 # stages that use multiplication (and thus need a lower bit width than the base bit width)
-stages_using_multiplication = ["Conv", "MatMul", "Div"]
+stages_using_multiplication = ["Conv", "MatMul"]
 
 # stages that don't have inputs
 static_stages = ["Initializer", "Constant", "Input"]
@@ -45,7 +46,7 @@ broadcast_operations = ["Add", "And", "Div", "Equal", "Greater", "Less", "Max", 
 # Chisel module that are supported for automatic generation.
 # Note that some modules are used for multiple operations, e.g. Initializer is used for both Constant and Initializer
 chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
-                  "Reshape", "Relu", "Div", "Add", "Initializer", "Broadcaster"]
+                  "Reshape", "Relu", "Add", "Initializer", "Broadcaster"]
 
 # -------------------------------------------- Constants end --------------------------------------------
 
@@ -105,7 +106,7 @@ for input in onnx_model.graph.input:
     graph[input.name] = {
         "type": "input",
         "name": input.name,
-        "input": "???",
+        "input": "?",
         "output": input.name,
         "dims": promote_dims_to_4d(shape_to_dims(input.type.tensor_type.shape)),
         "op_type": "Input",
@@ -120,7 +121,7 @@ for initializer in onnx_model.graph.initializer:
     graph[initializer.name] = {
         "type": "initializer",
         "name": initializer.name,
-        "input": "???",
+        "input": "?",
         "output": initializer.name,
         "dims": promote_dims_to_4d(initializer.dims),
         "op_type": "Initializer",
@@ -157,47 +158,148 @@ for node in onnx_model.graph.node:
 # pprint.pprint(graph)
 # -------------------------------------------- Bit Width application --------------------------------------------
 # Apply the bit width and fixed point values to the stages in the graph dictionary
+
+
+def find_output(stage):
+    stage_output_name = demote_dimensions(graph[stage]["output"])
+    output = None
+    for stage_ in graph:
+        for input in graph[stage_]["input"]:
+            if input == stage_output_name:
+                output = graph[stage_]
+                break
+    if output is None:
+        raise Exception("No stage uses the output of the current static stage")
+    return output
+
+
 for stage in graph:
     stage_op_type = graph[stage]["op_type"]
     bit_width_set = False
 
+    operands = []
+    operands.append([])  # bit width
+    operands.append([])  # fixed point
+
+    if stage_op_type not in supported_node_operations + supported_graphs:
+        raise Exception("Unsupported node operation: " + stage_op_type)
+
     # If the stage uses multiplication, then the bit width and fixed point of the operands and result are set to the values defined at the beginning of the script
     if stage_op_type in stages_using_multiplication:
-        graph[stage]["bit_width_operands"] = bit_width_multiplication
+        for stage_input in graph[stage]["input"]:
+            operands[0].append(bit_width_multiplication)
+            operands[1].append(fixed_point_multiplication)
+        graph[stage]["bit_width_operands"] = operands[0]
         graph[stage]["bit_width_result"] = bit_width_base
-        graph[stage]["fixed_point_operands"] = fixed_point_multiplication
+        graph[stage]["fixed_point_operands"] = operands[1]
         graph[stage]["fixed_point_result"] = fixed_point_base
         bit_width_set = True
 
+    elif stage_op_type == "Reshape":
+        # Reshape has a lot of special cases that need to be handled
+        if graph[stage]["input"].__len__() not in [1, 2]:
+            raise Exception("Reshape with only supported with 1 or 2 inputs")
+
+        if graph[stage]["input"].__len__() == 1:
+            # Old version of reshape where the shape is given as an attribute
+            # Only need to handle the special case where we feed into a multiplication operation
+            output = find_output(stage)
+
+            if output["op_type"] in stages_using_multiplication:
+                graph[stage]["bit_width_operands"] = [bit_width_multiplication]
+                graph[stage]["bit_width_result"] = bit_width_multiplication
+                graph[stage]["fixed_point_operands"] = [
+                    fixed_point_multiplication]
+                graph[stage]["fixed_point_result"] = bit_width_multiplication
+                bit_width_set = True
+
+        if graph[stage]["input"].__len__() == 2:
+            # Newer version of reshape where the shape is given as an input.
+            # the properties of the shape are infered compile time and are therefore set to 0 to avoid rounders.
+            # The input behaves as for the old version of reshape.
+            shape = graph[graph[stage]["input"][1]]
+            output = find_output(stage)
+
+            if shape["op_type"] not in ["Constant", "Initializer"]:
+                raise Exception("Reshape with dynamic shape not supported")
+
+            if output["op_type"] in stages_using_multiplication:
+                operands[0].append(bit_width_multiplication)
+                graph[stage]["bit_width_result"] = bit_width_multiplication
+                operands[1].append(fixed_point_multiplication)
+                graph[stage]["fixed_point_result"] = bit_width_multiplication
+            else:
+                operands[0].append(bit_width_base)
+                graph[stage]["bit_width_result"] = bit_width_base
+                operands[1].append(fixed_point_base)
+                graph[stage]["fixed_point_result"] = fixed_point_base
+
+            # not used as this is the shape and this is infered compile time
+            operands[0].append(0)
+            # not used as this is the shape and this is infered compile time
+            operands[1].append(0)
+
+            graph[stage]["bit_width_operands"] = operands[0]
+            graph[stage]["fixed_point_operands"] = operands[1]
+            bit_width_set = True
+
     # If the stage is an initializer or a node that is a constant and feeds into a multiplication operation
     # then the bit width and fixed point of the output of the initializer or constant node is set to the bit width and fixed point of the multiplication operation
-    # TODO: handle the case where we feed into a reshape operation properly
-    elif stage_op_type in static_stages or stage_op_type == "Reshape":
-        stage_output_name = demote_dimensions(graph[stage]["output"])
-
-        # Find any stages that uses the output of the current stage
-        output = None
-        for stage_ in graph:
-            for input in graph[stage_]["input"]:
-                if input == stage_output_name:
-                    output = graph[stage_]
-                    break
-
-        if output is None:
-            raise Exception(
-                "No stage uses the output of the current static stage")
+    elif stage_op_type in static_stages:
+        output = find_output(stage)
 
         if output["op_type"] in stages_using_multiplication:
-            graph[stage]["bit_width_operands"] = bit_width_multiplication
+            graph[stage]["bit_width_operands"] = [bit_width_multiplication]
             graph[stage]["bit_width_result"] = bit_width_multiplication
-            graph[stage]["fixed_point_operands"] = fixed_point_multiplication
+            graph[stage]["fixed_point_operands"] = [fixed_point_multiplication]
             graph[stage]["fixed_point_result"] = bit_width_multiplication
             bit_width_set = True
 
+        elif output["op_type"] == "Reshape":
+            # if we feed into a reshape shape input, then we need to set the output to 0 as this is infered compile time
+
+            if output["input"].__len__() == 2:
+                # if we are feeding into the shape input
+                if graph[stage]["output"] == output["input"][1]:
+                    graph[stage]["bit_width_operands"] = [0]
+                    graph[stage]["bit_width_result"] = 0
+                    graph[stage]["fixed_point_operands"] = [0]
+                    graph[stage]["fixed_point_result"] = 0
+                    bit_width_set = True
+                # if we are feeding into the data input
+                elif graph[stage]["output"] == output["input"][0]:
+                    reshape_output = find_output(output["output"][0])
+                    if reshape_output["op_type"] in stages_using_multiplication:
+                        graph[stage]["bit_width_operands"] = [
+                            bit_width_multiplication]
+                        graph[stage]["bit_width_result"] = bit_width_multiplication
+                        graph[stage]["fixed_point_operands"] = [
+                            fixed_point_multiplication]
+                        graph[stage]["fixed_point_result"] = bit_width_multiplication
+                        bit_width_set = True
+                else:
+                    raise Exception("Reshape with dynamic shape not supported")
+
+            else:
+                # if feed into a reshape with a constant shape,
+                # then we check if the reshape feeds into a multiplication operation
+                reshape_output = find_output(output["output"][0])
+                if reshape_output["op_type"] in stages_using_multiplication:
+                    graph[stage]["bit_width_operands"] = [
+                        bit_width_multiplication]
+                    graph[stage]["bit_width_result"] = bit_width_multiplication
+                    graph[stage]["fixed_point_operands"] = [
+                        fixed_point_multiplication]
+                    graph[stage]["fixed_point_result"] = bit_width_multiplication
+                    bit_width_set = True
+
     if not bit_width_set:  # catch all not special cases
-        graph[stage]["bit_width_operands"] = bit_width_base
+        for stage_input in graph[stage]["input"]:
+            operands[0].append(bit_width_base)
+            operands[1].append(fixed_point_base)
+        graph[stage]["bit_width_operands"] = operands[0]
         graph[stage]["bit_width_result"] = bit_width_base
-        graph[stage]["fixed_point_operands"] = fixed_point_base
+        graph[stage]["fixed_point_operands"] = operands[1]
         graph[stage]["fixed_point_result"] = fixed_point_base
         bit_width_set = True
 
@@ -213,13 +315,15 @@ for stage in graph:
     if graph[stage]["op_type"] in static_stages:
         continue  # skip static stages as they don't have inputs
 
-    bit_width_of_stage_operands = graph[stage]["bit_width_operands"]
-
     input_storage = []
-    for input in graph[stage]["input"]:
+    operand_index = 0
+    while operand_index < graph[stage]["input"].__len__():
+        input = graph[stage]["input"][operand_index]
+        bit_width_of_stage_operand = graph[stage]["bit_width_operands"][operand_index]
+
         bit_width_input = graph[input]["bit_width_result"]
 
-        if bit_width_input != bit_width_of_stage_operands:
+        if bit_width_input != bit_width_of_stage_operand:
             # add rounder
             name = "rounder_" + graph[input]["name"] + \
                 "_to_" + graph[stage]["name"]
@@ -234,9 +338,9 @@ for stage in graph:
                 "op_type": "Rounder",
                 "index": index,
                 "bit_width_operands": bit_width_input,
-                "bit_width_result": bit_width_of_stage_operands,
+                "bit_width_result": bit_width_of_stage_operand,
                 "fixed_point_operands": graph[input]["fixed_point_result"],
-                "fixed_point_result": graph[stage]["fixed_point_operands"],
+                "fixed_point_result": graph[stage]["fixed_point_operands"][operand_index],
             }
             index += 1
             rounders.append(rounder)
@@ -244,6 +348,7 @@ for stage in graph:
             input_storage.append(name)
         else:
             input_storage.append(input)
+        operand_index += 1
 
     graph[stage]["input"] = input_storage
 
@@ -431,20 +536,85 @@ def find_dimension(stage_name):
         new_dims = [a, b, e, f]
 
     elif graph[stage_name]["op_type"] == "Reshape":
+        # from ONNX docs:
+        # At most one dimension of the new shape can be -1.
+        # In this case, the value is inferred from the size of the tensor and the remaining dimensions.
+        # A dimension could also be 0, in which case the actual dimension value is unchanged (i.e. taken from the input tensor).
+        input = find_dimension(graph[stage_name]["input"][0])
+
+        # find desired shape from attributes
         shape = []
         for attribute in graph[stage_name]["attributes"]:
             if attribute.name == "shape":
                 shape = attribute.ints
-        new_dims = promote_dims_to_4d(shape)
+
+        if shape.__len__() == 0:
+            # if no shape is given, then a newer version of reshape is used where the shape is given as an input
+            input2 = graph[stage_name]["input"][1]
+            if graph[input2]["op_type"] not in ["Constant", "Initializer"]:
+                if graph[input2]["op_type"] != "Rounder":
+                    raise Exception("Reshape with dynamic shape not supported")
+
+                # Could be a rounder stage that may be connected to a constant or initializer
+                input2 = graph[input2]["input"][0]
+                if graph[input2]["op_type"] not in ["Constant", "Initializer"]:
+                    raise Exception("Reshape with dynamic shape not supported")
+
+            shape = graph[input2]["attributes"][0].flatten().tolist()
+
+        if shape.count(-1) > 1:
+            raise Exception("At most one dimension of the new shape can be -1")
+
+        if shape.__len__() > 4:
+            raise Exception(
+                "Reshape with more than 4 dimensions not supported")
+
+        new_dims = []
+        for i in range(shape.__len__()):
+            if shape[i] == 0:
+                new_dims.append(input[i])
+            elif shape[i] == -1:
+                new_dims.append(int(np.prod(input) / np.prod(shape)))
+            else:
+                new_dims.append(shape[i])
+
+        new_dims = promote_dims_to_4d(new_dims)  # ensure 4d tensor
 
     elif graph[stage_name]["op_type"] in broadcast_operations:
         # The dimensions of the two inputs may not match, in which case a broadcaster is added
         # to match the dimensions of the two inputs.
         # It is assumed that input1 is the larger tensor and input2 is the smaller or equal tensor
+        # TODO: remove this assumption
         input1 = find_dimension(graph[stage_name]["input"][0])
         input2 = find_dimension(graph[stage_name]["input"][1])
 
-        if input1 != input2:
+        # Rules for broadcasting (https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md). One must be true
+        # 1. The tensors all have exactly the same shape.
+        # 2. The tensors all have the same number of dimensions, and the length of each dimension is either a common length or 1.
+        # 3. The tensors that have too few dimensions can have their shapes prepended with a dimension of length 1 to satisfy property 2.
+        if input1 != input2:  # rule 1
+            # rule 2
+            rule2 = True
+            for i in range(4):
+                if input1[i] != input2[i] and input1[i] != 1 and input2[i] != 1:
+                    rule2 = False
+
+            # rule 3
+            rule3 = True
+            if rule2 == False:
+                for i in range(4):
+                    if input1[i] != input2[i]:
+                        if input1[i] == 1:
+                            input1[i] = input2[i]
+                        elif input2[i] == 1:
+                            input2[i] = input1[i]
+                        else:
+                            rule3 = False
+
+            if rule2 == False and rule3 == False:
+                raise Exception(
+                    "The dimensions of the two inputs (" + str(input1) + "(" + str(graph[stage_name]["input"][0]) + ")" + " and " + str(input2) + "(" + str(graph[stage_name]["input"][1]) + ") do not match and cannot be broadcasted")
+
             # add broadcaster
             name = "broadcaster_" + \
                 graph[stage_name]["input"][1] + "_to_" + \
@@ -457,10 +627,10 @@ def find_dimension(stage_name):
                 "dims": input1,
                 "op_type": "Broadcaster",
                 "index": index,
-                "bit_width_operands": graph[stage_name]["bit_width_operands"],
-                "bit_width_result": graph[stage_name]["bit_width_operands"],
-                "fixed_point_operands": graph[stage_name]["fixed_point_operands"],
-                "fixed_point_result": graph[stage_name]["fixed_point_operands"],
+                "bit_width_operands": graph[stage_name]["bit_width_operands"][1],
+                "bit_width_result": graph[stage_name]["bit_width_operands"][1],
+                "fixed_point_operands": graph[stage_name]["fixed_point_operands"][1],
+                "fixed_point_result": graph[stage_name]["fixed_point_operands"][1],
                 "input_dims": [input2],
             }
             index += 1
@@ -518,7 +688,7 @@ output_stage = {
     "type": "output",
     "name": output_name + "_output",
     "input": [output_name],
-    "output": "???",
+    "output": "?",
     "dims": promote_dims_to_4d(shape_to_dims(onnx_model.graph.output[0].type.tensor_type.shape)),
     "op_type": "Output",
     "index": index,
@@ -543,7 +713,7 @@ for stage in graph:
         connections.append(graph[input]["index"])
     graph[stage]["connections"] = connections
 # -------------------------------------------- Connections end --------------------------------------------
-# pprint.pprint(graph)
+pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
 # Index is used instead of name to ensure that the order is preserved
@@ -577,7 +747,7 @@ for stage in graph:
             "dims": current_stage["dims"]
         })
 
-    elif current_stage["op_type"] in ["Rounder", "Div"]:
+    elif current_stage["op_type"] in ["Rounder"]:
         chisel_dict[current_stage["op_type"]].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"],
@@ -641,7 +811,9 @@ for stage in graph:
     elif current_stage["op_type"] == "Constant":
         raw_data = None
         for attribute in current_stage["attributes"]:
-            if attribute.name == "value":
+            if current_stage["bit_width_result"] == 0:
+                raw_data = []  # Already inferred compile time into child stage
+            elif attribute.name == "value":
                 raw_data = attribute.t.float_data
                 raw_data = [convert_to_fixed_point(
                     x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
@@ -654,9 +826,12 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "Initializer":
-        raw_data = current_stage["attributes"][0].flatten().tolist()
-        raw_data = [convert_to_fixed_point(
-            x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
+        if current_stage["bit_width_result"] == 0:
+            raw_data = []  # Already inferred compile time into child stage
+        else:
+            raw_data = current_stage["attributes"][0].flatten().tolist()
+            raw_data = [convert_to_fixed_point(
+                x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
         chisel_dict["Initializer"].append({
             "index": current_stage["index"],
@@ -681,7 +856,7 @@ for stage in graph:
 
 
 # -------------------------------------------- Generate JSON dict end --------------------------------------------
-pprint.pprint(chisel_dict)
+# pprint.pprint(chisel_dict)
 # -------------------------------------------- Generate JSON --------------------------------------------
 # Write the chisel_dict to the JSON file
 with open(export_path, "w") as f:
