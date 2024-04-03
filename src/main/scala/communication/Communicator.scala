@@ -24,7 +24,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   })
 
   io.writeEnable := false.B
-  io.states := VecInit(Seq.fill(6)(false.B))
+  io.states := VecInit(Seq.fill(3)(false.B))
   io.startCalculation := false.B
   io.readEnable := false.B
 
@@ -59,6 +59,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   val state = RegInit(receivingData)
 
   switch(state) {
+
     is(receivingData) {
       io.states(0) := true.B
       bufferedInput.io.outputChannel.ready := true.B
