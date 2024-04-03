@@ -4,12 +4,6 @@ import chisel3._
 import chisel3.util.DecoupledIO
 
 class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: Boolean = true) extends Module {
-  def this(reluType: onnx.Operators.ReLUType) = this(
-    reluType.wOperands,
-    reluType.operandDimensions._1,
-    reluType.operandDimensions._2,
-    reluType.signed
-  )
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))

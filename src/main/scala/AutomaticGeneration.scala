@@ -15,7 +15,7 @@ class AutomaticGeneration(
 
   val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
   val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
-  
+
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W)))))
     val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
@@ -28,6 +28,8 @@ class AutomaticGeneration(
   val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
   val outputReady = Wire(Bool())
   val outputValid = Wire(Bool())
+
+  /*
 
   // Module Creation
   val modules = listOfNodes.map {
@@ -46,11 +48,11 @@ class AutomaticGeneration(
     case matMulType: MatMulType =>
       val matMul = Module(new MatMul(matMulType, enableDebuggingIO))
       matMul
-    case reluType: ReLUType =>
+    case reluType: ReluType =>
       val relu = Module(new ReLU(reluType))
       relu
-    case roundType: RoundType =>
-      val rounder = Module(new Rounder(roundType))
+    case rounderType: RounderType =>
+      val rounder = Module(new Rounder(rounderType))
       rounder
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
@@ -252,4 +254,6 @@ class AutomaticGeneration(
       outputReady := io.outputChannel.ready
     }
   }
+
+   */
 }

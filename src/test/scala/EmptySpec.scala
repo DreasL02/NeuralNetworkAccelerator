@@ -5,10 +5,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class EmptySpec extends AnyFreeSpec with ChiselScalatestTester {
+  val filepath = "ONNX Python/json/mnist12.json"
 
-  println(floatToFixed(1.0f, 0, 32, signed = true))
-  println(floatToFixed(0.0f, 0, 32, signed = true))
-  println(floatToFixed(-1.0f, 0, 32, signed = true))
-  println(floatToFixed(-2.0f, 0, 32, signed = true))
-  println(floatToFixed(-3.0f, 0, 32, signed = true))
+  SpecToListConverter.convertSpecToLists(filepath)
 }

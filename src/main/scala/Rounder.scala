@@ -9,9 +9,6 @@ class Rounder(
                signed: Boolean = true,
                fixedPoint: Int = 0
              ) extends Module {
-  def this(roundType: onnx.Operators.RoundType) =
-    this(roundType.wResult, roundType.wOperands, roundType.operandDimensions._1, roundType.operandDimensions._2, roundType.signed, roundType.fixedPoint)
-
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wBig.W)))))

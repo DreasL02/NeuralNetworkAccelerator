@@ -7,13 +7,6 @@ class Initializer(w: Int = 8,
                   data: Array[Array[BigInt]],
                  ) extends Module {
 
-  def this(initializerType: onnx.Operators.InitializerType) = this(
-    initializerType.w,
-    initializerType.dimensions._1,
-    initializerType.dimensions._2,
-    initializerType.data
-  )
-
   val io = IO(new Bundle {
     val outputChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
   })
