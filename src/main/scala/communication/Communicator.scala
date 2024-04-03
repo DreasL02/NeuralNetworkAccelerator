@@ -11,7 +11,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val uartRxPin = Input(UInt(1.W))
     val uartTxPin = Output(UInt(1.W))
 
-    val incrementAddress = Output(Bool())
     val readEnable = Output(Bool())
     val writeEnable = Output(Bool())
 
@@ -24,12 +23,17 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val calculationDone = Input(Bool())
   })
 
-  io.incrementAddress := false.B
   io.writeEnable := false.B
   io.states := VecInit(Seq.fill(6)(false.B))
   io.startCalculation := false.B
   io.readEnable := false.B
-  val receivingOpcodes :: respondingWithOKSignal :: incrementingAddress :: receivingData :: sendingData :: waitForExternalCalculation :: Nil = Enum(6)
+
+  val receivingData :: waitForExternalCalculation :: sendingData :: Nil = Enum(3)
+
+  // vi skal kunne:
+  // 1. modtage en matrix fra pc
+  // 2. vente til beregningen er udført
+  // 3. sende en resultatmatrix til pc
 
   val uartRx = Module(new UartRx(frequency, baudRate))
   val uartTx = Module(new UartTx(frequency, baudRate))
@@ -40,63 +44,21 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   val bufferedInput = Module(new DeSerializingByteBuffer(matrixByteSize))
   val bufferedOutput = Module(new SerializingByteBuffer(matrixByteSize))
 
-  val decoder = Module(new Decoder)
-
   // default connections
   uartTx.io.inputChannel <> bufferedOutput.io.outputChannel
   uartRx.io.outputChannel <> bufferedInput.io.inputChannel
 
   bufferedInput.io.outputChannel.ready := false.B
   io.dataOut := bufferedInput.io.outputChannel.bits
-  decoder.io.opcode := bufferedInput.io.outputChannel.bits(0)
 
   bufferedOutput.io.inputChannel.valid := false.B
   bufferedOutput.io.inputChannel.bits := io.dataIn
 
-  // Initially, we are receiving opcodes.
+  // Initially, we are receiving data.
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
-  val state = RegInit(receivingOpcodes)
+  val state = RegInit(receivingData)
 
   switch(state) {
-    is(receivingOpcodes) {
-      io.states(0) := true.B
-      bufferedInput.io.outputChannel.ready := true.B
-      when(bufferedInput.io.outputChannel.valid) {
-        // We have loaded the opcode into the buffer and decoded it.
-        switch(decoder.io.decodingCode) {
-          is(Codes.nextInputs) {
-            state := receivingData
-          }
-          is(Codes.nextTransmitting) {
-            state := sendingData
-          }
-          is(Codes.nextCalculating) {
-            state := waitForExternalCalculation
-          }
-          is(Codes.nextAddress) {
-            state := incrementingAddress
-          }
-        }
-      }
-    }
-
-    is(respondingWithOKSignal) {
-      io.states(1) := true.B
-      bufferedOutput.io.inputChannel.bits := VecInit(Seq.fill(matrixByteSize)(Opcodes.okResponse))
-      bufferedOutput.io.inputChannel.valid := true.B
-      when(bufferedOutput.io.inputChannel.ready) {
-        // We are done sending the OK signal.
-        // Go to receiving opcodes (idle state).
-        state := receivingOpcodes
-      }
-    }
-
-    is(incrementingAddress) {
-      io.states(2) := true.B
-      io.incrementAddress := true.B
-      state := respondingWithOKSignal // send affirmative signal
-    }
-
     is(receivingData) {
       io.states(3) := true.B
       bufferedInput.io.outputChannel.ready := true.B
