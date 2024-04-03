@@ -10,7 +10,7 @@ from onnx import load, numpy_helper
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
 model_path = "models/mnist-12.onnx"
 # model_path = "models/tinyyolov2-7.onnx"
-export_path = "json/wip.json"
+export_path = "json/mnist12.json"
 
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
@@ -477,19 +477,19 @@ def find_dimension(stage_name):
         for attribute in graph[stage_name]["attributes"]:
             if attribute.name == "kernel_shape":
                 kernel_shape = (np.array(attribute.ints)).tolist()
-            if attribute.name == "pads":
+            elif attribute.name == "pads":
                 padding = (np.array(attribute.ints)).tolist()
-            if attribute.name == "strides":
+            elif attribute.name == "strides":
                 strides = (np.array(attribute.ints)).tolist()
-            if attribute.name == "auto_pad":
+            elif attribute.name == "auto_pad":
                 auto_pad = attribute.s
-            if attribute.name == "ceil_mode":
+            elif attribute.name == "ceil_mode":
                 if attribute.i != 0:
                     raise Exception("Ceil mode other than 0 is not supported")
-            if attribute.name == "dilations":
+            elif attribute.name == "dilations":
                 if attribute.ints != [1, 1]:
                     raise Exception("Dilations other than 1 are not supported")
-            if attribute.name == "storage_order":
+            elif attribute.name == "storage_order":
                 if attribute.i != 0:
                     raise Exception(
                         "Storage order other than 0 is not supported")

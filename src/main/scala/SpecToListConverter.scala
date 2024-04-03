@@ -1,10 +1,12 @@
 import onnx.Operators
+import scala.util.Using
+import scala.io.Source
 
 object SpecToListConverter {
 
   // Reads a spec file (e.g. "scala_utils/data/example_spec_file.json") and converts it to various lists of the ONNX types
   def convertSpecToLists(specFilePath: String): (List[Any], List[List[Int]]) = {
-    val spec = scala.io.Source.fromFile(specFilePath).mkString
+    val spec = os.read(os.pwd / specFilePath)
 
     val json = ujson.read(spec)
     val inputs = json("Input").arr
