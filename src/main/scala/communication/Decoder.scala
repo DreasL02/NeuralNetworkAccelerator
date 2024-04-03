@@ -5,6 +5,7 @@ import chisel3.util.{is, switch}
 import communication.Encodings.Codes
 import communication.Encodings.Opcodes
 
+// TODO: Remove. Unused.
 class Decoder extends Module {
   val io = IO(new Bundle {
     val opcode = Input(UInt(Opcodes.opcodeWidth.W))
