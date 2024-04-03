@@ -9,7 +9,6 @@ import module_utils.SmallModules._
 class AdderTree(
                  w: Int = 8,
                  numberOfInputs: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
-
                ) extends Module {
 
   val io = IO(new Bundle {
@@ -28,22 +27,22 @@ class AdderTree(
     val numberOfOutputs = numberOfInputsInt >> stage
     //println("numberOfOutputs: " + numberOfOutputs)
 
-    if (stage == 0) {
+    if (stage == 0) { // first stage
       for (adder <- 0 until numberOfInputsInt) {
-        if (adder < numberOfInputs) {
+        if (adder < numberOfInputs) { // connect to input channel if there are still inputs
           data(stage)(adder) := io.inputChannel.bits(adder)
           //println("Connected (stage, adder): (" + stage + ", " + adder + ")" + " to input channel " + adder)
-        } else {
+        } else { // connect to 0 if there are no more inputs
           data(stage)(adder) := 0.U
           //println("Connected (stage, adder): (" + stage + ", " + adder + ")" + " to 0")
         }
       }
     } else {
       for (adder <- 0 until numberOfInputsInt) {
-        if (adder < numberOfOutputs) {
+        if (adder < numberOfOutputs) { // connect to previous stage if there are still outputs from the previous stage
           data(stage)(adder) := RegNext(data(stage - 1)(adder * 2) + data(stage - 1)(adder * 2 + 1))
           //println("Connected (stage, adder): (" + stage + ", " + adder + ")" + " to previous stage " + (adder * 2) + " and " + (adder * 2 + 1))
-        } else {
+        } else { // connect to 0 if there are no more outputs from the previous stage
           data(stage)(adder) := 0.U
           //println("Connected (stage, adder): (" + stage + ", " + adder + ")" + " to 0")
         }
@@ -61,6 +60,11 @@ class AdderTree(
 
   val doneWithComputation = timer(cyclesUntilOutputValid, clear, readyToCompute)
 
-  io.resultChannel.valid := doneWithComputation // ready when doneWithComputation is asserted
+  if (numberOfInputs == 1) {
+    io.resultChannel.valid := readyToCompute
+  } else {
+    io.resultChannel.valid := doneWithComputation
+  }
+
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new inputs when the result channel is ready and valid
 }

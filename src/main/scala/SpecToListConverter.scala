@@ -1,10 +1,12 @@
 import onnx.Operators
+import scala.util.Using
+import scala.io.Source
 
 object SpecToListConverter {
 
   // Reads a spec file (e.g. "scala_utils/data/example_spec_file.json") and converts it to various lists of the ONNX types
   def convertSpecToLists(specFilePath: String): (List[Any], List[List[Int]]) = {
-    val spec = scala.io.Source.fromFile(specFilePath).mkString
+    val spec = os.read(os.pwd / specFilePath)
 
     val json = ujson.read(spec)
     val inputs = json("Input").arr
@@ -14,6 +16,7 @@ object SpecToListConverter {
     val matmul = json("MatMul").arr
     val relu = json("Relu").arr
     val round = json("Rounder").arr
+
     val inputList = inputs.map(input => {
       val w = input("bit_width_result").num.toInt
       val dimensions = (input("input_dims")(0)(0).num.toInt, input("input_dims")(0)(1).num.toInt)
