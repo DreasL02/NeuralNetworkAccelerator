@@ -26,20 +26,20 @@ class AutomaticGenerationSpec extends AnyFreeSpec with ChiselScalatestTester {
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 
-  val lists: (List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
+  val lists: (_, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
 
   // Print the lists
   if (printToConsole) {
-    println(lists._1)
-    println()
     println(lists._2)
+    println()
+    println(lists._3)
     println()
   }
 
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   for (testNum <- 0 until numberOfInputs) {
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
-      test(new AutomaticGeneration(lists._1, lists._2, pipelineIO, true, printConnections)) { dut =>
+      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut =>
         var cycleTotal = 0
         dut.io.inputChannel.bits(0)(0).poke(inputsFixed(testNum).U)
         dut.io.inputChannel.valid.poke(true.B)

@@ -5,13 +5,6 @@ import scala_utils.Optional.optional
 
 // ONNX Add operator in module form
 class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDebuggingIO: Boolean = true) extends Module {
-  def this(addType: onnx.Operators.AddType, enableDebuggingIO: Boolean) = this(
-    addType.wOperands,
-    addType.operandDimensions._1,
-    addType.operandDimensions._2,
-    enableDebuggingIO
-  )
-
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
     val biasChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))

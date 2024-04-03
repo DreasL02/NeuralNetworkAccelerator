@@ -21,7 +21,7 @@ class MaxPooler4d(
     val resultChannel = new DecoupledIO(Vec(outputShape._1, Vec(outputShape._2, Vec(outputShape._3, Vec(outputShape._4, UInt(w.W))))))
   })
 
-  val maxPools = VecInit.fill(inputShape._1, inputShape._2)(Module(new MaxPooler(w, inputShape._3, inputShape._4, kernelShape, pads, strides)).io)
+  val maxPools = VecInit.fill(inputShape._1, inputShape._2)(Module(new MaxPool(w, inputShape._3, inputShape._4, kernelShape, pads, strides)).io)
 
   for (i <- 0 until inputShape._1) {
     for (j <- 0 until inputShape._2) {
