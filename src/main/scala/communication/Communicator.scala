@@ -14,7 +14,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val readEnable = Output(Bool())
     val writeEnable = Output(Bool())
 
-    val states = Output(Vec(6, Bool()))
+    val states = Output(Vec(3, Bool()))
 
     val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
@@ -60,34 +60,35 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
   switch(state) {
     is(receivingData) {
-      io.states(3) := true.B
+      io.states(0) := true.B
       bufferedInput.io.outputChannel.ready := true.B
       when(bufferedInput.io.outputChannel.valid) {
         // We are done receiving data.
-        // Go to sending OK signal.
+        // Go to waiting state.
         io.writeEnable := true.B
-        state := respondingWithOKSignal
+        state := waitForExternalCalculation
+      }
+    }
+
+    is(waitForExternalCalculation) {
+      io.states(2) := true.B
+      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
+      when(io.calculationDone) { // wait until layer is done calculating
+        state := sendingData // send the result back the the host
       }
     }
 
     is(sendingData) {
-      io.states(4) := true.B
+      io.states(1) := true.B
       io.readEnable := true.B
       bufferedOutput.io.inputChannel.valid := true.B
       when(bufferedOutput.io.inputChannel.ready) {
         // The output buffer is now empty.
         // We are done sending data. No more work to do here.
         // Go to receiving opcodes (idle state).
-        state := receivingOpcodes
+        state := receivingData
       }
     }
 
-    is(waitForExternalCalculation) {
-      io.states(5) := true.B
-      io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
-      when(io.calculationDone) { // wait until layer is done calculating
-        state := respondingWithOKSignal // send affirmative signal
-      }
-    }
   }
 }
