@@ -14,7 +14,7 @@ export_path = "json/sine.json"
 
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
-fixed_point_multiplication = 0
+fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned
 
@@ -700,7 +700,7 @@ output_stage = {
 index += 1
 graph[output_stage["name"]] = output_stage
 # -------------------------------------------- Introduce output end --------------------------------------------
-# pprint.pprint(graph)
+pprint.pprint(graph)
 # -------------------------------------------- Connections --------------------------------------------
 # Insert the connections between the stages in the graph dictionary using the index of the stages
 for stage in graph:
@@ -713,7 +713,7 @@ for stage in graph:
         connections.append(graph[input]["index"])
     graph[stage]["connections"] = connections
 # -------------------------------------------- Connections end --------------------------------------------
-pprint.pprint(graph)
+# pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
 # Index is used instead of name to ensure that the order is preserved
