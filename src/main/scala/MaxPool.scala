@@ -11,6 +11,7 @@ class MaxPool(
                pads: (Int, Int) = (0, 0),
                strides: (Int, Int) = (2, 2),
              ) extends Module {
+
   val xOutputDimension = (xDimension - kernelShape._1 + 2 * pads._1) / strides._1 + 1
   val yOutputDimension = (yDimension - kernelShape._2 + 2 * pads._2) / strides._2 + 1
 

@@ -19,6 +19,7 @@ class Conv4d(
 
   assert(inputDimensions._2 == kernelDimensions._2, "The second dimension of the input and kernel tensors must be the same")
 
+  def this(convType: onnx.Operators.ConvType) = this(convType.w, convType.wResult, convType.inputDimensions, convType.kernelDimensions, convType.signed, convType.strides, convType.pads)
 
   val outputDimensions = (
     inputDimensions._1, // batch size

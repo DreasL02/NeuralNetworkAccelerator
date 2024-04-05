@@ -58,6 +58,18 @@ class AutomaticGeneration(
     case rounderType: RounderType =>
       val rounder = Module(new Rounder4d(rounderType))
       rounder
+    case reshapeType: ReshapeType =>
+      val reshape = Module(new Reshape(reshapeType))
+      reshape
+    case convType: ConvType =>
+      val conv = Module(new Conv4d(convType))
+      conv
+    case maxPoolType: MaxPoolType =>
+      val maxPool = Module(new MaxPool4d(maxPoolType))
+      maxPool
+    case broadcasterType: BroadcasterType =>
+      val broadcaster = Module(new Broadcaster(broadcasterType))
+      broadcaster
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
   }
@@ -68,7 +80,6 @@ class AutomaticGeneration(
     if (printing) println("Generating connections for: " + currentModule)
     val connectionIndices = connectionList(i)
     currentModule match {
-
       case input: InputModule =>
         // Should only happen once
         input.io.inputChannel.bits := inputs
@@ -95,6 +106,14 @@ class AutomaticGeneration(
             add.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             add.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            add.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            add.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            add.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            add.io.inputChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
@@ -113,6 +132,14 @@ class AutomaticGeneration(
             add.io.biasChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             add.io.biasChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            add.io.biasChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            add.io.biasChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            add.io.biasChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            add.io.biasChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
           case _ =>
@@ -139,6 +166,14 @@ class AutomaticGeneration(
             matMul.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             matMul.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            matMul.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            matMul.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            matMul.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            matMul.io.inputChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -157,6 +192,14 @@ class AutomaticGeneration(
             matMul.io.weightChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             matMul.io.weightChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            matMul.io.weightChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            matMul.io.weightChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            matMul.io.weightChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            matMul.io.weightChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
           case _ =>
@@ -177,6 +220,14 @@ class AutomaticGeneration(
             relu.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             relu.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            relu.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            relu.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            relu.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            relu.io.inputChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a relu module")
           case _ =>
@@ -203,6 +254,14 @@ class AutomaticGeneration(
             output.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             output.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            output.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            output.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            output.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            output.io.inputChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an output module")
           case _ =>
@@ -228,12 +287,170 @@ class AutomaticGeneration(
             rounder.io.inputChannel <> conInitializer.io.outputChannel
           case conRound: Rounder4d =>
             rounder.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            rounder.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            rounder.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            rounder.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            rounder.io.inputChannel <> conBroadcaster.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a rounder module")
           case _ =>
             throw new Exception("Unknown module connected to rounder module")
         }
 
+      case reshape: Reshape =>
+        val connectedModule = modules(connectionIndices.head)
+        if (printing) println("Connected module: " + connectedModule)
+        connectedModule match {
+          case conInput: InputModule =>
+            reshape.io.inputChannel <> conInput.io.outputChannel
+          case conAdd: Add4d =>
+            reshape.io.inputChannel <> conAdd.io.resultChannel
+          case conMatMul: MatMul4d =>
+            reshape.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
+            reshape.io.inputChannel <> conReLU.io.resultChannel
+          case conInitializer: Initializer4d =>
+            reshape.io.inputChannel <> conInitializer.io.outputChannel
+          case conRound: Rounder4d =>
+            reshape.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            reshape.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            reshape.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            reshape.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            reshape.io.inputChannel <> conBroadcaster.io.resultChannel
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a reshape module")
+          case _ =>
+            throw new Exception("Unknown module connected to reshape module")
+        }
+
+      case conv: Conv4d =>
+        val connectedModule1 = modules(connectionIndices.head)
+        val connectedModule2 = modules(connectionIndices.last)
+        if (printing) {
+          println("Connected module 1: " + connectedModule1)
+          println("Connected module 2: " + connectedModule2)
+        }
+        connectedModule1 match {
+          case conInput: InputModule =>
+            conv.io.inputChannel <> conInput.io.outputChannel
+          case conAdd: Add4d =>
+            conv.io.inputChannel <> conAdd.io.resultChannel
+          case conMatMul: MatMul4d =>
+            conv.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
+            conv.io.inputChannel <> conReLU.io.resultChannel
+          case conInitializer: Initializer4d =>
+            conv.io.inputChannel <> conInitializer.io.outputChannel
+          case conRound: Rounder4d =>
+            conv.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            conv.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            conv.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            conv.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            conv.io.inputChannel <> conBroadcaster.io.resultChannel
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a conv module")
+          case _ =>
+            throw new Exception("Unknown module connected to conv module inputs")
+        }
+        connectedModule2 match {
+          case conInput: InputModule =>
+            conv.io.kernelChannel <> conInput.io.outputChannel
+          case conAdd: Add4d =>
+            conv.io.kernelChannel <> conAdd.io.resultChannel
+          case conMatMul: MatMul4d =>
+            conv.io.kernelChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
+            conv.io.kernelChannel <> conReLU.io.resultChannel
+          case conInitializer: Initializer4d =>
+            conv.io.kernelChannel <> conInitializer.io.outputChannel
+          case conRound: Rounder4d =>
+            conv.io.kernelChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            conv.io.kernelChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            conv.io.kernelChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            conv.io.kernelChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            conv.io.kernelChannel <> conBroadcaster.io.resultChannel
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a conv module")
+          case _ =>
+            throw new Exception("Unknown module connected to conv module inputs")
+        }
+
+      case maxPool: MaxPool4d =>
+        val connectedModule = modules(connectionIndices.head)
+        if (printing) println("Connected module: " + connectedModule)
+        connectedModule match {
+          case conInput: InputModule =>
+            maxPool.io.inputChannel <> conInput.io.outputChannel
+          case conAdd: Add4d =>
+            maxPool.io.inputChannel <> conAdd.io.resultChannel
+          case conMatMul: MatMul4d =>
+            maxPool.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
+            maxPool.io.inputChannel <> conReLU.io.resultChannel
+          case conInitializer: Initializer4d =>
+            maxPool.io.inputChannel <> conInitializer.io.outputChannel
+          case conRound: Rounder4d =>
+            maxPool.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            maxPool.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            maxPool.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            maxPool.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            maxPool.io.inputChannel <> conBroadcaster.io.resultChannel
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a maxpool module")
+          case _ =>
+            throw new Exception("Unknown module connected to maxpool module")
+        }
+
+      case broadcaster: Broadcaster =>
+        val connectedModule = modules(connectionIndices.head)
+        if (printing) println("Connected module: " + connectedModule)
+        connectedModule match {
+          case conInput: InputModule =>
+            broadcaster.io.inputChannel <> conInput.io.outputChannel
+          case conAdd: Add4d =>
+            broadcaster.io.inputChannel <> conAdd.io.resultChannel
+          case conMatMul: MatMul4d =>
+            broadcaster.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
+            broadcaster.io.inputChannel <> conReLU.io.resultChannel
+          case conInitializer: Initializer4d =>
+            broadcaster.io.inputChannel <> conInitializer.io.outputChannel
+          case conRound: Rounder4d =>
+            broadcaster.io.inputChannel <> conRound.io.resultChannel
+          case conReshape: Reshape =>
+            broadcaster.io.inputChannel <> conReshape.io.resultChannel
+          case conConv: Conv4d =>
+            broadcaster.io.inputChannel <> conConv.io.outputChannel
+          case conMaxPool: MaxPool4d =>
+            broadcaster.io.inputChannel <> conMaxPool.io.resultChannel
+          case conBroadcaster: Broadcaster =>
+            broadcaster.io.inputChannel <> conBroadcaster.io.resultChannel
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a broadcaster module")
+          case _ =>
+            throw new Exception("Unknown module connected to broadcaster module")
+        }
+        
       case _ =>
         throw new Exception("Unknown module type")
     }

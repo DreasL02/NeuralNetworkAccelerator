@@ -60,14 +60,14 @@ object Operators {
     require(operandBDimensions._4 > 0, "operandBDimensions._4 must be greater than 0")
   }
 
-  case class MaxPoolType(w: Int, inputDimensions: (Int, Int, Int, Int), signed: Boolean, kernelDimensions: (Int, Int), strides: (Int, Int), pads: (Int, Int)) {
+  case class MaxPoolType(w: Int, inputDimensions: (Int, Int, Int, Int), signed: Boolean, kernelShape: (Int, Int), strides: (Int, Int), pads: (Int, Int)) {
     require(w > 0, "w must be greater than 0")
     require(inputDimensions._1 > 0, "inputDimensions._1 must be greater than 0")
     require(inputDimensions._2 > 0, "inputDimensions._2 must be greater than 0")
     require(inputDimensions._3 > 0, "inputDimensions._3 must be greater than 0")
     require(inputDimensions._4 > 0, "inputDimensions._4 must be greater than 0")
-    require(kernelDimensions._1 > 0, "kernelDimensions._1 must be greater than 0")
-    require(kernelDimensions._2 > 0, "kernelDimensions._2 must be greater than 0")
+    require(kernelShape._1 > 0, "kernelDimensions._1 must be greater than 0")
+    require(kernelShape._2 > 0, "kernelDimensions._2 must be greater than 0")
     require(strides._1 > 0, "strides._1 must be greater than 0")
     require(strides._2 > 0, "strides._2 must be greater than 0")
     require(pads._1 >= 0, "pads._1 must be greater than or equal 0")
