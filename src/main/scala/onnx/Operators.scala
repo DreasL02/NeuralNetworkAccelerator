@@ -24,13 +24,13 @@ object Operators {
     require(dimensions._4 > 0, "dimensions._4 must be greater than 0")
   }
 
-  case class RounderType(wOperands: Int, wResult: Int, signed: Boolean, operandDimensions: (Int, Int, Int, Int), fixedPoint: Int) {
+  case class RounderType(wOperands: Int, wResult: Int, signed: Boolean, dimensions: (Int, Int, Int, Int), fixedPoint: Int) {
     require(wOperands > 0, "wOperands must be greater than 0")
     require(wResult <= wOperands, "wResult must be greater than or equal wOperands")
-    require(operandDimensions._1 > 0, "dimensions._1 must be greater than 0")
-    require(operandDimensions._2 > 0, "dimensions._2 must be greater than 0")
-    require(operandDimensions._3 > 0, "dimensions._3 must be greater than 0")
-    require(operandDimensions._4 > 0, "dimensions._4 must be greater than 0")
+    require(dimensions._1 > 0, "dimensions._1 must be greater than 0")
+    require(dimensions._2 > 0, "dimensions._2 must be greater than 0")
+    require(dimensions._3 > 0, "dimensions._3 must be greater than 0")
+    require(dimensions._4 > 0, "dimensions._4 must be greater than 0")
     require(fixedPoint >= 0, "fixedPoint must be greater than or equal 0")
   }
 
@@ -90,12 +90,12 @@ object Operators {
     require(newDimensions._4 > 0, "newDimensions._4 must be greater than 0")
   }
 
-  case class ReluType(w: Int, signed: Boolean, operandDimensions: (Int, Int, Int, Int)) {
+  case class ReluType(w: Int, signed: Boolean, dimensions: (Int, Int, Int, Int)) {
     require(w > 0, "wOperands must be greater than 0")
-    require(operandDimensions._1 > 0, "operandDimensions._1 must be greater than 0")
-    require(operandDimensions._2 > 0, "operandDimensions._2 must be greater than 0")
-    require(operandDimensions._3 > 0, "operandDimensions._3 must be greater than 0")
-    require(operandDimensions._4 > 0, "operandDimensions._4 must be greater than 0")
+    require(dimensions._1 > 0, "operandDimensions._1 must be greater than 0")
+    require(dimensions._2 > 0, "operandDimensions._2 must be greater than 0")
+    require(dimensions._3 > 0, "operandDimensions._3 must be greater than 0")
+    require(dimensions._4 > 0, "operandDimensions._4 must be greater than 0")
   }
 
   case class AddType(w: Int, operandDimensions: (Int, Int, Int, Int)) {

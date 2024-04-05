@@ -5,30 +5,26 @@ import scala_utils.Optional.optional
 class Add4d(
              w: Int = 8,
              dimensionsInput: (Int, Int, Int, Int) = (4, 4, 4, 4),
-             dimensionsBias: (Int, Int, Int, Int) = (4, 4, 4, 4),
              enableDebuggingIO: Boolean = true
            ) extends Module {
 
-  assert(dimensionsInput._1 == dimensionsBias._1, "The first dimension of the input and bias matrices must be the same")
-  assert(dimensionsInput._2 == dimensionsBias._2, "The second dimension of the input and bias matrices must be the same")
-  assert(dimensionsInput._3 == dimensionsBias._3, "The third dimension of the input and bias matrices must be the same")
-  assert(dimensionsInput._4 == dimensionsBias._4, "The fourth dimension of the input and bias matrices must be the same")
+  def this(addType: onnx.Operators.AddType, enableDebuggingIO: Boolean) = this(addType.w, addType.operandDimensions, enableDebuggingIO)
 
   val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsInput._4)
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
-    val biasChannel = Flipped(new DecoupledIO(Vec(dimensionsBias._1, Vec(dimensionsBias._2, Vec(dimensionsBias._3, Vec(dimensionsBias._4, UInt(w.W)))))))
+    val biasChannel = Flipped(new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
 
     val resultChannel = new DecoupledIO(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Vec(dimensionsOutput._3, Vec(dimensionsOutput._4, UInt(w.W))))))
 
-    val debugBiases = optional(enableDebuggingIO, Output(Vec(dimensionsBias._1, Vec(dimensionsBias._2, Vec(dimensionsBias._3, Vec(dimensionsBias._4, UInt(w.W)))))))
+    val debugBiases = optional(enableDebuggingIO, Output(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
   })
 
   val adds = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new Add(w, dimensionsOutput._3, dimensionsOutput._4, enableDebuggingIO)).io)
 
   val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  val biasReadies = Wire(Vec(dimensionsBias._1, Vec(dimensionsBias._2, Bool())))
+  val biasReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
   val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
 
   for (i <- 0 until dimensionsOutput._1) {

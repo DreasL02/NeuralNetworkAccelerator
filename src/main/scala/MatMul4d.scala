@@ -15,6 +15,7 @@ class MatMul4d(
   assert(dimensionsInput._2 == dimensionsWeight._2, "The second dimension of the input and weight matrices must be the same")
   assert(dimensionsInput._4 == dimensionsWeight._3, "The fourth dimension of the input and third of the weight matrices must be the same")
 
+  def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(matMulType.wOperands, matMulType.wResult, matMulType.operandADimensions, matMulType.operandBDimensions, matMulType.signed, enableDebuggingIO)
   // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
 
   val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)

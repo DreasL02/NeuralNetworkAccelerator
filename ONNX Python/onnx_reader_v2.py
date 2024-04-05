@@ -8,13 +8,13 @@ from onnx import load, numpy_helper
 # -------------------------------------------- Configuration --------------------------------------------
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
-model_path = "models/mnist-12.onnx"
+model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/tinyyolov2-7.onnx"
-export_path = "json/mnist12.json"
+export_path = "json/sine.json"
 
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
-fixed_point_multiplication = 4
+fixed_point_multiplication = 0
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned
 
@@ -60,7 +60,7 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
         if number < 0 and scaledToFixed <= 0:
             scaledToFixed = max + scaledToFixed
 
-    if scaledToFixed >= max:
+    if scaledToFixed >= max or scaledToFixed < 0:
         scaledToFixed = 0
 
     return scaledToFixed
@@ -252,7 +252,7 @@ for stage in graph:
             graph[stage]["bit_width_operands"] = [bit_width_multiplication]
             graph[stage]["bit_width_result"] = bit_width_multiplication
             graph[stage]["fixed_point_operands"] = [fixed_point_multiplication]
-            graph[stage]["fixed_point_result"] = bit_width_multiplication
+            graph[stage]["fixed_point_result"] = fixed_point_multiplication
             bit_width_set = True
 
         elif output["op_type"] == "Reshape":
@@ -275,7 +275,7 @@ for stage in graph:
                         graph[stage]["bit_width_result"] = bit_width_multiplication
                         graph[stage]["fixed_point_operands"] = [
                             fixed_point_multiplication]
-                        graph[stage]["fixed_point_result"] = bit_width_multiplication
+                        graph[stage]["fixed_point_result"] = fixed_point_multiplication
                         bit_width_set = True
                 else:
                     raise Exception("Reshape with dynamic shape not supported")
@@ -761,7 +761,7 @@ for stage in graph:
     elif current_stage["op_type"] == "MatMul":
         chisel_dict["MatMul"].append({
             "index": current_stage["index"],
-            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"]
@@ -778,11 +778,10 @@ for stage in graph:
     elif current_stage["op_type"] == "Conv":
         chisel_dict["Conv"].append({
             "index": current_stage["index"],
-            "bit_width_operands": current_stage["bit_width_operands"],
+            "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"],
-            "dims": current_stage["dims"],
             "padding": current_stage["extra"][0],
             "strides": current_stage["extra"][1],
         })
@@ -793,7 +792,6 @@ for stage in graph:
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"],
-            "dims": current_stage["dims"],
             "padding": current_stage["extra"][0],
             "strides": current_stage["extra"][1],
             "kernel_shape": current_stage["extra"][2],
@@ -811,9 +809,7 @@ for stage in graph:
     elif current_stage["op_type"] == "Constant":
         raw_data = None
         for attribute in current_stage["attributes"]:
-            if current_stage["bit_width_result"] == 0:
-                raw_data = []  # Already inferred compile time into child stage
-            elif attribute.name == "value":
+            if attribute.name == "value":
                 raw_data = attribute.t.float_data
                 raw_data = [convert_to_fixed_point(
                     x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
@@ -822,29 +818,25 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "dims": current_stage["dims"],
-            "raw_data": raw_data
+            "data": raw_data
         })
 
     elif current_stage["op_type"] == "Initializer":
-        if current_stage["bit_width_result"] == 0:
-            raw_data = []  # Already inferred compile time into child stage
-        else:
-            raw_data = current_stage["attributes"][0].flatten().tolist()
-            raw_data = [convert_to_fixed_point(
-                x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
+        raw_data = current_stage["attributes"][0].flatten().tolist()
+        raw_data = [convert_to_fixed_point(
+            x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
         chisel_dict["Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "dims": current_stage["dims"],
-            "raw_data": raw_data
+            "data": raw_data
         })
 
     elif current_stage["op_type"] == "Broadcaster":
         chisel_dict["Broadcaster"].append({
             "index": current_stage["index"],
-            "bit_width_operands": current_stage["bit_width_operands"],
-            "bit_width_result": current_stage["bit_width_result"],
+            "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
             "input_dims": current_stage["input_dims"],
             "dims": current_stage["dims"]

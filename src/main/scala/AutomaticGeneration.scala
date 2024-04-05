@@ -1,4 +1,4 @@
-import activation_functions.ReLU
+import activation_functions.{ReLU, ReLU4d}
 import chisel3._
 import chisel3.util.DecoupledIO
 import onnx.Operators._
@@ -17,19 +17,23 @@ class AutomaticGeneration(
   val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W)))))
-    val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2,
+      Vec(inputNode.dimensions._3, Vec(inputNode.dimensions._4, UInt(inputNode.w.W)))))))
+    val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2,
+      Vec(outputNode.dimensions._3, Vec(outputNode.dimensions._4, UInt(outputNode.w.W)))))
+    )
   })
 
-  val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, UInt(inputNode.w.W))))
+  val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, Vec(inputNode.dimensions._3,
+    Vec(inputNode.dimensions._4, UInt(inputNode.w.W))))))
   val inputReady = Wire(Bool())
   val inputValid = Wire(Bool())
 
-  val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, UInt(outputNode.w.W))))
+  val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, Vec(outputNode.dimensions._3,
+    Vec(outputNode.dimensions._4, UInt(outputNode.w.W))))))
   val outputReady = Wire(Bool())
   val outputValid = Wire(Bool())
 
-  /*
 
   // Module Creation
   val modules = listOfNodes.map {
@@ -40,19 +44,19 @@ class AutomaticGeneration(
       val output = Module(new OutputModule(outputType))
       output
     case initializerType: InitializerType =>
-      val initializer = Module(new Initializer(initializerType))
+      val initializer = Module(new Initializer4d(initializerType))
       initializer
     case addType: AddType =>
-      val add = Module(new Add(addType, enableDebuggingIO))
+      val add = Module(new Add4d(addType, enableDebuggingIO))
       add
     case matMulType: MatMulType =>
-      val matMul = Module(new MatMul(matMulType, enableDebuggingIO))
+      val matMul = Module(new MatMul4d(matMulType, enableDebuggingIO))
       matMul
     case reluType: ReluType =>
-      val relu = Module(new ReLU(reluType))
+      val relu = Module(new ReLU4d(reluType))
       relu
     case rounderType: RounderType =>
-      val rounder = Module(new Rounder(rounderType))
+      val rounder = Module(new Rounder4d(rounderType))
       rounder
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
@@ -255,5 +259,5 @@ class AutomaticGeneration(
     }
   }
 
-   */
+
 }

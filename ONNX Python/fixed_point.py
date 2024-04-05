@@ -14,16 +14,22 @@ def convertToFixed(number, fixedPoint, width, signed):
 
 
 # Test the function
-print(convertToFixed(3.14, 8, 16, True))
-print(convertToFixed(3.14, 8, 16, False))
-print(convertToFixed(-3.14, 8, 16, True))
+a = [0.15651583671569824,
+     0.15559262037277222,
+     0.291143000125885,
+     1.0016841888427734,
+     0.32924598455429077,
+     -0.2163182944059372,
+     0.9466480016708374,
+     -0.8109402060508728,
+     -0.3115585446357727,
+     -1.0420066118240356,
+     -0.6810837984085083,
+     0.606336772441864,
+     0.41242003440856934,
+     -0.6451005339622498,
+     1.0512760877609253,
+     0.09469065815210342]
 
-print(convertToFixed(1.0, 8, 16, True))
-print(convertToFixed(1.5, 8, 16, True))
-print(convertToFixed(0.5, 8, 16, True))
-
-print(convertToFixed(-1.0, 8, 16, True))
-print(convertToFixed(-1.5, 8, 16, True))
-print(convertToFixed(-0.5, 8, 16, True))
-
-print(convertToFixed(-1.0, 0, 16, True))
+for i in a:
+    print(convertToFixed(i, 3, 8, True))
