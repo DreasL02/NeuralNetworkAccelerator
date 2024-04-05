@@ -13,6 +13,7 @@ class Reshape(
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(inputDimensions._1, Vec(inputDimensions._2, Vec(inputDimensions._3, Vec(inputDimensions._4, UInt(w.W)))))))
+    val shapeChannel = Flipped(new DecoupledIO(Vec(shapeDimensions._1, Vec(shapeDimensions._2, Vec(shapeDimensions._3, Vec(shapeDimensions._4, UInt(1.W)))))))
     val resultChannel = new DecoupledIO(Vec(shapeDimensions._1, Vec(shapeDimensions._2, Vec(shapeDimensions._3, Vec(shapeDimensions._4, UInt(w.W))))))
   })
 
@@ -41,4 +42,6 @@ class Reshape(
 
   io.resultChannel.valid := io.inputChannel.valid
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+
+  io.shapeChannel.ready := true.B
 }

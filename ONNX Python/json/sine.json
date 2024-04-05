@@ -14,7 +14,7 @@
   "Output": [
     {
       "index": 17,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         14
       ],
@@ -29,7 +29,7 @@
   "Rounder": [
     {
       "index": 15,
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "fixed_point_operands": 8,
       "fixed_point_result": 4,
@@ -47,7 +47,7 @@
     },
     {
       "index": 16,
-      "bit_width_operands": 32,
+      "bit_width_operands": 16,
       "bit_width_result": 8,
       "fixed_point_operands": 8,
       "fixed_point_result": 4,
@@ -69,7 +69,7 @@
     {
       "index": 7,
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "connections": [
         0,
         5
@@ -92,7 +92,7 @@
     {
       "index": 10,
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "connections": [
         15,
         4
@@ -115,7 +115,7 @@
     {
       "index": 13,
       "bit_width_operands": 8,
-      "bit_width_result": 32,
+      "bit_width_result": 16,
       "connections": [
         16,
         6
@@ -141,7 +141,7 @@
   "Relu": [
     {
       "index": 9,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         8
       ],
@@ -156,7 +156,7 @@
     },
     {
       "index": 12,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         11
       ],
@@ -173,7 +173,7 @@
   "Add": [
     {
       "index": 8,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         7,
         3
@@ -195,7 +195,7 @@
     },
     {
       "index": 11,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         10,
         2
@@ -217,7 +217,7 @@
     },
     {
       "index": 14,
-      "bit_width": 32,
+      "bit_width": 16,
       "connections": [
         13,
         1
@@ -241,7 +241,7 @@
   "Initializer": [
     {
       "index": 1,
-      "bit_width": 32,
+      "bit_width": 16,
       "dims": [
         1,
         1,
@@ -249,12 +249,12 @@
         1
       ],
       "data": [
-        4294967212
+        65452
       ]
     },
     {
       "index": 2,
-      "bit_width": 32,
+      "bit_width": 16,
       "dims": [
         1,
         1,
@@ -264,25 +264,25 @@
       "data": [
         0,
         0,
-        4294967290,
+        65530,
         107,
         0,
         100,
         125,
         89,
-        4294967293,
+        65533,
         102,
         97,
-        4294967182,
+        65422,
         0,
         88,
         84,
-        4294967286
+        65526
       ]
     },
     {
       "index": 3,
-      "bit_width": 32,
+      "bit_width": 16,
       "dims": [
         1,
         1,
@@ -294,18 +294,18 @@
         237,
         0,
         1,
-        4294967240,
+        65480,
         0,
         292,
         0,
-        4294967129,
-        4294967228,
+        65369,
+        65468,
         0,
-        4294967294,
+        65534,
         0,
         0,
         0,
-        4294967008
+        65248
       ]
     },
     {
@@ -636,7 +636,7 @@
   "Broadcaster": [],
   "Parameters": [
     {
-      "bit_width_base": 32,
+      "bit_width_base": 16,
       "fixed_point_base": 8,
       "bit_width_multiplication": 8,
       "fixed_point_multiplication": 4,

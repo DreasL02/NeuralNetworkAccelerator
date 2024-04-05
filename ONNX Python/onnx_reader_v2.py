@@ -8,12 +8,12 @@ from onnx import load, numpy_helper
 # -------------------------------------------- Configuration --------------------------------------------
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
-model_path = "models/sinus_float_model_epoch_1000.onnx"
+model_path = "models/mnist-12.onnx"
 # model_path = "models/tinyyolov2-7.onnx"
-export_path = "json/sine.json"
+export_path = "json/mnist12.json"
 
 bit_width_multiplication = 8
-bit_width_base = bit_width_multiplication*4
+bit_width_base = bit_width_multiplication*2
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned
@@ -261,8 +261,8 @@ for stage in graph:
             if output["input"].__len__() == 2:
                 # if we are feeding into the shape input
                 if graph[stage]["output"] == output["input"][1]:
-                    graph[stage]["bit_width_operands"] = [0]
-                    graph[stage]["bit_width_result"] = 0
+                    graph[stage]["bit_width_operands"] = [1]
+                    graph[stage]["bit_width_result"] = 1
                     graph[stage]["fixed_point_operands"] = [0]
                     graph[stage]["fixed_point_result"] = 0
                     bit_width_set = True

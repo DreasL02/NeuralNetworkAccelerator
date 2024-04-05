@@ -302,9 +302,13 @@ class AutomaticGeneration(
         }
 
       case reshape: Reshape =>
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
-        connectedModule match {
+        val connectedModule1 = modules(connectionIndices.head)
+        val connectedModule2 = modules(connectionIndices.last)
+        if (printing) {
+          println("Connected module 1: " + connectedModule1)
+          println("Connected module 2: " + connectedModule2)
+        }
+        connectedModule1 match {
           case conInput: InputModule =>
             reshape.io.inputChannel <> conInput.io.outputChannel
           case conAdd: Add4d =>
@@ -328,8 +332,35 @@ class AutomaticGeneration(
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a reshape module")
           case _ =>
-            throw new Exception("Unknown module connected to reshape module")
+            throw new Exception("Unknown module connected to reshape module inputs")
         }
+        connectedModule2 match {
+          case _: InputModule =>
+            throw new Exception("Input module cannot be connected to a reshape shape")
+          case _: Add4d =>
+            throw new Exception("Add module cannot be connected to a reshape shape")
+          case _: MatMul4d =>
+            throw new Exception("MatMul module cannot be connected to a reshape shape")
+          case _: ReLU4d =>
+            throw new Exception("ReLU module cannot be connected to a reshape shape")
+          case conInitializer: Initializer4d =>
+            reshape.io.shapeChannel <> conInitializer.io.outputChannel
+          case _: Rounder4d =>
+            throw new Exception("Rounder module cannot be connected to a reshape shape")
+          case _: Reshape =>
+            throw new Exception("Reshape module cannot be connected to a reshape shape")
+          case _: Conv4d =>
+            throw new Exception("Conv module cannot be connected to a reshape shape")
+          case _: MaxPool4d =>
+            throw new Exception("Maxpool module cannot be connected to a reshape shape")
+          case _: Broadcaster =>
+            throw new Exception("Broadcaster cannot be connected to a reshape shape")
+          case _: OutputModule =>
+            throw new Exception("Output module cannot be connected to a reshape shape")
+          case _ =>
+            throw new Exception("Unknown module connected to reshape module inputs")
+        }
+
 
       case conv: Conv4d =>
         val connectedModule1 = modules(connectionIndices.head)
@@ -450,7 +481,7 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown module connected to broadcaster module")
         }
-        
+
       case _ =>
         throw new Exception("Unknown module type")
     }
