@@ -75,7 +75,7 @@ class AutomaticGeneration(
         input.io.inputChannel.valid := inputValid
         inputReady := input.io.inputChannel.ready
 
-      case add: Add =>
+      case add: Add4d =>
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
@@ -85,15 +85,15 @@ class AutomaticGeneration(
         connectedModule1 match {
           case conInput: InputModule =>
             add.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             add.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            add.io.inputChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            add.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             add.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             add.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             add.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
@@ -103,15 +103,15 @@ class AutomaticGeneration(
         connectedModule2 match {
           case conInput: InputModule =>
             add.io.biasChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             add.io.biasChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            add.io.biasChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            add.io.biasChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             add.io.biasChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             add.io.biasChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             add.io.biasChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an add module")
@@ -119,7 +119,7 @@ class AutomaticGeneration(
             throw new Exception("Unknown module connected to add module inputs")
         }
 
-      case matMul: MatMul =>
+      case matMul: MatMul4d =>
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
@@ -129,15 +129,15 @@ class AutomaticGeneration(
         connectedModule1 match {
           case conInput: InputModule =>
             matMul.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             matMul.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            matMul.io.inputChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            matMul.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             matMul.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             matMul.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             matMul.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
@@ -147,15 +147,15 @@ class AutomaticGeneration(
         connectedModule2 match {
           case conInput: InputModule =>
             matMul.io.weightChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             matMul.io.weightChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            matMul.io.weightChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            matMul.io.weightChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             matMul.io.weightChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             matMul.io.weightChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             matMul.io.weightChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a matmul module")
@@ -163,19 +163,19 @@ class AutomaticGeneration(
             throw new Exception("Unknown module connected to matmul module inputs")
         }
 
-      case relu: ReLU =>
+      case relu: ReLU4d =>
         val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             relu.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             relu.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            relu.io.inputChannel <> conMatMul.io.resultChannel
-          case conInitializer: Initializer =>
+          case conMatMul: MatMul4d =>
+            relu.io.inputChannel <> conMatMul.io.outputChannel
+          case conInitializer: Initializer4d =>
             relu.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             relu.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a relu module")
@@ -183,7 +183,7 @@ class AutomaticGeneration(
             throw new Exception("Unknown module connected to relu module")
         }
 
-      case _: Initializer =>
+      case _: Initializer4d =>
       // Initializers do not have any inputs
 
       case output: OutputModule =>
@@ -193,15 +193,15 @@ class AutomaticGeneration(
         connectedModule match {
           case conInput: InputModule =>
             output.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             output.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            output.io.inputChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            output.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             output.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             output.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             output.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to an output module")
@@ -212,21 +212,21 @@ class AutomaticGeneration(
         outputValid := output.io.outputChannel.valid
         output.io.outputChannel.ready := outputReady
 
-      case rounder: Rounder =>
+      case rounder: Rounder4d =>
         val connectedModule = modules(connectionIndices.head)
         if (printing) println("Connected module: " + connectedModule)
         connectedModule match {
           case conInput: InputModule =>
             rounder.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add =>
+          case conAdd: Add4d =>
             rounder.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul =>
-            rounder.io.inputChannel <> conMatMul.io.resultChannel
-          case conReLU: ReLU =>
+          case conMatMul: MatMul4d =>
+            rounder.io.inputChannel <> conMatMul.io.outputChannel
+          case conReLU: ReLU4d =>
             rounder.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer =>
+          case conInitializer: Initializer4d =>
             rounder.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder =>
+          case conRound: Rounder4d =>
             rounder.io.inputChannel <> conRound.io.resultChannel
           case _: OutputModule =>
             throw new Exception("Output module cannot be connected to a rounder module")

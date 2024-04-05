@@ -8,8 +8,6 @@ class Rounder4d(
                  signed: Boolean = true,
                  fixedPoint: Int = 8
                ) extends Module {
-  assert(w > 0, "w must be greater than 0")
-  assert(wTarget >= 2 * w, "wTarget must be greater than or equal 2*w")
 
   def this(rounderType: onnx.Operators.RounderType) = this(rounderType.wOperands, rounderType.wResult, rounderType.dimensions, rounderType.signed, rounderType.fixedPoint)
 
