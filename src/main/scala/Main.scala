@@ -2,7 +2,7 @@ import chisel3.emitVerilog
 
 object Main extends App {
 
-  val filepath = "ONNX Python/json/sine.json"
+  val filepath = "ONNX Python/json/conv.json"
 
   val lists = SpecToListConverter.convertSpecToLists(filepath)
 
