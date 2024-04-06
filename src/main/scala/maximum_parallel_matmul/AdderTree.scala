@@ -16,13 +16,13 @@ class AdderTree(
     val resultChannel = new DecoupledIO(UInt(w.W))
   })
 
-  val numberOfStages = log2Ceil(numberOfInputs) + 1
-  val numberOfInputsInt = math.pow(2, numberOfStages - 1).toInt
+  private val numberOfStages = log2Ceil(numberOfInputs) + 1
+  private val numberOfInputsInt = math.pow(2, numberOfStages - 1).toInt
 
   //println("numberOfStages: " + numberOfStages)
   //println("numberOfInputsInt: " + numberOfInputsInt)
 
-  val data = Wire(Vec(numberOfStages, Vec(numberOfInputsInt, UInt(w.W))))
+  private val data = Wire(Vec(numberOfStages, Vec(numberOfInputsInt, UInt(w.W))))
 
   for (stage <- 0 until numberOfStages) {
     val numberOfOutputs = numberOfInputsInt >> stage
@@ -53,13 +53,13 @@ class AdderTree(
 
   io.resultChannel.bits := data(numberOfStages - 1)(0)
 
-  val cyclesUntilOutputValid: Int = numberOfStages - 1 // number of cycles until the adder tree is done and the result is valid
+  private val cyclesUntilOutputValid: Int = numberOfStages - 1 // number of cycles until the adder tree is done and the result is valid
 
-  val readyToCompute = io.inputChannel.valid
+  private val readyToCompute = io.inputChannel.valid
 
-  val clear = risingEdge(readyToCompute) // load when readyToCompute is asserted
+  private val clear = risingEdge(readyToCompute) // load when readyToCompute is asserted
 
-  val doneWithComputation = timer(cyclesUntilOutputValid, clear, readyToCompute)
+  private val doneWithComputation = timer(cyclesUntilOutputValid, clear, readyToCompute)
 
   if (numberOfInputs == 1) {
     io.resultChannel.valid := readyToCompute

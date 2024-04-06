@@ -32,7 +32,7 @@ class LayerCalculator(
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val matMul = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+  private val matMul = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
   matMul.io.inputChannel <> io.inputChannel
   matMul.io.weightChannel <> io.weightChannel
 
@@ -42,7 +42,7 @@ class LayerCalculator(
     io.debugMatMulResults.get := matMul.io.debugResults.get
   }
 
-  val add = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
+  private val add = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
   add.io.inputChannel <> matMul.io.resultChannel
   add.io.biasChannel <> io.biasChannel
 
@@ -52,7 +52,7 @@ class LayerCalculator(
     io.debugRounderInputs.get := add.io.resultChannel.bits
   }
 
-  val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
+  private val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
   rounder.io.inputChannel <> add.io.resultChannel
 
   if (enableDebuggingIO) {
@@ -60,7 +60,7 @@ class LayerCalculator(
   }
 
   // ReLU
-  val reLU = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
+  private val reLU = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
   reLU.io.inputChannel <> rounder.io.resultChannel
 
   // Result of computations

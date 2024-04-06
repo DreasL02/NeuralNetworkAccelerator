@@ -27,7 +27,7 @@ class SystolicArray(
 
 
   // https://stackoverflow.com/questions/33621533/how-to-do-a-vector-of-modules
-  val processingElements = VecInit.fill(numberOfRows, numberOfColumns)(Module(new ProcessingElement(w, wResult, signed)).io)
+  private val processingElements = VecInit.fill(numberOfRows, numberOfColumns)(Module(new ProcessingElement(w, wResult, signed)).io)
 
   for (row <- 0 until numberOfRows) {
     for (column <- 0 until numberOfColumns) {

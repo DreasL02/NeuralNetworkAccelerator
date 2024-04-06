@@ -13,7 +13,7 @@ class TensorAdderTree(
     val resultChannel = new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, UInt(w.W))))
   })
 
-  val adderTrees = VecInit.fill(dimensionsInput._1, dimensionsInput._2)(Module(new AdderTree(w, numberOfInputs)).io)
+  private val adderTrees = VecInit.fill(dimensionsInput._1, dimensionsInput._2)(Module(new AdderTree(w, numberOfInputs)).io)
 
   for (i <- 0 until dimensionsInput._1) {
     for (j <- 0 until dimensionsInput._2) {

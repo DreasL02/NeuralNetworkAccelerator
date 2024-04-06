@@ -13,7 +13,7 @@ class SingleChannelConvolution(
                               ) extends Module {
 
   // Equation: https://builtin.com/machine-learning/fully-connected-layer
-  val outputDimensions = ((inputDimensions._1 - kernelDimensions._1 + 2 * pads._1) / strides._1 + 1, (inputDimensions._2 - kernelDimensions._2 + 2 * pads._2) / strides._2 + 1)
+  private val outputDimensions = ((inputDimensions._1 - kernelDimensions._1 + 2 * pads._1) / strides._1 + 1, (inputDimensions._2 - kernelDimensions._2 + 2 * pads._2) / strides._2 + 1)
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(inputDimensions._1, Vec(inputDimensions._2, UInt(w.W)))))
@@ -23,7 +23,7 @@ class SingleChannelConvolution(
   })
 
   // Pad the input matrix
-  val paddedInput = Wire(Vec(inputDimensions._1 + 2 * pads._1, Vec(inputDimensions._2 + 2 * pads._2, UInt(w.W))))
+  private val paddedInput = Wire(Vec(inputDimensions._1 + 2 * pads._1, Vec(inputDimensions._2 + 2 * pads._2, UInt(w.W))))
   for (i <- 0 until inputDimensions._1 + 2 * pads._1) {
     for (j <- 0 until inputDimensions._2 + 2 * pads._2) {
       if (i < pads._1 || i >= inputDimensions._1 + pads._1 || j < pads._2 || j >= inputDimensions._2 + pads._2) {
@@ -35,7 +35,7 @@ class SingleChannelConvolution(
   }
 
   // Divide the padded input matrix into smaller matrices of the same size as the kernel matrix moving across the input matrix with the stride
-  val smallerMatrices = for (x <- 0 until outputDimensions._1) yield {
+  private val smallerMatrices = for (x <- 0 until outputDimensions._1) yield {
     for (y <- 0 until outputDimensions._2) yield {
       val smallerMatrix = Wire(Vec(kernelDimensions._1, Vec(kernelDimensions._2, UInt(w.W))))
       for (i <- 0 until kernelDimensions._1) {
@@ -48,7 +48,7 @@ class SingleChannelConvolution(
   }
 
   // Multiply the smaller matrices by the kernel matrix using the element wise multiplier
-  val elementWiseMultipliersResults = for (x <- 0 until outputDimensions._1) yield {
+  private val elementWiseMultipliersResults = for (x <- 0 until outputDimensions._1) yield {
     for (y <- 0 until outputDimensions._2) yield {
       val elementWiseMultiplier = Module(new ElementWiseMultiplier(w, wResult, kernelDimensions._1, kernelDimensions._2, signed))
       elementWiseMultiplier.io.inputChannel.bits := smallerMatrices(x)(y)
@@ -60,7 +60,7 @@ class SingleChannelConvolution(
   }
 
   // Sum the of the element wise multipliers using adder trees
-  val adderTreesResults = for (x <- 0 until outputDimensions._1) yield {
+  private val adderTreesResults = for (x <- 0 until outputDimensions._1) yield {
     for (y <- 0 until outputDimensions._2) yield {
       val adderTree = Module(new AdderTree(wResult, kernelDimensions._1 * kernelDimensions._2))
       adderTree.io.inputChannel.bits := elementWiseMultipliersResults(x)(y).bits.flatten

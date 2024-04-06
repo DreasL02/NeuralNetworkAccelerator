@@ -20,11 +20,11 @@ class MaximumParallelMatrixMultiplication(
     val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   })
 
-  val componentMultiplier = Module(new ComponentMultiplier(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed))
+  private val componentMultiplier = Module(new ComponentMultiplier(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed))
   componentMultiplier.io.inputChannel <> io.inputChannel
   componentMultiplier.io.weightChannel <> io.weightChannel
 
-  val adderTrees = VecInit.fill(numberOfRows, numberOfColumns)(Module(new AdderTree(wResult, commonDimension)).io)
+  private val adderTrees = VecInit.fill(numberOfRows, numberOfColumns)(Module(new AdderTree(wResult, commonDimension)).io)
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       adderTrees(i)(j).inputChannel.bits := componentMultiplier.io.resultChannel.bits(i)(j)

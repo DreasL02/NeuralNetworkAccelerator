@@ -19,10 +19,10 @@ class ComponentMultiplier(
     val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, Vec(commonDimension, UInt(wResult.W)))))
   })
 
-  val inputs = RegNext(io.inputChannel.bits)
-  val weights = RegNext(io.weightChannel.bits)
+  private val inputs = RegNext(io.inputChannel.bits)
+  private val weights = RegNext(io.weightChannel.bits)
 
-  val multiplicationResultsRegisters = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
+  private val multiplicationResultsRegisters = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       for (k <- 0 until commonDimension) {

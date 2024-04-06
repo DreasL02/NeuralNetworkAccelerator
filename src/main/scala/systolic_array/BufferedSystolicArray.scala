@@ -29,25 +29,25 @@ class BufferedSystolicArray(
     val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
+  private val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
 
-  val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
+  private val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
 
-  val load = risingEdge(readyToCompute) // load when readyToCompute is asserted
+  private val load = risingEdge(readyToCompute) // load when readyToCompute is asserted
 
-  val doneWithComputation = timer(cyclesUntilOutputValid, load, readyToCompute)
+  private val doneWithComputation = timer(cyclesUntilOutputValid, load, readyToCompute)
 
-  val inputsBuffers = for (i <- 0 until numberOfRows) yield { // create array of buffers for inputs
+  private val inputsBuffers = for (i <- 0 until numberOfRows) yield { // create array of buffers for inputs
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
-  val weightsBuffers = for (i <- 0 until numberOfColumns) yield { // create array of buffers for weights
+  private val weightsBuffers = for (i <- 0 until numberOfColumns) yield { // create array of buffers for weights
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
     buffer // return module
   }
 
-  val systolicArray = Module(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed))
+  private val systolicArray = Module(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed))
 
 
   // Connect buffers to signals
@@ -60,7 +60,7 @@ class BufferedSystolicArray(
     }
   }
 
-  val transposedWeights = io.weightChannel.bits.transpose // transpose weights to match the systolic array's requirements
+  private val transposedWeights = io.weightChannel.bits.transpose // transpose weights to match the systolic array's requirements
 
   for (i <- 0 until numberOfColumns) {
     weightsBuffers(i).io.load := load

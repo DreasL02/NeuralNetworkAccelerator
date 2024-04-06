@@ -12,8 +12,8 @@ class MaxPool(
                strides: (Int, Int) = (2, 2),
              ) extends Module {
 
-  val xOutputDimension = (xDimension - kernelShape._1 + 2 * pads._1) / strides._1 + 1
-  val yOutputDimension = (yDimension - kernelShape._2 + 2 * pads._2) / strides._2 + 1
+  private val xOutputDimension = (xDimension - kernelShape._1 + 2 * pads._1) / strides._1 + 1
+  private val yOutputDimension = (yDimension - kernelShape._2 + 2 * pads._2) / strides._2 + 1
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(xDimension, Vec(yDimension, UInt(w.W)))))

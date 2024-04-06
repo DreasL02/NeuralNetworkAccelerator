@@ -37,17 +37,17 @@ class Conv4d(
     )
   })
 
-  val batchSize = inputDimensions._1
-  val numberOfOutputChannels = kernelDimensions._1
-  val numberOfConvolutions = inputDimensions._2
+  private val batchSize = inputDimensions._1
+  private val numberOfOutputChannels = kernelDimensions._1
+  private val numberOfConvolutions = inputDimensions._2
 
   println("outputDimensions: " + outputDimensions)
   println("batchSize: " + batchSize)
   println("numberOfOutputChannels: " + numberOfOutputChannels)
   println("numberOfConvolutions: " + numberOfConvolutions)
 
-  val singleChannelConvolutions = VecInit.fill(batchSize, numberOfOutputChannels, numberOfConvolutions)(Module(new SingleChannelConvolution(w, wResult, (inputDimensions._3, inputDimensions._4), (kernelDimensions._3, kernelDimensions._4), signed, strides, pads)).io)
-  val adderTree = VecInit.fill(batchSize, numberOfOutputChannels)(Module(new TensorAdderTree(wResult, numberOfConvolutions, (outputDimensions._3, outputDimensions._4))).io)
+  private val singleChannelConvolutions = VecInit.fill(batchSize, numberOfOutputChannels, numberOfConvolutions)(Module(new SingleChannelConvolution(w, wResult, (inputDimensions._3, inputDimensions._4), (kernelDimensions._3, kernelDimensions._4), signed, strides, pads)).io)
+  private val adderTree = VecInit.fill(batchSize, numberOfOutputChannels)(Module(new TensorAdderTree(wResult, numberOfConvolutions, (outputDimensions._3, outputDimensions._4))).io)
 
 
   for (i <- 0 until batchSize) {

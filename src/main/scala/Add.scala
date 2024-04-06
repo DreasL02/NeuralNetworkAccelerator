@@ -14,7 +14,7 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
     val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
   })
 
-  val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
+  private val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
   adders.io.operandA := io.inputChannel.bits
   adders.io.operandB := io.biasChannel.bits
   io.resultChannel.bits := adders.io.result

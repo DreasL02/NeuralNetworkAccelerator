@@ -21,7 +21,7 @@ class Reshape(
     val resultChannel = new DecoupledIO(Vec(newDimensions._1, Vec(newDimensions._2, Vec(newDimensions._3, Vec(newDimensions._4, UInt(w.W))))))
   })
 
-  val flatInput = Wire(Vec(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4, UInt(w.W)))
+  private val flatInput = Wire(Vec(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4, UInt(w.W)))
 
   for (i <- 0 until inputDimensions._1) {
     for (j <- 0 until inputDimensions._2) {

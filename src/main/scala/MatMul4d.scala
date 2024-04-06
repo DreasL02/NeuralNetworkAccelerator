@@ -18,7 +18,7 @@ class MatMul4d(
   def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(matMulType.wOperands, matMulType.wResult, matMulType.operandADimensions, matMulType.operandBDimensions, matMulType.signed, enableDebuggingIO)
   // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
 
-  val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)
+  private val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
@@ -28,11 +28,11 @@ class MatMul4d(
   })
 
 
-  val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  val weightReadies = Wire(Vec(dimensionsWeight._1, Vec(dimensionsWeight._2, Bool())))
-  val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
+  private val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
+  private val weightReadies = Wire(Vec(dimensionsWeight._1, Vec(dimensionsWeight._2, Bool())))
+  private val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
 
-  val matMuls = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new MatMul(w, wResult, dimensionsInput._3, dimensionsWeight._4, dimensionsWeight._3, signed, enableDebuggingIO)).io)
+  private val matMuls = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new MatMul(w, wResult, dimensionsInput._3, dimensionsWeight._4, dimensionsWeight._3, signed, enableDebuggingIO)).io)
 
   for (i <- 0 until dimensionsOutput._1) {
     for (j <- 0 until dimensionsOutput._2) {

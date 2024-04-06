@@ -21,11 +21,11 @@ class Add4d(
     val debugBiases = optional(enableDebuggingIO, Output(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
   })
 
-  val adds = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new Add(w, dimensionsOutput._3, dimensionsOutput._4, enableDebuggingIO)).io)
+  private val adds = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new Add(w, dimensionsOutput._3, dimensionsOutput._4, enableDebuggingIO)).io)
 
-  val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  val biasReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
+  private val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
+  private val biasReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
+  private val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
 
   for (i <- 0 until dimensionsOutput._1) {
     for (j <- 0 until dimensionsOutput._2) {

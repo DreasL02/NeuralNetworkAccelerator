@@ -508,6 +508,4 @@ class AutomaticGeneration(
       outputReady := io.outputChannel.ready
     }
   }
-
-
 }

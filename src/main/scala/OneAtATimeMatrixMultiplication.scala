@@ -24,26 +24,26 @@ class OneAtATimeMatrixMultiplication(
   })
 
   // Number of cycles required to compute the result matrix: numberOfRows * numberOfColumns * commonDimension
-  val cyclesUntilOutputValid = numberOfRows * numberOfColumns * commonDimension + 1 // number of cycles until the matrix multiplication is done and the result is valid
+  private val cyclesUntilOutputValid = numberOfRows * numberOfColumns * commonDimension + 1 // number of cycles until the matrix multiplication is done and the result is valid
 
-  val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
+  private val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
 
-  val load = risingEdge(readyToCompute) // load when readyToCompute is asserted
+  private val load = risingEdge(readyToCompute) // load when readyToCompute is asserted
 
-  val doneWithComputation = timer(cyclesUntilOutputValid, load, readyToCompute)
+  private val doneWithComputation = timer(cyclesUntilOutputValid, load, readyToCompute)
 
-  val inputsReg = Reg(Vec(numberOfRows, Vec(commonDimension, UInt(w.W))))
-  val weightsReg = Reg(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W))))
-  val resultsReg = Reg(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
+  private val inputsReg = Reg(Vec(numberOfRows, Vec(commonDimension, UInt(w.W))))
+  private val weightsReg = Reg(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W))))
+  private val resultsReg = Reg(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
   when(load) {
     inputsReg := io.inputChannel.bits
     weightsReg := io.weightChannel.bits
   }
 
-  val rowCounter = RegInit(0.U(log2Ceil(numberOfRows).W))
-  val columnCounter = RegInit(0.U(log2Ceil(numberOfColumns).W))
-  val commonCounter = RegInit(0.U(log2Ceil(commonDimension).W))
+  private val rowCounter = RegInit(0.U(log2Ceil(numberOfRows).W))
+  private val columnCounter = RegInit(0.U(log2Ceil(numberOfColumns).W))
+  private val commonCounter = RegInit(0.U(log2Ceil(commonDimension).W))
 
   when(commonCounter === (commonDimension - 1).U) {
     commonCounter := 0.U
@@ -67,9 +67,9 @@ class OneAtATimeMatrixMultiplication(
     columnCounter := 0.U
   }
 
-  val cycleInput = RegNext(inputsReg(rowCounter)(commonCounter)) // Register the input to be used in the next cycle to isolate the look-up logic
-  val cycleWeight = RegNext(weightsReg(commonCounter)(columnCounter))
-  val storedResult = resultsReg(RegNext(rowCounter))(RegNext(columnCounter))
+  private val cycleInput = RegNext(inputsReg(rowCounter)(commonCounter)) // Register the input to be used in the next cycle to isolate the look-up logic
+  private val cycleWeight = RegNext(weightsReg(commonCounter)(columnCounter))
+  private val storedResult = resultsReg(RegNext(rowCounter))(RegNext(columnCounter))
 
   when(!doneWithComputation) {
     resultsReg(RegNext(rowCounter))(RegNext(columnCounter)) := mult(cycleInput, cycleWeight, w, wResult, signed) + storedResult

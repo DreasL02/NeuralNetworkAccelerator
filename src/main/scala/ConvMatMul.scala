@@ -13,11 +13,11 @@ class ConvMatMul(
                   enableDebuggingIO: Boolean = true
                 ) extends Module {
 
-  val outputDimensions = ((inputDimensions._1 - kernelDimensions._1 + 2 * pads._1) / strides._1 + 1, (inputDimensions._2 - kernelDimensions._2 + 2 * pads._2) / strides._2 + 1)
-  val paddedDimensions = (inputDimensions._1 + 2 * pads._1, inputDimensions._2 + 2 * pads._2)
-  val numberOfToeplitzMatrices = paddedDimensions._1 // number of rows in the padded kernel matrix
-  val toeplitzMatrixDimensions = (paddedDimensions._1 - kernelDimensions._1 + 1, paddedDimensions._2 - kernelDimensions._2 + 1)
-  val doublyBlockedToeplitzDimensions = (toeplitzMatrixDimensions._1 * toeplitzMatrixDimensions._2, paddedDimensions._1 * paddedDimensions._2)
+  private val outputDimensions = ((inputDimensions._1 - kernelDimensions._1 + 2 * pads._1) / strides._1 + 1, (inputDimensions._2 - kernelDimensions._2 + 2 * pads._2) / strides._2 + 1)
+  private val paddedDimensions = (inputDimensions._1 + 2 * pads._1, inputDimensions._2 + 2 * pads._2)
+  private val numberOfToeplitzMatrices = paddedDimensions._1 // number of rows in the padded kernel matrix
+  private val toeplitzMatrixDimensions = (paddedDimensions._1 - kernelDimensions._1 + 1, paddedDimensions._2 - kernelDimensions._2 + 1)
+  private val doublyBlockedToeplitzDimensions = (toeplitzMatrixDimensions._1 * toeplitzMatrixDimensions._2, paddedDimensions._1 * paddedDimensions._2)
 
   println("outputDimensions: " + outputDimensions)
   println("paddedDimensions: " + paddedDimensions)
@@ -41,7 +41,7 @@ class ConvMatMul(
 
   // https://stackoverflow.com/questions/16798888/2-d-convolution-as-a-matrix-matrix-multiplication
 
-  val paddedInput = Wire(Vec(paddedDimensions._1, Vec(paddedDimensions._2, UInt(w.W))))
+  private val paddedInput = Wire(Vec(paddedDimensions._1, Vec(paddedDimensions._2, UInt(w.W))))
   for (i <- 0 until paddedDimensions._1) {
     for (j <- 0 until paddedDimensions._2) {
       if (i < pads._1 || i >= inputDimensions._1 + pads._1 || j < pads._2 || j >= inputDimensions._2 + pads._2) {

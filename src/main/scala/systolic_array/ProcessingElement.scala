@@ -28,10 +28,10 @@ class ProcessingElement(
     val clear = Input(Bool())
   })
 
-  val aReg = RegInit(0.U(w.W))
-  val bReg = RegInit(0.U(w.W))
-  val cReg = RegInit(0.U(wResult.W))
-  
+  private val aReg = RegInit(0.U(w.W))
+  private val bReg = RegInit(0.U(w.W))
+  private val cReg = RegInit(0.U(wResult.W))
+
   aReg := io.aIn // stagger the inputs
   bReg := io.bIn // stagger the inputs
   cReg := mult(io.aIn, io.bIn, w, wResult, signed) + cReg // MAC operation
