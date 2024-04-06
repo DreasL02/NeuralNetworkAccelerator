@@ -9,8 +9,7 @@ lazy val root = (project in file("."))
     name := "Neural Network Accelerator",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "5.0.0" % "test",
-      //"org.emergent-order" %% "onnx-scala-backends" % "0.14.0"
+      "edu.berkeley.cs" %% "chiseltest" % "5.0.0" % "test"
     ),
     scalacOptions ++= Seq(
       "-language:reflectiveCalls",
@@ -22,4 +21,7 @@ lazy val root = (project in file("."))
     ),
     addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
   )
+
+
+
 

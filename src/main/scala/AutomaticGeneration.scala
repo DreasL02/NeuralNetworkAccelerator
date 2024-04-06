@@ -74,6 +74,8 @@ class AutomaticGeneration(
       throw new Exception("Unknown specified module type (module creation)")
   }
 
+  print("Modules done. Beginning connection logic.")
+
   // Connection Logic (Wiring)
   for (i <- modules.indices) {
     val currentModule = modules(i)
@@ -345,8 +347,8 @@ class AutomaticGeneration(
             throw new Exception("ReLU module cannot be connected to a reshape shape")
           case conInitializer: Initializer4d =>
             reshape.io.shapeChannel <> conInitializer.io.outputChannel
-          case _: Rounder4d =>
-            throw new Exception("Rounder module cannot be connected to a reshape shape")
+          case conRounder: Rounder4d =>
+            reshape.io.shapeChannel <> conRounder.io.resultChannel
           case _: Reshape =>
             throw new Exception("Reshape module cannot be connected to a reshape shape")
           case _: Conv4d =>

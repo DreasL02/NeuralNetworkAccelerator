@@ -49,7 +49,7 @@ class ReshapeSpec extends AnyFreeSpec with ChiselScalatestTester {
   )
 
   "Reshape should reshape correctly" in {
-    test(new Reshape(w = 8, inputDimensions = (2, 2, 4, 4), shapeDimensions = (1, 1, 4, 16))) {
+    test(new Reshape(w = 8, inputDimensions = (2, 2, 4, 4), shapeDimensions = (1, 1, 1, 1), newDimensions = (1, 1, 4, 16))) {
       dut =>
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.resultChannel.ready.poke(true.B)
