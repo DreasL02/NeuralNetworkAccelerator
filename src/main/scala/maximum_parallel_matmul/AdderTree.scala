@@ -18,6 +18,7 @@ class AdderTree(
 
   val numberOfStages = log2Ceil(numberOfInputs) + 1
   val numberOfInputsInt = math.pow(2, numberOfStages - 1).toInt
+
   //println("numberOfStages: " + numberOfStages)
   //println("numberOfInputsInt: " + numberOfInputsInt)
 

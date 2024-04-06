@@ -9,4 +9,5 @@ object Main extends App {
   val pipelineIO = true
 
   emitVerilog(new AutomaticGeneration(lists._2, lists._3, pipelineIO, false, false))
+
 }

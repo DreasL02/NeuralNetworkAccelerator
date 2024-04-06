@@ -16,6 +16,7 @@ class Conv4d(
               pads: (Int, Int) = (0, 0) // the padding to use for the convolution
             )
   extends Module {
+  println("CONV")
 
   assert(inputDimensions._2 == kernelDimensions._2, "The second dimension of the input and kernel tensors must be the same")
 
