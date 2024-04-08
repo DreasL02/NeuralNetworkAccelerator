@@ -25,19 +25,26 @@ class Conv4dMatmul(
     (inputDimensions._4 - kernelDimensions._4 + 2 * pads._2) / strides._2 + 1 // width
   )
 
+  val paddedInputDimensions = (
+    inputDimensions._1,
+    inputDimensions._2,
+    inputDimensions._3 + 2 * pads._1,
+    inputDimensions._4 + 2 * pads._2
+  )
 
   println("inputDimensions: " + inputDimensions)
+  println("paddedInputDimensions: " + paddedInputDimensions)
   println("kernelDimensions: " + kernelDimensions)
   println("outputDimensions: " + outputDimensions)
 
-  val batchsize = inputDimensions._1
-  val inputChannels = inputDimensions._2
+
+  val batchsize = paddedInputDimensions._1
+  val inputChannels = paddedInputDimensions._2
   val kernelSize = kernelDimensions._3
-  val inputHeight = inputDimensions._3
-  val inputWidth = inputDimensions._4
+  val inputHeight = paddedInputDimensions._3
+  val inputWidth = paddedInputDimensions._4
   val outputHeight = outputDimensions._3
   val outputWidth = outputDimensions._4
-  val padding = pads._1
 
   val im2colInputsDimensions = (batchsize, inputChannels * kernelSize * kernelSize, outputHeight * outputWidth)
   println("im2colInputsDimensions: " + im2colInputsDimensions)
@@ -55,6 +62,21 @@ class Conv4dMatmul(
     val debugKernelIm2Col = optional(enableDebuggingIO, Output(Vec(im2colWeightsDimensions._1, Vec(im2colWeightsDimensions._2, UInt(w.W)))))
   })
 
+  val paddedInputs = Wire(Vec(paddedInputDimensions._1, Vec(paddedInputDimensions._2, Vec(paddedInputDimensions._3, Vec(paddedInputDimensions._4, UInt(w.W))))))
+  for (i <- 0 until paddedInputDimensions._1) {
+    for (j <- 0 until paddedInputDimensions._2) {
+      for (k <- 0 until paddedInputDimensions._3) {
+        for (l <- 0 until paddedInputDimensions._4) {
+          if (k < pads._1 || k >= inputDimensions._3 + pads._1 || l < pads._2 || l >= inputDimensions._4 + pads._2) {
+            paddedInputs(i)(j)(k)(l) := 0.U
+          } else {
+            paddedInputs(i)(j)(k)(l) := io.inputChannel.bits(i)(j)(k - pads._1)(l - pads._2)
+          }
+        }
+      }
+    }
+  }
+
   val im2colInputs = Wire(Vec(im2colInputsDimensions._1, Vec(im2colInputsDimensions._2, Vec(im2colInputsDimensions._3, UInt(w.W)))))
 
   // https://github.com/BVLC/caffe/files/813582/A.Simple.and.Efficient.Implementation.of.im2col.in.Convolution.Neural.Networks.pdf
@@ -70,11 +92,7 @@ class Conv4dMatmul(
       val j0 = q % outputWidth + p % kernelSize
       //println("p: " + p + ", q: " + q + ", d0: " + d0 + ", i0: " + i0 + ", j0: " + j0)
 
-      if ((i0 >= padding && i0 <= inputHeight + padding) && (j0 >= padding && j0 <= inputWidth + padding)) {
-        im2colInputs(batch)(p)(q) := io.inputChannel.bits(batch)(d0)(i0 - padding)(j0 - padding)
-      } else {
-        im2colInputs(batch)(p)(q) := 0.U
-      }
+      im2colInputs(batch)(p)(q) := paddedInputs(batch)(d0)(i0)(j0)
     }
   }
 
