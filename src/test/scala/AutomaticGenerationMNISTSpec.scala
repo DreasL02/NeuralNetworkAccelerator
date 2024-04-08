@@ -8,7 +8,7 @@ import onnx.Operators.Parameters
 class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
-  val printConnections = false // set to true to print the connections to the console
+  val printConnections = true // set to true to print the connections to the console
   val filepath = "ONNX Python/json/mnist12.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
@@ -51,7 +51,8 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
 
   for (testNum <- 0 until numberOfInputs) {
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, testNum.toFloat, testNum.toFloat) in {
-      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut =>
+      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+        println("Test " + testNum + " begun")
         var cycleTotal = 0
         for (i <- 0 until 28) {
           for (j <- 0 until 28) {
