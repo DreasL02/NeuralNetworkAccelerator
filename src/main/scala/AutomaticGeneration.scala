@@ -62,7 +62,7 @@ class AutomaticGeneration(
       val reshape = Module(new Reshape(reshapeType))
       reshape
     case convType: ConvType =>
-      val conv = Module(new Conv4d(convType))
+      val conv = Module(new Conv4dMatmul(convType))
       conv
     case maxPoolType: MaxPoolType =>
       val maxPool = Module(new MaxPool4d(maxPoolType))
@@ -110,7 +110,7 @@ class AutomaticGeneration(
             add.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             add.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             add.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             add.io.inputChannel <> conMaxPool.io.resultChannel
@@ -136,7 +136,7 @@ class AutomaticGeneration(
             add.io.biasChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             add.io.biasChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             add.io.biasChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             add.io.biasChannel <> conMaxPool.io.resultChannel
@@ -170,7 +170,7 @@ class AutomaticGeneration(
             matMul.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             matMul.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             matMul.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             matMul.io.inputChannel <> conMaxPool.io.resultChannel
@@ -196,7 +196,7 @@ class AutomaticGeneration(
             matMul.io.weightChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             matMul.io.weightChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             matMul.io.weightChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             matMul.io.weightChannel <> conMaxPool.io.resultChannel
@@ -224,7 +224,7 @@ class AutomaticGeneration(
             relu.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             relu.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             relu.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             relu.io.inputChannel <> conMaxPool.io.resultChannel
@@ -258,7 +258,7 @@ class AutomaticGeneration(
             output.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             output.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             output.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             output.io.inputChannel <> conMaxPool.io.resultChannel
@@ -291,7 +291,7 @@ class AutomaticGeneration(
             rounder.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             rounder.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             rounder.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             rounder.io.inputChannel <> conMaxPool.io.resultChannel
@@ -325,7 +325,7 @@ class AutomaticGeneration(
             reshape.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             reshape.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             reshape.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             reshape.io.inputChannel <> conMaxPool.io.resultChannel
@@ -351,7 +351,7 @@ class AutomaticGeneration(
             reshape.io.shapeChannel <> conRounder.io.resultChannel
           case _: Reshape =>
             throw new Exception("Reshape module cannot be connected to a reshape shape")
-          case _: Conv4d =>
+          case _: Conv4dMatmul =>
             throw new Exception("Conv module cannot be connected to a reshape shape")
           case _: MaxPool4d =>
             throw new Exception("Maxpool module cannot be connected to a reshape shape")
@@ -364,7 +364,7 @@ class AutomaticGeneration(
         }
 
 
-      case conv: Conv4d =>
+      case conv: Conv4dMatmul =>
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
@@ -386,7 +386,7 @@ class AutomaticGeneration(
             conv.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             conv.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             conv.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             conv.io.inputChannel <> conMaxPool.io.resultChannel
@@ -412,7 +412,7 @@ class AutomaticGeneration(
             conv.io.kernelChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             conv.io.kernelChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             conv.io.kernelChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             conv.io.kernelChannel <> conMaxPool.io.resultChannel
@@ -442,7 +442,7 @@ class AutomaticGeneration(
             maxPool.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             maxPool.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             maxPool.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             maxPool.io.inputChannel <> conMaxPool.io.resultChannel
@@ -472,7 +472,7 @@ class AutomaticGeneration(
             broadcaster.io.inputChannel <> conRound.io.resultChannel
           case conReshape: Reshape =>
             broadcaster.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4d =>
+          case conConv: Conv4dMatmul =>
             broadcaster.io.inputChannel <> conConv.io.outputChannel
           case conMaxPool: MaxPool4d =>
             broadcaster.io.inputChannel <> conMaxPool.io.resultChannel

@@ -16,6 +16,8 @@ class Conv4dMatmul(
                     val enableDebuggingIO: Boolean = true
                   ) extends Module {
 
+  def this(convType: onnx.Operators.ConvType) = this(convType.w, convType.wResult, convType.inputDimensions, convType.kernelDimensions, convType.signed, convType.strides, convType.pads, false)
+
   assert(kernelDimensions._3 == kernelDimensions._4, "Only square kernels are supported")
 
   val outputDimensions = (
@@ -41,8 +43,6 @@ class Conv4dMatmul(
   val batchsize = paddedInputDimensions._1
   val inputChannels = paddedInputDimensions._2
   val kernelSize = kernelDimensions._3
-  val inputHeight = paddedInputDimensions._3
-  val inputWidth = paddedInputDimensions._4
   val outputHeight = outputDimensions._3
   val outputWidth = outputDimensions._4
 
