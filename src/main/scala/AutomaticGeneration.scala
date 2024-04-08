@@ -490,22 +490,25 @@ class AutomaticGeneration(
 
     if (printing) println("Connections generated for: " + currentModule)
 
-    if (pipelineIO) {
-      inputs := RegNext(io.inputChannel.bits)
-      inputValid := RegNext(io.inputChannel.valid)
-      io.inputChannel.ready := RegNext(inputReady)
 
-      io.outputChannel.bits := RegNext(outputs)
-      io.outputChannel.valid := RegNext(outputValid)
-      outputReady := RegNext(io.outputChannel.ready)
-    } else {
-      inputs := io.inputChannel.bits
-      inputValid := io.inputChannel.valid
-      io.inputChannel.ready := inputReady
-
-      io.outputChannel.bits := outputs
-      io.outputChannel.valid := outputValid
-      outputReady := io.outputChannel.ready
-    }
   }
+  if (pipelineIO) {
+    inputs := RegNext(io.inputChannel.bits)
+    inputValid := RegNext(io.inputChannel.valid)
+    io.inputChannel.ready := RegNext(inputReady)
+
+    io.outputChannel.bits := RegNext(outputs)
+    io.outputChannel.valid := RegNext(outputValid)
+    outputReady := RegNext(io.outputChannel.ready)
+  } else {
+    inputs := io.inputChannel.bits
+    inputValid := io.inputChannel.valid
+    io.inputChannel.ready := inputReady
+
+    io.outputChannel.bits := outputs
+    io.outputChannel.valid := outputValid
+    outputReady := io.outputChannel.ready
+  }
+
+  if (printing) println("Connections done.")
 }

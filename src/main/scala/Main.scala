@@ -8,6 +8,5 @@ object Main extends App {
 
   val pipelineIO = false
 
-  emitVerilog(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, false))
-
+  emitVerilog(new AutomaticGeneration(lists._2, lists._3, pipelineIO, false, true))
 }
