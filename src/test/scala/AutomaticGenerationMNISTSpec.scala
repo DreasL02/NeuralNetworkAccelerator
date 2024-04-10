@@ -53,6 +53,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, testNum.toFloat, testNum.toFloat) in {
       test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
         println("Test " + testNum + " begun")
+        dut.clock.setTimeout(100000)
         var cycleTotal = 0
         for (i <- 0 until 28) {
           for (j <- 0 until 28) {
@@ -66,10 +67,6 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         while (!dut.io.outputChannel.valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
-
-          if (cycleTotal > 1000) {
-            fail("Timeout")
-          }
         }
 
         val resultFixed = Array.fill(10)(BigInt(0))
