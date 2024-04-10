@@ -68,6 +68,17 @@ class MatMul(
       io.debugCounters.get := VecInit(Seq.fill(3)(0.U(log2Ceil(math.max(numberOfRows, math.max(numberOfColumns, commonDimension))).W)))
       io.debugCycleInputs.get := VecInit(Seq.fill(3)(0.U(wResult.W)))
     }
+  } else if (config == "wsSystolicArray") {
+    val wsSystolicArray = Module(new ws_systolic_array.BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    wsSystolicArray.io.inputChannel <> io.inputChannel
+    wsSystolicArray.io.weightChannel <> io.weightChannel
+    wsSystolicArray.io.resultChannel <> io.resultChannel
+
+    if (enableDebuggingIO) {
+      io.debugInputs.get := wsSystolicArray.io.debugInputs.get
+      io.debugWeights.get := wsSystolicArray.io.debugWeights.get
+      io.debugResults.get := wsSystolicArray.io.debugPartialResults.get
+    }
   }
   else if (config == "OneAtATimeMatrixMultiplication") {
     val oneAtATime = Module(new OneAtATimeMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))

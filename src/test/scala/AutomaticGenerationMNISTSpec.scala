@@ -83,7 +83,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
           println("Test: " + testNum)
           println("Output: " + resultsFloat.mkString(", "))
           println("Output Fixed: " + resultFixed.mkString(", "))
-          println("Expected: " + flatOutput)
+          println("Expected: " + flatOutput.mkString(", "))
           println("Cycles: " + cycleTotal)
           println()
         }

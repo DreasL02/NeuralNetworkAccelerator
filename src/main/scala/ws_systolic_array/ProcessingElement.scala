@@ -6,7 +6,7 @@ import module_utils.SmallModules.mult
 class ProcessingElement(
                          w: Int = 8, // width of the inputs
                          wResult: Int = 32, // width of the result / register
-                         signed: Boolean = true // to determine if signed or unsigned multiplication should be used
+                         signed: Boolean = true, // to determine if signed or unsigned multiplication should be used
                        ) extends Module {
 
   val io = IO(new Bundle {
