@@ -31,7 +31,7 @@ class BroadcasterSpec extends AnyFreeSpec with ChiselScalatestTester {
           for (k <- 0 until test1(1)._3) {
             for (l <- 0 until test1(1)._4) {
               dut.io.resultChannel.bits(i)(j)(k)(l).expect(test1Data(i % test1(0)._1)(j % test1(0)._2)(k % test1(0)._3)(l % test1(0)._4).U)
-              dut.io.resultChannel.bits(i)(j)(k)(l).expect(42.U)
+              dut.io.resultChannel.bits(i)(j)(k)(l).expect(42.U) // to verify that the value is broadcasted
             }
           }
         }

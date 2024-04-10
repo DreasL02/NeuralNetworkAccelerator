@@ -24,23 +24,15 @@ class Rounder(
         if (fixedPoint == 0) {
           io.resultChannel.bits(row)(column) := sign ## io.inputChannel.bits(row)(column)(w - 1, 0)
         } else {
-          //io.output(column)(row) := sign ## (io.input(column)(row) >> fixedPoint.U)(w - 1, 0).asUInt
-
-          // Round to nearest with round up on a tie
           io.resultChannel.bits(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(w - 1, 0).asUInt
         }
 
 
       } else {
         if (fixedPoint == 0) {
-          // No fixed point, just pass through the bottom bits
           io.resultChannel.bits(row)(column) := io.inputChannel.bits(row)(column)
         } else {
-          // Round to nearest with round up on a tie
           io.resultChannel.bits(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
-
-          //If we want to just ceil and only use 1 shift use:
-          //io.output(column)(row) := io.input(column)(row) >> io.fixedPoint
         }
       }
 

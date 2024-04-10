@@ -1,4 +1,3 @@
-
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
@@ -67,7 +66,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         val debugIm2ColInput = dut.io.debugInputIm2Col.get
-        val debugIm2ColKernel = dut.io.debugKernelIm2Col.get
+        val debugIm2ColKernel = dut.io.debugKernel.get
 
         println("Im2Col input")
         for (i <- debugIm2ColInput.indices) {
@@ -180,7 +179,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         val debugIm2ColInput = dut.io.debugInputIm2Col.get
-        val debugIm2ColKernel = dut.io.debugKernelIm2Col.get
+        val debugIm2ColKernel = dut.io.debugKernel.get
 
         println("Im2Col input")
         for (i <- debugIm2ColInput.indices) {
@@ -344,7 +343,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.outputChannel.ready.poke(true.B)
 
         val debugIm2ColInput = dut.io.debugInputIm2Col.get
-        val debugIm2ColKernel = dut.io.debugKernelIm2Col.get
+        val debugIm2ColKernel = dut.io.debugKernel.get
 
         println("Im2Col input")
         for (i <- debugIm2ColInput.indices) {

@@ -5,7 +5,6 @@ import chisel3.util.DecoupledIO
 class Conv4d(
               w: Int = 8,
               wResult: Int = 32,
-
               inputDimensions: (Int, Int, Int, Int) = (4, 4, 4, 4), // the dimensions of the input tensor
               // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
               kernelDimensions: (Int, Int, Int, Int) = (3, 3, 3, 3), // the dimensions of the kernel tensor
@@ -13,10 +12,10 @@ class Conv4d(
 
               signed: Boolean = true, // whether the input and kernel tensors are signed
               strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-              pads: (Int, Int) = (0, 0) // the padding to use for the convolution
+              pads: (Int, Int) = (0, 0), // the padding to use for the convolution
+              print: Boolean = false
             )
   extends Module {
-  println("CONV")
 
   assert(inputDimensions._2 == kernelDimensions._2, "The second dimension of the input and kernel tensors must be the same")
 
@@ -41,14 +40,15 @@ class Conv4d(
   private val numberOfOutputChannels = kernelDimensions._1
   private val numberOfConvolutions = inputDimensions._2
 
-  println("outputDimensions: " + outputDimensions)
-  println("batchSize: " + batchSize)
-  println("numberOfOutputChannels: " + numberOfOutputChannels)
-  println("numberOfConvolutions: " + numberOfConvolutions)
+  if (print) {
+    println("outputDimensions: " + outputDimensions)
+    println("batchSize: " + batchSize)
+    println("numberOfOutputChannels: " + numberOfOutputChannels)
+    println("numberOfConvolutions: " + numberOfConvolutions)
+  }
 
   private val singleChannelConvolutions = VecInit.fill(batchSize, numberOfOutputChannels, numberOfConvolutions)(Module(new SingleChannelConvolution(w, wResult, (inputDimensions._3, inputDimensions._4), (kernelDimensions._3, kernelDimensions._4), signed, strides, pads)).io)
   private val adderTree = VecInit.fill(batchSize, numberOfOutputChannels)(Module(new TensorAdderTree(wResult, numberOfConvolutions, (outputDimensions._3, outputDimensions._4))).io)
-
 
   for (i <- 0 until batchSize) {
     for (j <- 0 until numberOfOutputChannels) {

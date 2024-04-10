@@ -1,7 +1,7 @@
 package maximum_parallel_matmul
 
 import chisel3._
-import chisel3.util.{DecoupledIO, Fill}
+import chisel3.util.{DecoupledIO}
 import module_utils.SmallModules.mult
 
 class ComponentMultiplier(

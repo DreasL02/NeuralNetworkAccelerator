@@ -16,7 +16,6 @@ class MatMul4d(
   assert(dimensionsInput._4 == dimensionsWeight._3, "The fourth dimension of the input and third of the weight matrices must be the same")
 
   def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(matMulType.wOperands, matMulType.wResult, matMulType.operandADimensions, matMulType.operandBDimensions, matMulType.signed, enableDebuggingIO)
-  // https://medium.com/@hunter-j-phillips/a-simple-introduction-to-tensors-c4a8321efffc
 
   private val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsWeight._4)
 
@@ -55,5 +54,5 @@ class MatMul4d(
 
   io.inputChannel.ready := inputReadies.flatten.reduce(_ && _)
   io.weightChannel.ready := weightReadies.flatten.reduce(_ && _)
-  io.outputChannel.valid := outputValids.flatten.reduce(_ && _) //TODO: investigate if this is good in hardware
+  io.outputChannel.valid := outputValids.flatten.reduce(_ && _)
 }

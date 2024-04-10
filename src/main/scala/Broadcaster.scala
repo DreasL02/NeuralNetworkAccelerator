@@ -16,16 +16,17 @@ class Broadcaster(
     val resultChannel = new DecoupledIO(Vec(newDimensions._1, Vec(newDimensions._2, Vec(newDimensions._3, Vec(newDimensions._4, UInt(w.W))))))
   })
 
-  for (i <- 0 until newDimensions._1) {
-    for (j <- 0 until newDimensions._2) {
-      for (k <- 0 until newDimensions._3) {
-        for (l <- 0 until newDimensions._4) {
-          val iInput = i % operandDimensions._1
-          val jInput = j % operandDimensions._2
-          val kInput = k % operandDimensions._3
-          val lInput = l % operandDimensions._4
+  for (newDim1 <- 0 until newDimensions._1) {
+    for (newDim2 <- 0 until newDimensions._2) {
+      for (newDim3 <- 0 until newDimensions._3) {
+        for (newDim4 <- 0 until newDimensions._4) {
+          // indices for the input tensor can be calculated by taking the modulus of the new dimensions
+          val oldDim1 = newDim1 % operandDimensions._1
+          val oldDim2 = newDim2 % operandDimensions._2
+          val oldDim3 = newDim3 % operandDimensions._3
+          val oldDim4 = newDim4 % operandDimensions._4
 
-          io.resultChannel.bits(i)(j)(k)(l) := io.inputChannel.bits(iInput)(jInput)(kInput)(lInput)
+          io.resultChannel.bits(newDim1)(newDim2)(newDim3)(newDim4) := io.inputChannel.bits(oldDim1)(oldDim2)(oldDim3)(oldDim4)
         }
       }
     }

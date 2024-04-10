@@ -7,11 +7,7 @@ class Reshape(
                shapeDimensions: (Int, Int, Int, Int) = (16, 64, 16, 32),
                newDimensions: (Int, Int, Int, Int) = (16, 64, 16, 32),
              ) extends Module {
-  println("RESHAPE")
-  println("inputDimensions: " + inputDimensions)
-  println("newDimensions: " + newDimensions)
-
-  assert(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4 == newDimensions._1 * newDimensions._2 * newDimensions._3 * newDimensions._4)
+  assert(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4 == newDimensions._1 * newDimensions._2 * newDimensions._3 * newDimensions._4, "Total sum of dimensions must be the same")
 
   def this(reshapeType: onnx.Operators.ReshapeType) = this(reshapeType.w, reshapeType.inputDimensions, reshapeType.shapeDimensions, reshapeType.newDimensions)
 

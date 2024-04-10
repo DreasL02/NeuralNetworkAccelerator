@@ -3,6 +3,11 @@ package systolic_array
 import chisel3._
 import chisel3.util.log2Ceil
 
+// Inspired by code by Kazutomo Yoshii:
+// https://github.com/kazutomo/Chisel-MatMul/tree/master (Visited 08-04-2024)
+// and the approach presented at the ECE459 course page by NJIT:
+// http://ecelabs.njit.edu/ece459/lab3.php (Visited 08-04-2024)
+
 class SystolicArray(
                      w: Int = 8, // width of the inputs
                      wResult: Int = 32, // width of the result
@@ -18,15 +23,6 @@ class SystolicArray(
     val clear = Input(Bool()) // clears all registers in the PEs
   })
 
-  // Output stationary systolic array
-
-  // Inspired by code from:
-  // https://github.com/kazutomo/Chisel-MatMul/tree/master
-  // and diagrams from:
-  // http://ecelabs.njit.edu/ece459/lab3.php
-
-
-  // https://stackoverflow.com/questions/33621533/how-to-do-a-vector-of-modules
   private val processingElements = VecInit.fill(numberOfRows, numberOfColumns)(Module(new ProcessingElement(w, wResult, signed)).io)
 
   for (row <- 0 until numberOfRows) {

@@ -4,7 +4,7 @@ import maximum_parallel_matmul.AdderTree
 import org.scalatest.freespec.AnyFreeSpec
 
 class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
-  "maximum_parallel_matmul.AdderTree should sum all the values in the input channel" in {
+  "AdderTree should sum all the values in the input channel" in {
     test(new AdderTree(w = 8, numberOfInputs = 4)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.inputChannel.bits(0).poke(1.U)
@@ -23,7 +23,7 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "maximum_parallel_matmul.AdderTree should sum all the values in the input channel with 3 inputs" in {
+  "AdderTree should sum all the values in the input channel with 3 inputs" in {
     test(new AdderTree(w = 8, numberOfInputs = 3)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.inputChannel.bits(0).poke(1.U)
@@ -41,6 +41,4 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.resultChannel.bits.expect(6.U)
     }
   }
-
-
 }

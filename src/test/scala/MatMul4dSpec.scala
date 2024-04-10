@@ -7,6 +7,7 @@ import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 
 class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
+  val toPrint = false
 
   val inputDimensions = (1, 3, 3, 2)
   val weightDimensions = (1, 3, 2, 4)
@@ -77,14 +78,17 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val cU = convertIntTensorToFixedTensor(c, 0, wResult, signed = true)
 
-  println("A")
-  println(tensorToString(aU))
+  if (toPrint) {
+    println("A")
+    println(tensorToString(aU))
 
-  println("B")
-  println(tensorToString(bU))
+    println("B")
+    println(tensorToString(bU))
 
-  println("C")
-  println(tensorToString(cU))
+    println("C")
+    println(tensorToString(cU))
+  }
+
 
   "4d MatMul" in {
     test(new MatMul4d(w, wResult, inputDimensions, weightDimensions, signed = true, enableDebuggingIO = true)) { dut =>
@@ -133,11 +137,23 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      println("Cycles")
-      println(cycle)
+      for (i <- 0 until outputDimensions._1) {
+        for (j <- 0 until outputDimensions._2) {
+          for (k <- 0 until outputDimensions._3) {
+            for (l <- 0 until outputDimensions._4) {
+              assert(results(i)(j)(k)(l) == cU(i)(j)(k)(l))
+            }
+          }
+        }
+      }
 
-      println("Results")
-      println(tensorToString(results))
+      if (toPrint) {
+        println("Cycles")
+        println(cycle)
+
+        println("Results")
+        println(tensorToString(results))
+      }
     }
   }
 

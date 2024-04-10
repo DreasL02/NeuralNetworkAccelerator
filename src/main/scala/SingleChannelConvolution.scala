@@ -59,7 +59,7 @@ class SingleChannelConvolution(
     }
   }
 
-  // Sum the of the element wise multipliers using adder trees
+  // Sum of the element wise multipliers using adder trees
   private val adderTreesResults = for (x <- 0 until outputDimensions._1) yield {
     for (y <- 0 until outputDimensions._2) yield {
       val adderTree = Module(new AdderTree(wResult, kernelDimensions._1 * kernelDimensions._2))
