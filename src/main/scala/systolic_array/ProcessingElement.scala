@@ -4,10 +4,10 @@ import chisel3._
 import chisel3.util.{Fill, log2Ceil}
 import module_utils.SmallModules.mult
 
-// Inspired by:
-// https://github.com/kazutomo/Chisel-MatMul/tree/master
-// and
-// http://ecelabs.njit.edu/ece459/lab3.php
+// Inspired by code by Kazutomo Yoshii:
+// https://github.com/kazutomo/Chisel-MatMul/tree/master (Visited 08-04-2024)
+// and the approach presented at the ECE459 course page by NJIT:
+// http://ecelabs.njit.edu/ece459/lab3.php (Visited 08-04-2024)
 
 class ProcessingElement(
                          w: Int = 8, // width of the inputs

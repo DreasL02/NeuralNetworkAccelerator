@@ -17,7 +17,6 @@ class BufferedSystolicArray(
                              enableDebuggingIO: Boolean = true
                            ) extends Module {
 
-  // Additional constructor to create a MatMul module from a MatMulType
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
     val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))
@@ -39,12 +38,12 @@ class BufferedSystolicArray(
 
   private val inputsBuffers = for (i <- 0 until numberOfRows) yield { // create array of buffers for inputs
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
-    buffer // return module
+    buffer
   }
 
   private val weightsBuffers = for (i <- 0 until numberOfColumns) yield { // create array of buffers for weights
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
-    buffer // return module
+    buffer
   }
 
   private val systolicArray = Module(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed))
@@ -76,7 +75,7 @@ class BufferedSystolicArray(
   // Connect the result of the systolic array to the output
   io.resultChannel.bits := systolicArray.io.c
 
-  io.resultChannel.valid := doneWithComputation // ready when doneWithComputation is asserted
+  io.resultChannel.valid := doneWithComputation // valid when doneWithComputation is asserted
   io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new inputs when the result channel is ready and valid
   io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new weights when the result channel is ready and valid
 

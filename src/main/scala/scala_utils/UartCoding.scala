@@ -24,7 +24,7 @@ object UartCoding {
   }
 
   def decodeUartBitsToByteArray(bits: Array[BigInt], bufferBitSize: Int = 8): Array[Byte] = {
-    var output = ListBuffer[Byte]()
+    val output = ListBuffer[Byte]()
     var i = 0
 
     while (i < bits.length) {

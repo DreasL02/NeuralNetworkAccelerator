@@ -1,8 +1,7 @@
-import activation_functions.{ReLU, ReLU4d}
+import activation_functions.{ReLU4d}
 import chisel3._
 import chisel3.util.DecoupledIO
 import onnx.Operators._
-import scala_utils.DimensionManipulation.{reverseRows, transpose}
 
 class AutomaticGeneration(
                            listOfNodes: List[Any],

@@ -17,7 +17,7 @@ object SpecToListConverter {
   }
 
   // Reads a spec file (e.g. "scala_utils/data/example_spec_file.json") and converts it to various lists of the ONNX types
-  def convertSpecToLists(specFilePath: String): (Operators.Parameters, List[Any], List[List[Int]]) = {
+  def convertSpecToLists(specFilePath: String, toPrint: Boolean = false): (Operators.Parameters, List[Any], List[List[Int]]) = {
     val source = scala.io.Source.fromFile(specFilePath)
     val spec = try source.mkString finally source.close()
 
@@ -52,7 +52,7 @@ object SpecToListConverter {
       val w = entry("bit_width").num.toInt
       val dimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
-      println("Input: " + index + " " + w + " " + dimensions)
+      if (toPrint) println("Input: " + index + " " + w + " " + dimensions)
       (index, Operators.InputType(w, dimensions), List())
     }).toList
 
@@ -61,7 +61,7 @@ object SpecToListConverter {
       val dimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Output: " + index + " " + w + " " + dimensions + " " + connectionIndex)
+      if (toPrint) println("Output: " + index + " " + w + " " + dimensions + " " + connectionIndex)
       (index, Operators.OutputType(w, dimensions), connectionIndex)
     }).toList
 
@@ -73,7 +73,7 @@ object SpecToListConverter {
       val fixedPoint = entry("fixed_point_result").num.toInt
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandDimensions + " " + fixedPoint + " " + connectionIndex)
+      if (toPrint) println("Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandDimensions + " " + fixedPoint + " " + connectionIndex)
       (index, Operators.RounderType(wOperands, wResult, signed, operandDimensions, fixedPoint), connectionIndex)
     }).toList
 
@@ -87,7 +87,7 @@ object SpecToListConverter {
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Conv: " + index + " " + w + " " + wResult + " " + inputDimensions + " " + kernelDimensions + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
+      if (toPrint) println("Conv: " + index + " " + w + " " + wResult + " " + inputDimensions + " " + kernelDimensions + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
       (index, Operators.ConvType(w, wResult, inputDimensions, kernelDimensions, signed, strides, pads), connectionIndex)
     }).toList
 
@@ -99,7 +99,7 @@ object SpecToListConverter {
       val operandBDimensions = toTuple4(entry("input_dims")(1).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandADimensions + " " + operandBDimensions + " " + connectionIndex)
+      if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandADimensions + " " + operandBDimensions + " " + connectionIndex)
       (index, Operators.MatMulType(wOperands, wResult, signed, operandADimensions, operandBDimensions), connectionIndex)
     }).toList
 
@@ -112,7 +112,7 @@ object SpecToListConverter {
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("MaxPool: " + index + " " + w + " " + inputDimensions + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
+      if (toPrint) println("MaxPool: " + index + " " + w + " " + inputDimensions + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
       (index, Operators.MaxPoolType(w, inputDimensions, signed, kernelShape, strides, pads), connectionIndex)
     }).toList
 
@@ -123,7 +123,7 @@ object SpecToListConverter {
       val outputDimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Reshape: " + index + " " + w + " " + inputDimensions + " " + shapeDimensions + " " + outputDimensions + " " + connectionIndex)
+      if (toPrint) println("Reshape: " + index + " " + w + " " + inputDimensions + " " + shapeDimensions + " " + outputDimensions + " " + connectionIndex)
       (index, Operators.ReshapeType(w, inputDimensions, shapeDimensions, outputDimensions), connectionIndex)
     }).toList
 
@@ -133,7 +133,7 @@ object SpecToListConverter {
       val signed = parameters(0).signed
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Relu: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
+      if (toPrint) println("Relu: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
       (index, Operators.ReluType(w, signed, inputDimensions), connectionIndex)
     }).toList
 
@@ -142,7 +142,7 @@ object SpecToListConverter {
       val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Add: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
+      if (toPrint) println("Add: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
       (index, Operators.AddType(w, inputDimensions), connectionIndex)
     }).toList
 
@@ -152,8 +152,8 @@ object SpecToListConverter {
       val index = entry("index").num.toInt
       val flat_data = entry("data").arr.map(_.num.toBigInt).toArray
       val data = flat_data.grouped(dimensions._1 * dimensions._2 * dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._2 * dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._4).toArray))).head
-      println("Initializer: " + index + " " + w + " " + dimensions)
-      print(tensorToString(data))
+      if (toPrint) println("Initializer: " + index + " " + w + " " + dimensions)
+      if (toPrint) print(tensorToString(data))
       (index, Operators.InitializerType(w, dimensions, data), List())
     }).toList
 
@@ -163,7 +163,7 @@ object SpecToListConverter {
       val outputDimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      println("Broadcaster: " + index + " " + w + " " + inputDimensions + " " + outputDimensions + " " + connectionIndex)
+      if (toPrint) println("Broadcaster: " + index + " " + w + " " + inputDimensions + " " + outputDimensions + " " + connectionIndex)
       (index, Operators.BroadcasterType(w, inputDimensions, outputDimensions), connectionIndex)
     }).toList
 

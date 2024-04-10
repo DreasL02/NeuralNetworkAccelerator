@@ -4,6 +4,7 @@ import FixedPointConversion._
 
 object MatrixUtils {
   def calculateMatrixMultiplication(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
+    // Golden model for matrix multiplication implemented as per the algorithm described at
     //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
     val n = m1.length
     val m = m1(0).length
@@ -22,6 +23,7 @@ object MatrixUtils {
   }
 
   def calculateMatrixMultiplication(m1: Array[Array[BigInt]], m2: Array[Array[BigInt]]): Array[Array[BigInt]] = {
+    // Golden model for matrix multiplication implemented as per the algorithm described at
     //https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
     val n = m1.length
     val m = m1(0).length
@@ -180,19 +182,5 @@ object MatrixUtils {
     println("ReLU:")
     print(matrixToString(mre))
     1.0f
-  }
-
-  def calculateMACResult(inputsFloat: Array[Array[Float]], weightsFloat: Array[Array[Float]], biasesFloat: Array[Array[Float]], fixedPoint: Int, w: Int, signed: Boolean): Array[Array[Float]] = {
-    val inputsFixed = FixedPointConversion.convertFloatMatrixToFixedMatrix(inputsFloat, fixedPoint, w, signed)
-    val weightsFixed = convertFloatMatrixToFixedMatrix(weightsFloat, fixedPoint, w, signed)
-    val biasesFixed = convertFloatMatrixToFixedMatrix(biasesFloat, fixedPoint, w, signed)
-
-    val inputsFloatAgain = convertFixedMatrixToFloatMatrix(inputsFixed, fixedPoint, w, signed)
-    val weightsFloatAgain = convertFixedMatrixToFloatMatrix(weightsFixed, fixedPoint, w, signed)
-    val biasesFloatAgain = convertFixedMatrixToFloatMatrix(biasesFixed, fixedPoint, w, signed)
-
-    val multiplicationResultFloat = calculateMatrixMultiplication(inputsFloat, weightsFloat)
-    val additionResultFloat = calculateMatrixAddition(multiplicationResultFloat, biasesFloat)
-    additionResultFloat
   }
 }

@@ -6,7 +6,6 @@ class OutputModule(
                     val dimensions: (Int, Int, Int, Int),
                   ) extends Module {
 
-  def this(outputType: onnx.Operators.OutputType) = this(outputType.w, outputType.dimensions)
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(w.W)))))))

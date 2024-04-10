@@ -1,7 +1,7 @@
 package activation_functions
 
 import chisel3._
-import chisel3.util.{Decoupled, DecoupledIO}
+import chisel3.util.{DecoupledIO}
 
 class ReLU4d(
               w: Int = 8,

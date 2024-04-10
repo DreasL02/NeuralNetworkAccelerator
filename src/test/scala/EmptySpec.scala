@@ -2,7 +2,6 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class EmptySpec extends AnyFreeSpec with ChiselScalatestTester {
   val filepath = "ONNX Python/json/mnist12.json"
