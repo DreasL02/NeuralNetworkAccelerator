@@ -7,10 +7,10 @@ from onnx import load, numpy_helper
 
 # -------------------------------------------- Configuration --------------------------------------------
 
-# model_path = "models/sinus_float_model_epoch_1000.onnx"
-model_path = "models/mnist-12.onnx"
+model_path = "models/sinus_float_model_epoch_1000.onnx"
+# model_path = "models/mnist-12.onnx"
 # model_path = "models/tinyyolov2-7.onnx"
-export_path = "json/mnist12.json"
+export_path = "json/sine.json"
 
 bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*2
@@ -66,21 +66,21 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
     return scaledToFixed
 
 
-def promote_dims_to_4d(dims):
+def ensure_dims_are_4d(dims):
     # replace all 0, none or negative values with 1
     dims = [1 if (x is None or x <= 0) else x for x in dims]
     if len(dims) > 4:
-        raise Exception("Dimensions with more than 4 dimensions not supported")
+        raise Exception("Graphs with more than 4 dimensions not supported")
     while len(dims) < 4:
         dims.insert(0, 1)
     return dims
 
 
-def shape_to_dims(shape):
-    dims = []
+def shape_to_list(shape):
+    a = []
     for i in shape.dim:
-        dims.append(i.dim_value)
-    return dims
+        a.append(i.dim_value)
+    return a
 
 
 def demote_dimensions(dim_array):
@@ -102,19 +102,20 @@ graph = {}
 
 index = 0
 
+if len(onnx_model.graph.input) > 1:
+    raise Exception("Models with multiple inputs are not supported")
 for input in onnx_model.graph.input:
     graph[input.name] = {
         "type": "input",
         "name": input.name,
         "input": "?",
         "output": input.name,
-        "dims": promote_dims_to_4d(shape_to_dims(input.type.tensor_type.shape)),
+        "shape": ensure_dims_are_4d(shape_to_list(input.type.tensor_type.shape)),
         "op_type": "Input",
         "attributes": [],
         "extra": [],
         "index": index
     }
-
     index += 1
 
 for initializer in onnx_model.graph.initializer:
@@ -123,7 +124,7 @@ for initializer in onnx_model.graph.initializer:
         "name": initializer.name,
         "input": "?",
         "output": initializer.name,
-        "dims": promote_dims_to_4d(initializer.dims),
+        "shape": ensure_dims_are_4d(initializer.dims),
         "op_type": "Initializer",
         "attributes": [numpy_helper.to_array(initializer)],
         "extra": [],
@@ -143,8 +144,8 @@ for node in onnx_model.graph.node:
         "name": node.name,
         "input": node.input,
         "output": node.output,
-        # temporary dimension, actual dims are calculated in the later step
-        "dims": [0, 0, 0, 0],
+        # temporary shape, actual shape are calculated in the later step
+        "shape": [0, 0, 0, 0],
         "op_type": node.op_type,
         "attributes": attributes,
         "extra": [],
@@ -333,8 +334,8 @@ for stage in graph:
                 "name": name,
                 "input": [demote_dimensions(rounder_input)],
                 "output": [name],
-                # temporary dimension, actual dims are calculated in the later step
-                "dims": [0, 0, 0, 0],
+                # temporary shape, actual shape are calculated in the later step
+                "shape": [0, 0, 0, 0],
                 "op_type": "Rounder",
                 "index": index,
                 "bit_width_operands": bit_width_input,
@@ -357,36 +358,36 @@ for rounder in rounders:
 
 # -------------------------------------------- Introduce rounders end --------------------------------------------
 # pprint.pprint(graph)
-# -------------------------------------------- Calculate dimensions --------------------------------------------
+# -------------------------------------------- Calculate shapes  --------------------------------------------
 broadcasters = []
-# Calculate the input dimensions for each stage and store them in the graph dictionary
+# Calculate the shapes for each stage and store them in the graph dictionary
 
 
-def find_dimension(stage_name):
+def find_shape(stage_name):
     global index
-    # if the dimensions are already calculated, return them
-    if graph[stage_name]["dims"] != [0, 0, 0, 0]:
-        if graph[stage_name]["dims"].__len__() != 4:
+    # if the shapes are already calculated, return them
+    if graph[stage_name]["shape"] != [0, 0, 0, 0]:
+        if graph[stage_name]["shape"].__len__() != 4:
             raise Exception("Only 4d tensors are supported")
-        return list(graph[stage_name]["dims"])
+        return list(graph[stage_name]["shape"])
 
     elif graph[stage_name]["op_type"] == "Constant":
         for attribute in graph[stage_name]["attributes"]:
             if attribute.name == "value":
-                if attribute.t.dims == []:  # some times the dims are seemingly empty, in that case we treat it as a 1d tensor
-                    new_dims = [1, 1, 1, attribute.t.float_data.__len__()]
+                if attribute.t.shape == []:  # some times the shape are seemingly empty, in that case we treat it as a 1d tensor
+                    new_shape = [1, 1, 1, attribute.t.float_data.__len__()]
                 else:
-                    new_dims = promote_dims_to_4d(attribute.t.dims)
+                    new_shape = ensure_dims_are_4d(attribute.t.dims)
 
     elif graph[stage_name]["op_type"] == "MatMul":
         # a x b x n x m * a x b x m x p = a x b x n x p
-        input1 = find_dimension(graph[stage_name]["input"][0])
-        input2 = find_dimension(graph[stage_name]["input"][1])
+        input1 = find_shape(graph[stage_name]["input"][0])
+        input2 = find_shape(graph[stage_name]["input"][1])
         a = input1[0]
         b = input1[1]
         n = input1[2]
         p = input2[3]
-        new_dims = [a, b, n, p]
+        new_shape = [a, b, n, p]
 
     elif graph[stage_name]["op_type"] == "Conv":
         # Input 1: a x b x c x d (a: batch size, b: number of input channels, c: height, d: width)
@@ -396,8 +397,8 @@ def find_dimension(stage_name):
         # Output: a x e x h x i (h: height, i: width)
         # h = (c - f + 2*padding[0]) / strides[0] + 1
         # i = (d - g + 2*padding[1]) / strides[1] + 1
-        input1 = find_dimension(graph[stage_name]["input"][0])
-        input2 = find_dimension(graph[stage_name]["input"][1])
+        input1 = find_shape(graph[stage_name]["input"][0])
+        input2 = find_shape(graph[stage_name]["input"][1])
 
         # find padding, strides
         padding = [0, 0]
@@ -455,7 +456,7 @@ def find_dimension(stage_name):
         g = input2[3]
         h = floor((c - f + 2*padding[0]) / strides[0] + 1)
         i = floor((d - g + 2*padding[1]) / strides[1] + 1)
-        new_dims = [a, e, h, i]
+        new_shape = [a, e, h, i]
 
     elif graph[stage_name]["op_type"] == "MaxPool":
         # Input: a x b x c x d
@@ -466,7 +467,7 @@ def find_dimension(stage_name):
         # e = (c - kernel_shape[0] + 2*pads[0]) / strides[0] + 1
         # f = (d - kernel_shape[1] + 2*pads[1]) / strides[1] + 1
 
-        input = find_dimension(graph[stage_name]["input"][0])
+        input = find_shape(graph[stage_name]["input"][0])
 
         # find kernel_shape, padding, strides
         kernel_shape = [1, 1]
@@ -533,14 +534,14 @@ def find_dimension(stage_name):
         e = floor((c - kernel_shape[0] + 2*padding[0]) / strides[0] + 1)
         f = floor((d - kernel_shape[1] + 2*padding[1]) / strides[1] + 1)
 
-        new_dims = [a, b, e, f]
+        new_shape = [a, b, e, f]
 
     elif graph[stage_name]["op_type"] == "Reshape":
         # from ONNX docs:
         # At most one dimension of the new shape can be -1.
         # In this case, the value is inferred from the size of the tensor and the remaining dimensions.
         # A dimension could also be 0, in which case the actual dimension value is unchanged (i.e. taken from the input tensor).
-        input = find_dimension(graph[stage_name]["input"][0])
+        input = find_shape(graph[stage_name]["input"][0])
 
         # find desired shape from attributes
         shape = []
@@ -569,24 +570,24 @@ def find_dimension(stage_name):
             raise Exception(
                 "Reshape with more than 4 dimensions not supported")
 
-        new_dims = []
+        new_shape = []
         for i in range(shape.__len__()):
             if shape[i] == 0:
-                new_dims.append(input[i])
+                new_shape.append(input[i])
             elif shape[i] == -1:
-                new_dims.append(int(np.prod(input) / np.prod(shape)))
+                new_shape.append(int(np.prod(input) / np.prod(shape)))
             else:
-                new_dims.append(shape[i])
+                new_shape.append(shape[i])
 
-        new_dims = promote_dims_to_4d(new_dims)  # ensure 4d tensor
+        new_shape = ensure_dims_are_4d(new_shape)  # ensure 4d tensor
 
     elif graph[stage_name]["op_type"] in broadcast_operations:
-        # The dimensions of the two inputs may not match, in which case a broadcaster is added
-        # to match the dimensions of the two inputs.
+        # The shape of the two inputs may not match, in which case a broadcaster is added
+        # to match the shape of the two inputs.
         # It is assumed that input1 is the larger tensor and input2 is the smaller or equal tensor
         # TODO: remove this assumption
-        input1 = find_dimension(graph[stage_name]["input"][0])
-        input2 = find_dimension(graph[stage_name]["input"][1])
+        input1 = find_shape(graph[stage_name]["input"][0])
+        input2 = find_shape(graph[stage_name]["input"][1])
 
         # Rules for broadcasting (https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md). One must be true
         # 1. The tensors all have exactly the same shape.
@@ -618,20 +619,20 @@ def find_dimension(stage_name):
             # add broadcaster
             name = "broadcaster_" + \
                 graph[stage_name]["input"][1] + "_to_" + \
-                graph[stage_name]["input"][0] + "_dimensions"
+                graph[stage_name]["input"][0] + "_shape"
             broadcaster = {
                 "type": "broadcaster",
                 "name": name,
                 "input": [demote_dimensions(graph[stage_name]["input"][1])],
                 "output": [name],
-                "dims": input1,
+                "shape": input1,
                 "op_type": "Broadcaster",
                 "index": index,
                 "bit_width_operands": graph[stage_name]["bit_width_operands"][1],
                 "bit_width_result": graph[stage_name]["bit_width_operands"][1],
                 "fixed_point_operands": graph[stage_name]["fixed_point_operands"][1],
                 "fixed_point_result": graph[stage_name]["fixed_point_operands"][1],
-                "input_dims": [input2],
+                "input_shape": [input2],
             }
             index += 1
             # broadcaster is added to the graph later to avoid changing the graph while iterating over it
@@ -639,29 +640,31 @@ def find_dimension(stage_name):
             graph[stage_name]["input"][1] = demote_dimensions(
                 broadcaster["output"])
 
-        new_dims = input1
+        new_shape = input1
 
     else:
-        new_dims = find_dimension(graph[stage_name]["input"][0])
+        new_shape = find_shape(graph[stage_name]["input"][0])
 
-    # store the newly calculated dimensions in the graph dictionary
-    graph[stage_name]["dims"] = new_dims
-    return new_dims
+    # store the newly calculated shape in the graph dictionary
+    graph[stage_name]["shape"] = new_shape
+    return new_shape
 
 
 for stage in graph:
-    find_dimension(stage)
+    # calculate the shape for all stages to get all broadcasters in the broadcasters list
+    find_shape(stage)
 
 for broadcaster in broadcasters:
+    # add the broadcasters to the graph dictionary
     graph[broadcaster["name"]] = broadcaster
 
 for stage in graph:
     if graph[stage]["op_type"] in static_stages:
         continue  # skip stages that don't have defined inputs
     else:
-        graph[stage]["input_dims"] = []
+        graph[stage]["input_shape"] = []
         for input in graph[stage]["input"]:
-            graph[stage]["input_dims"].append(find_dimension(input))
+            graph[stage]["input_shape"].append(find_shape(input))
 
 
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
@@ -689,7 +692,7 @@ output_stage = {
     "name": output_name + "_output",
     "input": [output_name],
     "output": "?",
-    "dims": promote_dims_to_4d(shape_to_dims(onnx_model.graph.output[0].type.tensor_type.shape)),
+    "shape": ensure_dims_are_4d(shape_to_list(onnx_model.graph.output[0].type.tensor_type.shape)),
     "op_type": "Output",
     "index": index,
     "bit_width_operands": output_producer["bit_width_result"],
@@ -736,7 +739,7 @@ for stage in graph:
         chisel_dict["Input"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
-            "dims": current_stage["dims"],
+            "shape": current_stage["shape"],
         })
 
     elif current_stage["op_type"] == "Output":
@@ -744,7 +747,7 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_operands"],
             "connections": current_stage["connections"],
-            "dims": current_stage["dims"]
+            "shape": current_stage["shape"]
         })
 
     elif current_stage["op_type"] in ["Rounder"]:
@@ -755,7 +758,7 @@ for stage in graph:
             "fixed_point_operands": current_stage["fixed_point_operands"],
             "fixed_point_result": current_stage["fixed_point_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"]
+            "input_shape": current_stage["input_shape"]
         })
 
     elif current_stage["op_type"] == "MatMul":
@@ -764,7 +767,7 @@ for stage in graph:
             "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"]
+            "input_shape": current_stage["input_shape"]
         })
 
     elif current_stage["op_type"] in ["Add", "Relu"]:
@@ -772,7 +775,7 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"],
+            "input_shape": current_stage["input_shape"],
         })
 
     elif current_stage["op_type"] == "Conv":
@@ -781,7 +784,7 @@ for stage in graph:
             "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"],
+            "input_shape": current_stage["input_shape"],
             "padding": current_stage["extra"][0],
             "strides": current_stage["extra"][1],
         })
@@ -791,7 +794,7 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"],
+            "input_shape": current_stage["input_shape"],
             "padding": current_stage["extra"][0],
             "strides": current_stage["extra"][1],
             "kernel_shape": current_stage["extra"][2],
@@ -802,8 +805,8 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"],
-            "dims": current_stage["dims"]
+            "input_shape": current_stage["input_shape"],
+            "shape": current_stage["shape"]
         })
 
     elif current_stage["op_type"] == "Constant":
@@ -817,7 +820,7 @@ for stage in graph:
         chisel_dict["Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
-            "dims": current_stage["dims"],
+            "shape": current_stage["shape"],
             "data": raw_data
         })
 
@@ -829,7 +832,7 @@ for stage in graph:
         chisel_dict["Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
-            "dims": current_stage["dims"],
+            "shape": current_stage["shape"],
             "data": raw_data
         })
 
@@ -838,8 +841,8 @@ for stage in graph:
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_dims": current_stage["input_dims"],
-            "dims": current_stage["dims"]
+            "input_shape": current_stage["input_shape"],
+            "shape": current_stage["shape"]
         })
 
     else:

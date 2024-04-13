@@ -3,7 +3,7 @@
     {
       "index": 0,
       "bit_width": 8,
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -18,7 +18,7 @@
       "connections": [
         14
       ],
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -36,7 +36,7 @@
       "connections": [
         9
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -54,7 +54,7 @@
       "connections": [
         12
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -74,7 +74,7 @@
         0,
         5
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -97,7 +97,7 @@
         15,
         4
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -120,7 +120,7 @@
         16,
         6
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -145,7 +145,7 @@
       "connections": [
         8
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -160,7 +160,7 @@
       "connections": [
         11
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -178,7 +178,7 @@
         7,
         3
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -200,7 +200,7 @@
         10,
         2
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -222,7 +222,7 @@
         13,
         1
       ],
-      "input_dims": [
+      "input_shape": [
         [
           1,
           1,
@@ -242,7 +242,7 @@
     {
       "index": 1,
       "bit_width": 16,
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -255,7 +255,7 @@
     {
       "index": 2,
       "bit_width": 16,
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -283,7 +283,7 @@
     {
       "index": 3,
       "bit_width": 16,
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -311,7 +311,7 @@
     {
       "index": 4,
       "bit_width": 8,
-      "dims": [
+      "shape": [
         1,
         1,
         16,
@@ -579,7 +579,7 @@
     {
       "index": 5,
       "bit_width": 8,
-      "dims": [
+      "shape": [
         1,
         1,
         1,
@@ -607,7 +607,7 @@
     {
       "index": 6,
       "bit_width": 8,
-      "dims": [
+      "shape": [
         1,
         1,
         16,

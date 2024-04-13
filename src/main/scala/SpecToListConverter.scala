@@ -6,12 +6,12 @@ import scala.math.BigDecimal.double2bigDecimal
 object SpecToListConverter {
   // https://stackoverflow.com/a/11305313
 
-  def toTuple2(array: Array[Int]): (Int, Int) = {
+  private def toTuple2(array: Array[Int]): (Int, Int) = {
     require(array.length == 2)
     (array(0), array(1))
   }
 
-  def toTuple4(array: Array[Int]): (Int, Int, Int, Int) = {
+  private def toTuple4(array: Array[Int]): (Int, Int, Int, Int) = {
     require(array.length == 4)
     (array(0), array(1), array(2), array(3))
   }
@@ -50,121 +50,124 @@ object SpecToListConverter {
 
     val inputList = inputs.map(entry => {
       val w = entry("bit_width").num.toInt
-      val dimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
+      val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
-      if (toPrint) println("Input: " + index + " " + w + " " + dimensions)
-      (index, Operators.InputType(w, dimensions), List())
+      if (toPrint) println("Input: " + index + " " + w + " " + shape)
+      (index, Operators.InputType(w, shape), List())
     }).toList
 
     val outputList = outputs.map(entry => {
       val w = entry("bit_width").num.toInt
-      val dimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
+      val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Output: " + index + " " + w + " " + dimensions + " " + connectionIndex)
-      (index, Operators.OutputType(w, dimensions), connectionIndex)
+      if (toPrint) println("Output: " + index + " " + w + " " + shape + " " + connectionIndex)
+      (index, Operators.OutputType(w, shape), connectionIndex)
     }).toList
 
     val rounderList = rounders.map(entry => {
       val wOperands = entry("bit_width_operands").num.toInt
       val wResult = entry("bit_width_result").num.toInt
       val signed = parameters(0).signed
-      val operandDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
+      val operandShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
       val fixedPoint = entry("fixed_point_result").num.toInt
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandDimensions + " " + fixedPoint + " " + connectionIndex)
-      (index, Operators.RounderType(wOperands, wResult, signed, operandDimensions, fixedPoint), connectionIndex)
+      if (toPrint) println("Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandShape + " " + fixedPoint + " " + connectionIndex)
+      (index, Operators.RounderType(wOperands, wResult, signed, operandShape, fixedPoint), connectionIndex)
     }).toList
 
     val convList = convs.map(entry => {
       val w = entry("bit_width_operands").num.toInt
       val wResult = entry("bit_width_result").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
-      val kernelDimensions = toTuple4(entry("input_dims")(1).arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
+      val kernelShape = toTuple4(entry("input_shape")(1).arr.map(_.num.toInt).toArray)
       val signed = parameters(0).signed
       val strides = toTuple2(entry("strides").arr.map(_.num.toInt).toArray)
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Conv: " + index + " " + w + " " + wResult + " " + inputDimensions + " " + kernelDimensions + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
-      (index, Operators.ConvType(w, wResult, inputDimensions, kernelDimensions, signed, strides, pads), connectionIndex)
+      if (toPrint) println("Conv: " + index + " " + w + " " + wResult + " " + inputShape + " " + kernelShape + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
+      (index, Operators.ConvType(w, wResult, inputShape, kernelShape, signed, strides, pads), connectionIndex)
     }).toList
 
     val matmulList = matmuls.map(entry => {
       val wOperands = entry("bit_width_operands").num.toInt
       val wResult = entry("bit_width_result").num.toInt
       val signed = parameters(0).signed
-      val operandADimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
-      val operandBDimensions = toTuple4(entry("input_dims")(1).arr.map(_.num.toInt).toArray)
+      val operandAShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
+      val operandBShape = toTuple4(entry("input_shape")(1).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandADimensions + " " + operandBDimensions + " " + connectionIndex)
-      (index, Operators.MatMulType(wOperands, wResult, signed, operandADimensions, operandBDimensions), connectionIndex)
+      if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandAShape + " " + operandBShape + " " + connectionIndex)
+      (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape), connectionIndex)
     }).toList
 
     val maxPoolList = maxPools.map(entry => {
       val w = entry("bit_width").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
       val kernelShape = toTuple2(entry("kernel_shape").arr.map(_.num.toInt).toArray)
       val signed = parameters(0).signed
       val strides = toTuple2(entry("strides").arr.map(_.num.toInt).toArray)
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("MaxPool: " + index + " " + w + " " + inputDimensions + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
-      (index, Operators.MaxPoolType(w, inputDimensions, signed, kernelShape, strides, pads), connectionIndex)
+      if (toPrint) println("MaxPool: " + index + " " + w + " " + inputShape + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
+      (index, Operators.MaxPoolType(w, inputShape, signed, kernelShape, strides, pads), connectionIndex)
     }).toList
 
     val reshapeList = reshapes.map(entry => {
       val w = entry("bit_width").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
-      val shapeDimensions = toTuple4(entry("input_dims")(1).arr.map(_.num.toInt).toArray)
-      val outputDimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
+      val shapeShape = toTuple4(entry("input_shape")(1).arr.map(_.num.toInt).toArray)
+      val outputShape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Reshape: " + index + " " + w + " " + inputDimensions + " " + shapeDimensions + " " + outputDimensions + " " + connectionIndex)
-      (index, Operators.ReshapeType(w, inputDimensions, shapeDimensions, outputDimensions), connectionIndex)
+      if (toPrint) println("Reshape: " + index + " " + w + " " + inputShape + " " + shapeShape + " " + outputShape + " " + connectionIndex)
+      (index, Operators.ReshapeType(w, inputShape, shapeShape, outputShape), connectionIndex)
     }).toList
 
     val reluList = relus.map(entry => {
       val w = entry("bit_width").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
       val signed = parameters(0).signed
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Relu: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
-      (index, Operators.ReluType(w, signed, inputDimensions), connectionIndex)
+      if (toPrint) println("Relu: " + index + " " + w + " " + inputShape + " " + connectionIndex)
+      (index, Operators.ReluType(w, signed, inputShape), connectionIndex)
     }).toList
 
     val addList = adds.map(entry => {
       val w = entry("bit_width").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Add: " + index + " " + w + " " + inputDimensions + " " + connectionIndex)
-      (index, Operators.AddType(w, inputDimensions), connectionIndex)
+      if (toPrint) println("Add: " + index + " " + w + " " + inputShape + " " + connectionIndex)
+      (index, Operators.AddType(w, inputShape), connectionIndex)
     }).toList
 
     val initializerList = initializers.map(entry => {
       val w = entry("bit_width").num.toInt
-      val dimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
+      val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val flat_data = entry("data").arr.map(_.num.toBigInt).toArray
-      val data = flat_data.grouped(dimensions._1 * dimensions._2 * dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._2 * dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._3 * dimensions._4).toArray.map(_.grouped(dimensions._4).toArray))).head
-      if (toPrint) println("Initializer: " + index + " " + w + " " + dimensions)
+      val data = flat_data.grouped(shape._1 * shape._2 * shape._3 * shape._4).toArray.map(
+        _.grouped(shape._2 * shape._3 * shape._4).toArray.map(
+          _.grouped(shape._3 * shape._4).toArray.map(
+            _.grouped(shape._4).toArray))).head
+      if (toPrint) println("Initializer: " + index + " " + w + " " + shape)
       if (toPrint) print(tensorToString(data))
-      (index, Operators.InitializerType(w, dimensions, data), List())
+      (index, Operators.InitializerType(w, shape, data), List())
     }).toList
 
     val broadcasterList = broadcasters.map(entry => {
       val w = entry("bit_width").num.toInt
-      val inputDimensions = toTuple4(entry("input_dims")(0).arr.map(_.num.toInt).toArray)
-      val outputDimensions = toTuple4(entry("dims").arr.map(_.num.toInt).toArray)
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
+      val outputShape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("Broadcaster: " + index + " " + w + " " + inputDimensions + " " + outputDimensions + " " + connectionIndex)
-      (index, Operators.BroadcasterType(w, inputDimensions, outputDimensions), connectionIndex)
+      if (toPrint) println("Broadcaster: " + index + " " + w + " " + inputShape + " " + outputShape + " " + connectionIndex)
+      (index, Operators.BroadcasterType(w, inputShape, outputShape), connectionIndex)
     }).toList
 
     // only one input and one output is supported
