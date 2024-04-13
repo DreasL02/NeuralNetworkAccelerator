@@ -7,7 +7,23 @@ model_name = "models/mnist-12.onnx"
 sess = rt.InferenceSession(
     model_name, providers=rt.get_available_providers())
 
-test_image = numpy.random.rand(1, 1, 28, 28).astype(numpy.float32)
+
+
+test_image = []
+with open("two.txt", "r") as f:
+	for line in f:
+		row = map(lambda c : 0.0 if c == ' ' else 1.0, line[0:28])
+		test_image.append(list(row))
+
+#test_image = numpy.random.rand(1, 1, 28, 28).astype(numpy.float32)
+
+# convert to numpy array of dims 1, 1, 28 28
+test_image = np.array(test_image).astype(np.float32)
+test_image = test_image.reshape(1, 1, 28, 28)
+
+
+
+
 
 # print(test_image)
 flat = test_image.flatten()

@@ -10,7 +10,6 @@ class ShiftedOutputBuffer(
   val io = IO(new Bundle {
     val data = Input(UInt(w.W))
     val output = Output(Vec(dimension, UInt(w.W)))
-    val filled = Output(Bool())
   })
 
   private val buffer = RegInit(VecInit(Seq.fill(dimension + shift)(0.U(w.W))))
@@ -21,6 +20,8 @@ class ShiftedOutputBuffer(
     buffer(i) := buffer(i + 1)
   }
 
-  
-  io.output := buffer
+  buffer(lastIndex) := io.data
+
+  // output all non shifted elements
+  io.output := buffer.slice(shift, dimension + shift)
 }
