@@ -1,16 +1,15 @@
 
 import chisel3._
 import chiseltest._
+import onnx.Operators.Parameters
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
-import onnx.Operators.Parameters
-import TestingUtils.Comparison
 
-class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTester {
+class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/smaller_mnist.json"
+  val filepath = "ONNX Python/json/uciml_8x8_digits.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1
@@ -48,7 +47,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         println("Test " + testNum + " begun")
 
         // Read flat data from ONNX Python/input.txt
-        val inputFileName = "ONNX Python/numbers_28x28/input_%d.txt".format(testNum)
+        val inputFileName = "ONNX Python/numbers_8x8/input_%d.txt".format(testNum)
         println(inputFileName)
         val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
