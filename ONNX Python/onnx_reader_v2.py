@@ -10,11 +10,12 @@ from onnx import load, numpy_helper
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/mnist-12.onnx"
 model_path = "models/smaller_mnist_1.onnx"
+# model_path = "models/bob.onnx"
 export_path = "json/smaller_mnist.json"
 
-bit_width_multiplication = 12
+bit_width_multiplication = 8
 bit_width_base = bit_width_multiplication*4
-fixed_point_multiplication = 6
+fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned
 
@@ -93,8 +94,7 @@ def demote_dimensions(dim_array):
 with open(model_path, "rb") as model_file:
     onnx_model = load(model_file)
 
-# pprint.pprint(onnx_model.graph)
-
+pprint.pprint(onnx_model.graph)
 # -------------------------------------------- Graph creation --------------------------------------------
 # Create a dictionary containing all the stages in the model with all the necessary information and with a unique index
 
