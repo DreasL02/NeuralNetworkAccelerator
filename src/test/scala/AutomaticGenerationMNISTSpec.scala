@@ -48,7 +48,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         println("Test " + testNum + " begun")
 
         // Read flat data from ONNX Python/input.txt
-        val inputFileName = "ONNX Python/numbers_28x28/input_%d.txt".format(testNum)
+        val inputFileName = "ONNX Python/digits_28x28/%d.txt".format(testNum)
         println(inputFileName)
         val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))

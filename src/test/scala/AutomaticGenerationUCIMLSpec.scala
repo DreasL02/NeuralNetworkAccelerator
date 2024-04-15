@@ -9,7 +9,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/uciml_8x8_digits.json"
+  val filepath = "ONNX Python/json/8x8.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1
@@ -23,6 +23,8 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val threshold = 0.25f
   val numberOfInputs = 10
   val pipelineIO = false
+
+  val imageWidth = 8
 
   // Print the lists
   if (printToConsole) {
@@ -47,16 +49,16 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         println("Test " + testNum + " begun")
 
         // Read flat data from ONNX Python/input.txt
-        val inputFileName = "ONNX Python/numbers_8x8/input_%d.txt".format(testNum)
+        val inputFileName = "ONNX Python/digits_8x8/%d.txt".format(testNum)
         println(inputFileName)
         val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
 
         //Group to 28x28
-        val groupedData = Array.fill(28, 28)(BigInt(0))
-        for (i <- 0 until 28) {
-          for (j <- 0 until 28) {
-            groupedData(i)(j) = fixedFlatData(i * 28 + j)
+        val groupedData = Array.fill(imageWidth, imageWidth)(BigInt(0))
+        for (i <- 0 until imageWidth) {
+          for (j <- 0 until imageWidth) {
+            groupedData(i)(j) = fixedFlatData(i * imageWidth + j)
           }
         }
 
@@ -64,8 +66,8 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         //val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
 
         var cycleTotal = 0
-        for (i <- 0 until 28) {
-          for (j <- 0 until 28) {
+        for (i <- 0 until imageWidth) {
+          for (j <- 0 until imageWidth) {
             dut.io.inputChannel.bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
           }
         }
