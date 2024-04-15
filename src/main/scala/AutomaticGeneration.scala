@@ -73,7 +73,7 @@ class AutomaticGeneration(
       throw new Exception("Unknown specified module type (module creation)")
   }
 
-  print("Modules done. Beginning connection logic.")
+  if (printing) println("Modules done. Beginning connection logic.")
 
   // Connection Logic (Wiring)
   for (i <- modules.indices) {
@@ -91,8 +91,8 @@ class AutomaticGeneration(
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
-          println("Connected module 1: " + connectedModule1)
-          println("Connected module 2: " + connectedModule2)
+          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
+          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
         }
         connectedModule1 match {
           case conInput: InputModule =>
@@ -151,8 +151,8 @@ class AutomaticGeneration(
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
-          println("Connected module 1: " + connectedModule1)
-          println("Connected module 2: " + connectedModule2)
+          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
+          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
         }
         connectedModule1 match {
           case conInput: InputModule =>
@@ -209,7 +209,7 @@ class AutomaticGeneration(
 
       case relu: ReLU4d =>
         val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
         connectedModule match {
           case conInput: InputModule =>
             relu.io.inputChannel <> conInput.io.outputChannel
@@ -241,7 +241,7 @@ class AutomaticGeneration(
       case output: OutputModule =>
         // Should only happen once
         val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
         connectedModule match {
           case conInput: InputModule =>
             output.io.inputChannel <> conInput.io.outputChannel
@@ -274,7 +274,7 @@ class AutomaticGeneration(
 
       case rounder: Rounder4d =>
         val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
         connectedModule match {
           case conInput: InputModule =>
             rounder.io.inputChannel <> conInput.io.outputChannel
@@ -306,8 +306,8 @@ class AutomaticGeneration(
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
-          println("Connected module 1: " + connectedModule1)
-          println("Connected module 2: " + connectedModule2)
+          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
+          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
         }
         connectedModule1 match {
           case conInput: InputModule =>
@@ -367,8 +367,8 @@ class AutomaticGeneration(
         val connectedModule1 = modules(connectionIndices.head)
         val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
-          println("Connected module 1: " + connectedModule1)
-          println("Connected module 2: " + connectedModule2)
+          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
+          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
         }
         connectedModule1 match {
           case conInput: InputModule =>
@@ -425,7 +425,7 @@ class AutomaticGeneration(
 
       case maxPool: MaxPool4d =>
         val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
         connectedModule match {
           case conInput: InputModule =>
             maxPool.io.inputChannel <> conInput.io.outputChannel
@@ -455,7 +455,7 @@ class AutomaticGeneration(
 
       case broadcaster: Broadcaster =>
         val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule)
+        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
         connectedModule match {
           case conInput: InputModule =>
             broadcaster.io.inputChannel <> conInput.io.outputChannel

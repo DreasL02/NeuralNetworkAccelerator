@@ -48,6 +48,8 @@ object SpecToListConverter {
       throw new Exception("Only one set of model parameters is supported")
     }
 
+    if (toPrint) println("Name | Index | Bit Width | Shape | Connection Index (data is shown below the list)")
+
     val inputList = inputs.map(entry => {
       val w = entry("bit_width").num.toInt
       val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
@@ -176,8 +178,18 @@ object SpecToListConverter {
     }
 
     val allLists = List(inputList, outputList, rounderList, convList, matmulList, maxPoolList, reshapeList, reluList, addList, initializerList, broadcasterList)
-    val sortedList = allLists.flatten.sortBy(_._1).map(_._2)
-    val connectionList = allLists.flatten.sortBy(_._1).map(_._3)
-    (parameters(0), sortedList, connectionList)
+    // sort elements by index (first element of tuple):
+    val sortedList = allLists.flatten.sortBy(_._1)
+
+    val modulesList = sortedList.map(_._2)
+    val connectionList = sortedList.map(_._3)
+
+    if (toPrint) {
+      println("Sorted List: ")
+      sortedList.foreach(println)
+    }
+
+
+    (parameters(0), modulesList, connectionList)
   }
 }

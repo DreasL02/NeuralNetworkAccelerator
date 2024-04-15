@@ -101,20 +101,23 @@ with open(model_path, "rb") as model_file:
 graph = {}
 
 index = 0
+if len(onnx_model.graph.input) > 1:
+    print("Models with multiple inputs are not supported. Only the first input will be used")
 
-for input in onnx_model.graph.input:
-    graph[input.name] = {
-        "type": "input",
-        "name": input.name,
-        "input": "?",
-        "output": input.name,
-        "shape": ensure_dims_are_4d(shape_to_list(input.type.tensor_type.shape)),
-        "op_type": "Input",
-        "attributes": [],
-        "extra": [],
-        "index": index
-    }
-    index += 1
+input = onnx_model.graph.input[0]
+graph[input.name] = {
+    "type": "input",
+    "name": input.name,
+    "input": "?",
+    "output": input.name,
+    "shape": ensure_dims_are_4d(shape_to_list(input.type.tensor_type.shape)),
+    "op_type": "Input",
+    "attributes": [],
+    "extra": [],
+    "index": index
+}
+
+index += 1
 
 for initializer in onnx_model.graph.initializer:
     graph[initializer.name] = {
@@ -128,8 +131,8 @@ for initializer in onnx_model.graph.initializer:
         "extra": [],
         "index": index
     }
-
     index += 1
+
 
 for node in onnx_model.graph.node:
     if node.op_type not in supported_node_operations:
@@ -429,12 +432,8 @@ def find_shape(stage_name):
             padding = [floor((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
                        floor((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
 
-            # if padding is larger than 2d tensor but all values over 2 are 0, then we assume it is a 2d tensor
+            # if padding is larger than 2d tensor but all values over 2, then we assume it is a 2d tensor
         if padding.__len__() > 2:
-            for i in range(2, padding.__len__()):
-                if padding[i] != 0:
-                    padding[i] = 0  
-                    #raise Exception("Padding larger than 2d tensor not supported")
             padding = padding[:2]
 
         if len(padding) < 2:
@@ -701,7 +700,7 @@ output_stage = {
 index += 1
 graph[output_stage["name"]] = output_stage
 # -------------------------------------------- Introduce output end --------------------------------------------
-pprint.pprint(graph)
+# pprint.pprint(graph)
 # -------------------------------------------- Connections --------------------------------------------
 # Insert the connections between the stages in the graph dictionary using the index of the stages
 for stage in graph:
@@ -714,7 +713,7 @@ for stage in graph:
         connections.append(graph[input]["index"])
     graph[stage]["connections"] = connections
 # -------------------------------------------- Connections end --------------------------------------------
-# pprint.pprint(graph)
+pprint.pprint(graph)
 # -------------------------------------------- Generate JSON dict --------------------------------------------
 # Dictionary only containing the absolute necessary information for the Chisel generator for each module
 # Index is used instead of name to ensure that the order is preserved

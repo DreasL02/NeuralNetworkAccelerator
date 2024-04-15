@@ -9,8 +9,8 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
 
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
-  val printConnections = false // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/sine_fixed_4.json"
+  val printConnections = true // set to true to print the connections to the console
+  val filepath = "ONNX Python/json/sine.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
   val parameters = lists._1
