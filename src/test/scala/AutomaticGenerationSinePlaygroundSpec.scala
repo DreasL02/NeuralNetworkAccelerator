@@ -5,7 +5,7 @@ import onnx.Operators.Parameters
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
-class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester {
+class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
@@ -40,10 +40,20 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
   }
 
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
-  for (testNum <- 0 until numberOfInputs) {
-    "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
-      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut =>
+  "Should work" in {
+    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+
+      for (testNum <- 0 until numberOfInputs) {
         var cycleTotal = 0
+
+        dut.reset.poke(true.B)
+        dut.clock.step()
+        dut.reset.poke(false.B)
+        dut.clock.step()
+
+        val statusMsg = "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum))
+        println(statusMsg)
+
         dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(testNum).U)
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.outputChannel.ready.poke(true.B)
@@ -58,6 +68,11 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
           }
         }
         val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
+
+        dut.clock.step()
+        dut.io.inputChannel.valid.poke(false.B)
+        dut.io.outputChannel.ready.poke(false.B)
+        dut.clock.step()
 
         if (printToConsole) {
           println("Test: " + testNum)

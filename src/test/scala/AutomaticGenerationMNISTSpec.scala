@@ -4,6 +4,7 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 import onnx.Operators.Parameters
+import TestingUtils.Comparison
 
 class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
@@ -21,7 +22,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
 
   val signed = true
   val threshold = 0.25f
-  val numberOfInputs = 1
+  val numberOfInputs = 10
   val pipelineIO = false
 
   // Print the lists
@@ -34,32 +35,41 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
     println()
   }
 
-  // Read flat data from ONNX Python/input.txt
-  val flatData = scala.io.Source.fromFile("ONNX Python/input.txt").getLines().map(_.toFloat).toArray
-  val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
+  "AutomaticGenerationSpec should behave correctly" in {
+    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+      dut.clock.setTimeout(100000)
+      for (testNum <- 0 until numberOfInputs) {
 
-  //Group to 28x28
-  val groupedData = Array.fill(28, 28)(BigInt(0))
-  for (i <- 0 until 28) {
-    for (j <- 0 until 28) {
-      groupedData(i)(j) = fixedFlatData(i * 28 + j)
-    }
-  }
+        dut.reset.poke(true.B)
+        dut.clock.step()
+        dut.reset.poke(false.B)
+        dut.clock.step()
 
-  val flatOutput = scala.io.Source.fromFile("ONNX Python/output.txt").getLines().map(_.toFloat).toArray
-  val fixedFlatOutput = flatOutput.map(i => floatToFixed(i, fixedPointResult, wResult, signed))
-
-  for (testNum <- 0 until numberOfInputs) {
-    "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, testNum.toFloat, testNum.toFloat) in {
-      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
         println("Test " + testNum + " begun")
-        dut.clock.setTimeout(100000)
+
+        // Read flat data from ONNX Python/input.txt
+        val inputFileName = "ONNX Python/numbers_28x28/input_%d.txt".format(testNum)
+        val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
+        val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
+
+        //Group to 28x28
+        val groupedData = Array.fill(28, 28)(BigInt(0))
+        for (i <- 0 until 28) {
+          for (j <- 0 until 28) {
+            groupedData(i)(j) = fixedFlatData(i * 28 + j)
+          }
+        }
+
+        val expectedFileName = "ONNX Python/numbers_28x28/output_%d.txt".format(testNum)
+        val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
+
         var cycleTotal = 0
         for (i <- 0 until 28) {
           for (j <- 0 until 28) {
             dut.io.inputChannel.bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
           }
         }
+
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.outputChannel.ready.poke(true.B)
         dut.clock.step()
@@ -76,19 +86,28 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
           resultsFloat(i) = fixedToFloat(resultFixed(i), fixedPointResult, wResult, signed)
         }
 
+        dut.clock.step()
+        dut.io.inputChannel.valid.poke(false.B)
+        dut.io.outputChannel.ready.poke(false.B)
+        dut.clock.step()
+
         if (printToConsole) {
           println("Test: " + testNum)
           println("Output: " + resultsFloat.mkString(", "))
-          println("Output Fixed: " + resultFixed.mkString(", "))
-          println("Expected: " + flatOutput.mkString(", "))
+          // println("Output Fixed: " + resultFixed.mkString(", "))
+          println("Expected: " + expectedFlatOutput.mkString(", "))
           println("Cycles: " + cycleTotal)
           println()
         }
 
         // Evaluate
         for (i <- 0 until 10) {
-          assert(resultsFloat(i) == flatOutput(i))
+          assert(
+            Comparison.CompareWithErrorThreshold(resultsFloat(i), expectedFlatOutput(i), threshold),
+            ": input %f (test %d) did not match (got %f : expected %f)".format(flatData(i), testNum, resultsFloat(i), expectedFlatOutput(i))
+            )
         }
+
       }
     }
   }
