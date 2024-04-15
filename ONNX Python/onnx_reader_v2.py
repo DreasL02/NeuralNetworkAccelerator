@@ -7,10 +7,10 @@ from onnx import load, numpy_helper
 
 # -------------------------------------------- Configuration --------------------------------------------
 
-model_path = "models/sinus_float_model_epoch_1000.onnx"
+# model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/mnist-12.onnx"
-# model_path = "models/tinyyolov2-7.onnx"
-export_path = "json/sine.json"
+model_path = "models/smaller_mnist_1.onnx"
+export_path = "json/smaller_mnist.json"
 
 bit_width_multiplication = 12
 bit_width_base = bit_width_multiplication*4
@@ -102,8 +102,6 @@ graph = {}
 
 index = 0
 
-if len(onnx_model.graph.input) > 1:
-    raise Exception("Models with multiple inputs are not supported")
 for input in onnx_model.graph.input:
     graph[input.name] = {
         "type": "input",
@@ -435,8 +433,8 @@ def find_shape(stage_name):
         if padding.__len__() > 2:
             for i in range(2, padding.__len__()):
                 if padding[i] != 0:
-                    raise Exception(
-                        "Padding larger than 2d tensor not supported")
+                    padding[i] = 0  
+                    #raise Exception("Padding larger than 2d tensor not supported")
             padding = padding[:2]
 
         if len(padding) < 2:
