@@ -2,7 +2,7 @@ import numpy
 import onnxruntime as rt
 import numpy as np
 
-model_name = "models/mnist-12.onnx"
+model_name = "models/smaller_mnist_1.onnx"
 
 sess = rt.InferenceSession(
     model_name, providers=rt.get_available_providers())
@@ -37,10 +37,10 @@ for n in range(10):
 
     flat_out = model_output[0].flatten()
 
-    # for i in range(len(flat_out)):
-    #     print(flat_out[i])
+    for i in range(len(flat_out)):
+        print(flat_out[i])
 
     # Print flat outputs into file
-    with open(f"numbers_28x28/expected_{n}.txt", "w") as f:
-        for i in range(len(flat_out)):
-            f.write(str(flat_out[i]) + "\n")
+    #with open(f"numbers_28x28/expected_{n}.txt", "w") as f:
+    #    for i in range(len(flat_out)):
+    #        f.write(str(flat_out[i]) + "\n")
