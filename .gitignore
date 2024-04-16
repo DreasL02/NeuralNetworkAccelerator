@@ -412,6 +412,7 @@ hs_err_pid*
 *.fir
 *.v
 *.sv
+*.anno.json
 project/
 target/
 test_run_dir/
