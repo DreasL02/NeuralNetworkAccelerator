@@ -25,7 +25,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val numberOfInputs = 10
   val pipelineIO = false
 
-  val imageWidth = 8
+  val imageSize = 8
 
   // Print the lists
   if (printToConsole) {
@@ -56,10 +56,10 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
 
         //Group to 8x8
-        val groupedData = Array.fill(imageWidth, imageWidth)(BigInt(0))
-        for (i <- 0 until imageWidth) {
-          for (j <- 0 until imageWidth) {
-            groupedData(i)(j) = fixedFlatData(i * imageWidth + j)
+        val groupedData = Array.fill(imageSize, imageSize)(BigInt(0))
+        for (i <- 0 until imageSize) {
+          for (j <- 0 until imageSize) {
+            groupedData(i)(j) = fixedFlatData(i * imageSize + j)
           }
         }
 
@@ -67,8 +67,8 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
 
         var cycleTotal = 0
-        for (i <- 0 until imageWidth) {
-          for (j <- 0 until imageWidth) {
+        for (i <- 0 until imageSize) {
+          for (j <- 0 until imageSize) {
             dut.io.inputChannel.bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
           }
         }

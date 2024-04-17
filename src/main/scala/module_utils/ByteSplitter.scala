@@ -27,6 +27,7 @@ class ByteSplitter(w: Int = 8) extends Module {
   }
 }
 
+
 // Scalable byte splitter of a Vec of w bit inputs into a Vec of 8 bit outputs
 class VectorIntoByteSplitter(w: Int, dimension: Int) extends Module {
   private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
@@ -44,6 +45,26 @@ class VectorIntoByteSplitter(w: Int, dimension: Int) extends Module {
     }
   }
 }
+
+
+// Scalable byte splitter of a Vec of w bit inputs into a Vec of 8 bit outputs
+class FlatVectorIntoByteSplitter(w: Int, length: Int) extends Module {
+  private val numberOfBytes = (w.toFloat / 8.0f).ceil.toInt // number of bytes needed to represent a w bit number
+
+  val io = IO(new Bundle {
+    val input = Input(Vec(length, UInt(w.W)))
+    val output = Output(Vec(length * numberOfBytes, UInt(8.W)))
+  })
+
+  for (i <- 0 until length) { // for each vector element
+    val byteSplitter = Module(new ByteSplitter(w))
+    byteSplitter.io.input := io.input(i) // split the vector element into bytes
+    for (j <- 0 until numberOfBytes) { // for each byte
+      io.output(i * numberOfBytes + j) := byteSplitter.io.output(j) // output the byte
+    }
+  }
+}
+
 
 // Scalable byte collector of a Vec of 8 bit inputs into a w bit output
 class ByteCollector(w: Int = 8) extends Module {

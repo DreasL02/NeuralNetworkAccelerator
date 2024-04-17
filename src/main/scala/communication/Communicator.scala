@@ -3,7 +3,8 @@ package communication
 import chisel3._
 import chisel3.util._
 import communication.Encodings.{Codes, Opcodes}
-import communication.chisel.lib.uart.{UartRx, UartTx, SerializingByteBuffer, DeSerializingByteBuffer}
+import communication.chisel.lib.uart.{DeSerializingByteBuffer, SerializingByteBuffer, UartRx, UartTx}
+import module_utils.{FlatVectorIntoByteSplitter, VectorIntoByteSplitter}
 
 class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends Module {
 
@@ -16,7 +17,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
 
     val states = Output(Vec(3, Bool()))
 
-    val dataIn = Input(Vec(matrixByteSize, UInt(8.W)))
+    val dataIn = Input(Vec(10, UInt(16.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
 
     val startCalculation = Output(Bool())
@@ -42,7 +43,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.uartTxPin := uartTx.io.txd
 
   val bufferedInput = Module(new DeSerializingByteBuffer(matrixByteSize))
-  val bufferedOutput = Module(new SerializingByteBuffer(matrixByteSize))
+  val bufferedOutput = Module(new SerializingByteBuffer(10*2))
 
   // default connections
   uartTx.io.inputChannel <> bufferedOutput.io.outputChannel
@@ -52,7 +53,11 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.dataOut := bufferedInput.io.outputChannel.bits
 
   bufferedOutput.io.inputChannel.valid := false.B
-  bufferedOutput.io.inputChannel.bits := io.dataIn
+  // bufferedOutput.io.inputChannel.bits := io.dataIn // ham her
+
+  val splitter = Module(new FlatVectorIntoByteSplitter(16, 10))
+  splitter.io.input := io.dataIn
+  bufferedOutput.io.inputChannel.bits := splitter.io.output
 
   // Initially, we are receiving data.
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
