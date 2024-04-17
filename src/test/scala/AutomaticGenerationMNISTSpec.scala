@@ -25,6 +25,8 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
   val numberOfInputs = 10
   val pipelineIO = false
 
+  val imageSize = 28
+
   // Print the lists
   if (printToConsole) {
     println(lists._1)
@@ -54,10 +56,10 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
 
         //Group to 28x28
-        val groupedData = Array.fill(28, 28)(BigInt(0))
-        for (i <- 0 until 28) {
-          for (j <- 0 until 28) {
-            groupedData(i)(j) = fixedFlatData(i * 28 + j)
+        val groupedData = Array.fill(imageSize, imageSize)(BigInt(0))
+        for (i <- 0 until imageSize) {
+          for (j <- 0 until imageSize) {
+            groupedData(i)(j) = fixedFlatData(i * imageSize + j)
           }
         }
 
@@ -65,8 +67,8 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
 
         var cycleTotal = 0
-        for (i <- 0 until 28) {
-          for (j <- 0 until 28) {
+        for (i <- 0 until imageSize) {
+          for (j <- 0 until imageSize) {
             dut.io.inputChannel.bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
           }
         }

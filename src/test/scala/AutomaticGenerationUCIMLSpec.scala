@@ -55,7 +55,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
         val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, w, signed))
 
-        //Group to 28x28
+        //Group to 8x8
         val groupedData = Array.fill(imageWidth, imageWidth)(BigInt(0))
         for (i <- 0 until imageWidth) {
           for (j <- 0 until imageWidth) {
