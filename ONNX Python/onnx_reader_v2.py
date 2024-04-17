@@ -9,12 +9,12 @@ from onnx import load, numpy_helper
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/mnist-12.onnx"
-model_path = "models/smaller_mnist_1.onnx"
+model_path = "models/mnist-12.onnx"
 # model_path = "models/bob.onnx"
-export_path = "json/smaller_mnist.json"
+export_path = "json/mnist12.json"
 
-bit_width_multiplication = 8
-bit_width_base = bit_width_multiplication*4
+bit_width_multiplication = 9
+bit_width_base = 32 # bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned

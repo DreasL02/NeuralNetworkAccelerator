@@ -10,7 +10,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/smaller_mnist.json"
+  val filepath = "ONNX Python/json/mnist12.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1
@@ -21,7 +21,7 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
   val fixedPointResult = parameters.fixedPointResult
 
   val signed = true
-  val threshold = 0.25f
+  val threshold = 2.0f
   val numberOfInputs = 10
   val pipelineIO = false
 
@@ -61,8 +61,8 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
           }
         }
 
-        //val expectedFileName = "ONNX Python/numbers_28x28/expected_%d.txt".format(testNum)
-        //val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
+        val expectedFileName = "ONNX Python/digits_28x28/expected_%d.txt".format(testNum)
+        val expectedFlatOutput = scala.io.Source.fromFile(expectedFileName).getLines().map(_.toFloat).toArray
 
         var cycleTotal = 0
         for (i <- 0 until 28) {
@@ -94,22 +94,19 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
 
         if (printToConsole) {
           println("Test: " + testNum)
-          println("Output: " + resultsFloat.mkString(", "))
-          // println("Output Fixed: " + resultFixed.mkString(", "))
-          //println("Expected: " + expectedFlatOutput.mkString(", "))
+          println("Output:  \t\t" + resultsFloat.map(f => "%+3.2f".format(f)).mkString("\t"))
+          println("Expected:\t\t" + expectedFlatOutput.map(f => "%+3.2f".format(f)).mkString("\t"))
           println("Cycles: " + cycleTotal)
           println()
         }
 
-        /*
-        // Evaluate
         for (i <- 0 until 10) {
           assert(
             Comparison.CompareWithErrorThreshold(resultsFloat(i), expectedFlatOutput(i), threshold),
-            ": input %f (test %d) did not match (got %f : expected %f)".format(flatData(i), testNum, resultsFloat(i), expectedFlatOutput(i))
+            ": (test %d) did not match (got %f : expected %f)".format(testNum, resultsFloat(i), expectedFlatOutput(i))
             )
         }
-        */
+
       }
     }
   }
