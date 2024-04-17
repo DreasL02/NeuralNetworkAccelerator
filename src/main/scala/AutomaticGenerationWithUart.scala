@@ -8,7 +8,8 @@ class AutomaticGenerationWithUart(
                                    connectionList: List[List[Int]],
                                    pipelineIO: Boolean = false,
                                    enableDebuggingIO: Boolean = true,
-                                   printing: Boolean = true
+                                   printing: Boolean = true,
+                                   matrixByteSize: Int,
                                  ) extends Module {
 
   val io = IO(new Bundle {
@@ -16,15 +17,13 @@ class AutomaticGenerationWithUart(
     val uartTxPin = Output(UInt(1.W))
   })
 
-  val imageSize = 8
-  val matrixByteSize = imageSize*imageSize*2
-
   private val communicator = Module(new Communicator(matrixByteSize, frequency, baudRate))
   communicator.io.uartRxPin := io.uartRxPin
   io.uartTxPin := communicator.io.uartTxPin
 
   private val automaticGeneration = Module(new AutomaticGeneration(listOfNodes, connectionList, pipelineIO, enableDebuggingIO, printing))
 
+  val imageSize = 8
 
   for (i <- 0 until imageSize) {
     for (j <- 0 until imageSize) {
@@ -38,4 +37,5 @@ class AutomaticGenerationWithUart(
   automaticGeneration.io.outputChannel.ready := communicator.io.readEnable
   automaticGeneration.io.inputChannel.valid := communicator.io.writeEnable
   communicator.io.calculationDone := automaticGeneration.io.outputChannel.valid
+  automaticGeneration.io.inputChannel.valid := communicator.io.startCalculation
 }
