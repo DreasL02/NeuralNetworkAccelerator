@@ -23,21 +23,15 @@ class Add4d(
 
   private val adds = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new Add(w, dimensionsOutput._3, dimensionsOutput._4, enableDebuggingIO)).io)
 
-  private val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  private val biasReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  private val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
-
   for (i <- 0 until dimensionsOutput._1) {
     for (j <- 0 until dimensionsOutput._2) {
 
       adds(i)(j).inputChannel.valid := io.inputChannel.valid
       adds(i)(j).inputChannel.bits := io.inputChannel.bits(i)(j)
-      inputReadies(i)(j) := adds(i)(j).inputChannel.ready
 
 
       adds(i)(j).biasChannel.valid := io.biasChannel.valid
       adds(i)(j).biasChannel.bits := io.biasChannel.bits(i)(j)
-      biasReadies(i)(j) := adds(i)(j).biasChannel.ready
 
       io.resultChannel.bits(i)(j) := adds(i)(j).resultChannel.bits
 
@@ -46,11 +40,11 @@ class Add4d(
       }
 
       adds(i)(j).resultChannel.ready := io.resultChannel.ready
-      outputValids(i)(j) := adds(i)(j).resultChannel.valid
     }
   }
 
-  io.inputChannel.ready := inputReadies.flatten.reduce(_ && _)
-  io.biasChannel.ready := biasReadies.flatten.reduce(_ && _)
-  io.resultChannel.valid := outputValids.flatten.reduce(_ && _) //TODO: investigate if this is good in hardware
+  // if one is _, then  all are _.
+  io.inputChannel.ready := adds(0)(0).inputChannel.ready
+  io.biasChannel.ready := adds(0)(0).biasChannel.ready
+  io.resultChannel.valid := adds(0)(0).resultChannel.valid
 }

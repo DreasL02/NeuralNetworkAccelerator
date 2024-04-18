@@ -22,6 +22,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val printing = Array.fill(numberOfTests)(false)
   val printWeightsAndInputs = false // only supported for systolic array
+  val printInterfaces = true
   val printCounters = true // only supported for one at a time matrix multiplication
 
   // We can enable printing for a specific test by setting the index to true
@@ -67,12 +68,23 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         if (enablePrinting)
           printMatrixMultiplication(inputsFloat, weightsFloat, multiplicationResultFloat, "GOLDEN MODEL CALCULATION IN RECONVERTED FLOATING")
 
-
         if (enablePrinting) {
           println("FORMATTED INPUTS")
           print(matrixToString(inputsFixed))
           println("FORMATTED WEIGHTS")
           print(matrixToString(weightsFixed))
+        }
+
+        if (printInterfaces) {
+          println("Interfaces at beginning:")
+          println("Input Channel Valid: %b".format(dut.io.inputChannel.valid.peek().litToBoolean))
+          println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
+          println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
+          println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
+          println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
+          println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+          println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
+          println()
         }
 
         // Setup the dut by loading the inputs and weights and indicating that they are valid
@@ -92,15 +104,23 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.io.resultChannel.ready.poke(true.B)
 
-        dut.clock.step()
-        // All values should now be loaded into the buffers
-
         // Wait for the systolic array to be done
         var cycles = 0
         while (!dut.io.resultChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println()
+            if (printInterfaces) {
+              println("Interfaces:")
+              println("Input Channel Valid: %b".format(dut.io.inputChannel.valid.peek().litToBoolean))
+              println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
+              println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
+              println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
+              println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
+              println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+              println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
+              println()
+            }
             if (printWeightsAndInputs) {
               println("DEBUG WEIGHTS / DEBUG INPUTS")
               print("  ")
@@ -153,6 +173,17 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           dut.clock.step()
         }
 
+        if (printInterfaces) {
+          println("Interfaces at end:")
+          println("Input Channel Valid: %b".format(dut.io.inputChannel.valid.peek().litToBoolean))
+          println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
+          println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
+          println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
+          println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
+          println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+          println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
+          println()
+        }
 
         val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
         for (i <- multiplicationResultFixed.indices) {

@@ -4,8 +4,10 @@ import maximum_parallel_matmul.AdderTree
 import org.scalatest.freespec.AnyFreeSpec
 
 class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
+  val toPrint = true
+
   "AdderTree should sum all the values in the input channel" in {
-    test(new AdderTree(w = 8, numberOfInputs = 4)) { dut =>
+    test(new AdderTree(w = 8, numberOfInputs = 4, toPrint = toPrint)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.inputChannel.bits(0).poke(1.U)
       dut.io.inputChannel.bits(1).poke(2.U)
@@ -14,9 +16,17 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.resultChannel.ready.poke(true.B)
       dut.io.resultChannel.valid.expect(false.B)
       dut.io.resultChannel.bits.expect(0.U)
-
+      var cycles = 0
       while (!dut.io.resultChannel.valid.peek().litToBoolean) {
+        dut.io.inputChannel.ready.expect(false.B)
         dut.clock.step()
+        cycles += 1
+        if (toPrint) {
+          println("output = " + dut.io.resultChannel.bits.peek().litValue)
+        }
+      }
+      if (toPrint) {
+        println("Cycles: " + cycles)
       }
       dut.io.resultChannel.valid.expect(true.B)
       dut.io.resultChannel.bits.expect(10.U)
@@ -24,7 +34,7 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "AdderTree should sum all the values in the input channel with 3 inputs" in {
-    test(new AdderTree(w = 8, numberOfInputs = 3)) { dut =>
+    test(new AdderTree(w = 8, numberOfInputs = 3, toPrint = toPrint)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.inputChannel.bits(0).poke(1.U)
       dut.io.inputChannel.bits(1).poke(2.U)
@@ -33,12 +43,55 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.resultChannel.valid.expect(false.B)
       dut.io.resultChannel.bits.expect(0.U)
 
+      var cycles = 0
       while (!dut.io.resultChannel.valid.peek().litToBoolean) {
+        dut.io.inputChannel.ready.expect(false.B)
         dut.clock.step()
+        cycles += 1
+        if (toPrint) {
+          println("output = " + dut.io.resultChannel.bits.peek().litValue)
+        }
+      }
+      if (toPrint) {
+        println("Cycles: " + cycles)
       }
 
       dut.io.resultChannel.valid.expect(true.B)
       dut.io.resultChannel.bits.expect(6.U)
+    }
+  }
+
+  "AdderTree should sum all the values in the input channel with 10 inputs" in {
+    test(new AdderTree(w = 8, numberOfInputs = 10, toPrint = toPrint)) { dut =>
+      for (i <- 0 until 10) {
+        dut.io.inputChannel.bits(i).poke(i.U)
+      }
+      dut.io.inputChannel.valid.poke(true.B)
+      dut.io.resultChannel.ready.poke(true.B)
+      dut.io.resultChannel.valid.expect(false.B)
+      dut.io.resultChannel.bits.expect(0.U)
+
+      if (toPrint) {
+        println("output = " + dut.io.resultChannel.bits.peek().litValue)
+      }
+
+      var cycles = 0
+      while (!dut.io.resultChannel.valid.peek().litToBoolean) {
+        dut.io.inputChannel.ready.expect(false.B)
+        dut.clock.step()
+        cycles += 1
+        if (toPrint) {
+          println("output = " + dut.io.resultChannel.bits.peek().litValue)
+        }
+      }
+      if (toPrint) {
+        println("Cycles: " + cycles)
+      }
+      dut.io.resultChannel.bits.expect(45.U)
+
+      dut.io.inputChannel.valid.poke(false.B)
+      dut.clock.step()
+      dut.io.inputChannel.ready.expect(true.B)
     }
   }
 }

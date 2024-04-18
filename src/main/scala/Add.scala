@@ -1,6 +1,7 @@
 import chisel3._
 import chisel3.util.DecoupledIO
-import module_utils.Adders
+import module_utils.{Adders, InterfaceFSM}
+import module_utils.SmallModules.timer
 import scala_utils.Optional.optional
 
 // ONNX Add operator in module form
@@ -17,13 +18,24 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
   private val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
   adders.io.operandA := io.inputChannel.bits
   adders.io.operandB := io.biasChannel.bits
-  io.resultChannel.bits := adders.io.result
 
   if (enableDebuggingIO) {
     io.debugBiases.get := io.biasChannel.bits
   }
 
-  io.resultChannel.valid := io.inputChannel.valid && io.biasChannel.valid // Output is valid as soon as both inputs are valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
-  io.biasChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new biases when the result channel is ready and valid
+  private val cyclesUntilOutputValid: Int = 0
+  private val interfaceFSM = Module(new InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid && io.biasChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
+
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
+  io.biasChannel.ready := interfaceFSM.io.inputReady
+
+  val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns)(0.U(w.W)))
+  when(interfaceFSM.io.storeResult) {
+    buffer := adders.io.result
+  }
+  io.resultChannel.bits := buffer
 }

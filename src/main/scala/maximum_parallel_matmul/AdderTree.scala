@@ -2,6 +2,7 @@ package maximum_parallel_matmul
 
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
+import module_utils.InterfaceFSM
 import module_utils.SmallModules._
 
 // General design is inspired by the approach presented at
@@ -56,21 +57,19 @@ class AdderTree(
     }
   }
 
-  io.resultChannel.bits := data(numberOfStages - 1)(0)
-
   private val cyclesUntilOutputValid: Int = numberOfStages - 1 // number of cycles until the adder tree is done and the result is valid
+  if (toPrint) println("cyclesUntilOutputValid: " + cyclesUntilOutputValid)
+  private val interfaceFSM = Module(new InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
 
-  private val readyToCompute = io.inputChannel.valid
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
 
-  private val clear = risingEdge(readyToCompute) // load when readyToCompute is asserted
-
-  private val doneWithComputation = timer(cyclesUntilOutputValid, clear, readyToCompute)
-
-  if (numberOfInputs == 1) {
-    io.resultChannel.valid := readyToCompute
-  } else {
-    io.resultChannel.valid := doneWithComputation
+  val buffer = RegInit(0.U(w.W))
+  when(interfaceFSM.io.storeResult) {
+    buffer := data(numberOfStages - 1)(0)
   }
-
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new inputs when the result channel is ready and valid
+  io.resultChannel.bits := buffer
 }

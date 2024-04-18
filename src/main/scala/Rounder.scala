@@ -1,9 +1,11 @@
 import chisel3._
 import chisel3.util._
+import module_utils.InterfaceFSM
+import module_utils.SmallModules.timer
 
 class Rounder(
-               w: Int = 8,
-               wBig: Int = 16,
+               wBefore: Int = 8,
+               wAfter: Int = 16,
                numberOfRows: Int = 4,
                numberOfColumns: Int = 4,
                signed: Boolean = true,
@@ -11,34 +13,43 @@ class Rounder(
              ) extends Module {
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wBig.W)))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wBefore.W)))))
 
-    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
+    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wAfter.W))))
   })
 
-
+  val results = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(wAfter.W))))
   for (row <- 0 until numberOfRows) {
     for (column <- 0 until numberOfColumns) {
       if (signed) {
-        val sign = io.inputChannel.bits(row)(column)(wBig - 1)
+        val sign = io.inputChannel.bits(row)(column)(wBefore - 1)
         if (fixedPoint == 0) {
-          io.resultChannel.bits(row)(column) := sign ## io.inputChannel.bits(row)(column)(w - 1, 0)
+          results(row)(column) := sign ## io.inputChannel.bits(row)(column)(wBefore - 1, 0)
         } else {
-          io.resultChannel.bits(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(w - 1, 0).asUInt
+          results(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(wBefore - 1, 0).asUInt
         }
-
-
       } else {
         if (fixedPoint == 0) {
-          io.resultChannel.bits(row)(column) := io.inputChannel.bits(row)(column)
+          results(row)(column) := io.inputChannel.bits(row)(column)
         } else {
-          io.resultChannel.bits(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
+          results(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
         }
       }
-
     }
   }
 
-  io.resultChannel.valid := io.inputChannel.valid // Output is valid as soon as input is valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
+  private val cyclesUntilOutputValid: Int = 0
+  private val interfaceFSM = Module(new InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
+
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
+
+  val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns)(0.U(wAfter.W)))
+  when(interfaceFSM.io.storeResult) {
+    buffer := results
+  }
+  io.resultChannel.bits := buffer
 }

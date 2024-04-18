@@ -25,6 +25,6 @@ class TensorAdderTree(
     }
   }
 
-  io.inputChannel.ready := adderTrees.flatten.map(_.inputChannel.ready).reduce(_ && _) && io.resultChannel.valid && io.resultChannel.ready
-  io.resultChannel.valid := adderTrees.flatten.map(_.resultChannel.valid).reduce(_ && _)
+  io.inputChannel.ready := adderTrees(0)(0).inputChannel.ready
+  io.resultChannel.valid := adderTrees(0)(0).resultChannel.valid
 }

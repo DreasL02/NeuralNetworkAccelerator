@@ -1,8 +1,8 @@
 package maximum_parallel_matmul
 
 import chisel3._
-import chisel3.util.{DecoupledIO}
-import module_utils.SmallModules.mult
+import chisel3.util.DecoupledIO
+import module_utils.SmallModules.{mult, timer}
 
 class ComponentMultiplier(
                            w: Int = 8,
@@ -22,17 +22,30 @@ class ComponentMultiplier(
   private val inputs = RegNext(io.inputChannel.bits)
   private val weights = RegNext(io.weightChannel.bits)
 
-  private val multiplicationResultsRegisters = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
+  private val multiplicationResults = Wire(Vec(numberOfRows, Vec(numberOfColumns, Vec(commonDimension, UInt(wResult.W)))))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       for (k <- 0 until commonDimension) {
-        multiplicationResultsRegisters(i)(j)(k) := mult(inputs(i)(k), weights(k)(j), w, wResult, signed)
+        multiplicationResults(i)(j)(k) := mult(inputs(i)(k), weights(k)(j), w, wResult, signed)
       }
     }
   }
 
-  io.resultChannel.bits := multiplicationResultsRegisters
-  io.resultChannel.valid := RegNext(RegNext(RegNext(io.inputChannel.valid))) && RegNext(RegNext(RegNext(io.weightChannel.valid)))
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
-  io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+  private val cyclesUntilOutputValid: Int = 3
+
+  private val interfaceFSM = Module(new module_utils.InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
+
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
+  io.weightChannel.ready := interfaceFSM.io.inputReady
+
+  val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
+  when(interfaceFSM.io.storeResult) {
+    buffer := multiplicationResults
+  }
+
+  io.resultChannel.bits := buffer
 }

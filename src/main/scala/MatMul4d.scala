@@ -25,34 +25,25 @@ class MatMul4d(
 
     val outputChannel = new DecoupledIO(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Vec(dimensionsOutput._3, Vec(dimensionsOutput._4, UInt(wResult.W))))))
   })
-
-
-  private val inputReadies = Wire(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Bool())))
-  private val weightReadies = Wire(Vec(dimensionsWeight._1, Vec(dimensionsWeight._2, Bool())))
-  private val outputValids = Wire(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Bool())))
-
+  
   private val matMuls = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new MatMul(w, wResult, dimensionsInput._3, dimensionsWeight._4, dimensionsWeight._3, signed, enableDebuggingIO)).io)
 
   for (i <- 0 until dimensionsOutput._1) {
     for (j <- 0 until dimensionsOutput._2) {
-
       matMuls(i)(j).inputChannel.valid := io.inputChannel.valid
       matMuls(i)(j).inputChannel.bits := io.inputChannel.bits(i)(j)
-      inputReadies(i)(j) := matMuls(i)(j).inputChannel.ready
-
 
       matMuls(i)(j).weightChannel.valid := io.weightChannel.valid
       matMuls(i)(j).weightChannel.bits := io.weightChannel.bits(i)(j)
-      weightReadies(i)(j) := matMuls(i)(j).weightChannel.ready
-
 
       io.outputChannel.bits(i)(j) := matMuls(i)(j).resultChannel.bits
       matMuls(i)(j).resultChannel.ready := io.outputChannel.ready
-      outputValids(i)(j) := matMuls(i)(j).resultChannel.valid
     }
   }
 
-  io.inputChannel.ready := inputReadies.flatten.reduce(_ && _)
-  io.weightChannel.ready := weightReadies.flatten.reduce(_ && _)
-  io.outputChannel.valid := outputValids.flatten.reduce(_ && _)
+  // if one matmul is ready, then all matmuls are ready as they all have the same flow.
+  io.inputChannel.ready := matMuls(0)(0).inputChannel.ready
+  io.weightChannel.ready := matMuls(0)(0).weightChannel.ready
+  // if one matmul is valid, then all matmuls are valid as they all have the same flow.
+  io.outputChannel.valid := matMuls(0)(0).resultChannel.valid
 }

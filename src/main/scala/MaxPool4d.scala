@@ -34,7 +34,7 @@ class MaxPool4d(
       io.resultChannel.bits(i)(j) := maxPools(i)(j).resultChannel.bits
     }
   }
-
-  io.resultChannel.valid := maxPools.map(_.map(_.resultChannel.valid).reduce(_ && _)).reduce(_ && _)
-  io.inputChannel.ready := maxPools.map(_.map(_.inputChannel.ready).reduce(_ && _)).reduce(_ && _) && io.resultChannel.valid && io.resultChannel.ready
+  
+  io.inputChannel.ready := maxPools(0)(0).inputChannel.ready
+  io.resultChannel.valid := maxPools(0)(0).resultChannel.valid
 }

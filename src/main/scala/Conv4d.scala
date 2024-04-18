@@ -67,8 +67,8 @@ class Conv4d(
     }
   }
 
-  io.inputChannel.ready := singleChannelConvolutions.map(_.map(_.map(_.inputChannel.ready).reduce(_ && _)).reduce(_ && _)).reduce(_ && _) && io.outputChannel.valid && io.outputChannel.ready
-  io.kernelChannel.ready := singleChannelConvolutions.map(_.map(_.map(_.kernelChannel.ready).reduce(_ && _)).reduce(_ && _)).reduce(_ && _) && io.outputChannel.valid && io.outputChannel.ready
-  io.outputChannel.valid := adderTree.map(_.map(_.resultChannel.valid).reduce(_ && _)).reduce(_ && _)
+  io.inputChannel.ready := singleChannelConvolutions(0)(0)(0).inputChannel.ready
+  io.kernelChannel.ready := singleChannelConvolutions(0)(0)(0).kernelChannel.ready
+  io.outputChannel.valid := singleChannelConvolutions(0)(0)(0).outputChannel.valid
 }
 

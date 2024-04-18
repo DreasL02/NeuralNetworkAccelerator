@@ -55,6 +55,8 @@ class SingleChannelConvolution(
       elementWiseMultiplier.io.weightChannel.bits := io.kernelChannel.bits
       elementWiseMultiplier.io.inputChannel.valid := io.inputChannel.valid
       elementWiseMultiplier.io.weightChannel.valid := io.kernelChannel.valid
+      io.inputChannel.ready := elementWiseMultiplier.io.inputChannel.ready
+      io.kernelChannel.ready := elementWiseMultiplier.io.weightChannel.ready
       elementWiseMultiplier.io.resultChannel
     }
   }
@@ -77,7 +79,5 @@ class SingleChannelConvolution(
     }
   }
 
-  io.outputChannel.valid := adderTreesResults.flatten.map(_.valid).reduce(_ && _)
-  io.inputChannel.ready := io.outputChannel.ready && io.outputChannel.valid
-  io.kernelChannel.ready := io.outputChannel.ready && io.outputChannel.valid
+  io.outputChannel.valid := adderTreesResults(0)(0).valid
 }

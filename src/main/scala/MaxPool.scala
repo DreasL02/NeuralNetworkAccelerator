@@ -1,5 +1,7 @@
 import chisel3._
 import chisel3.util.DecoupledIO
+import module_utils.InterfaceFSM
+import module_utils.SmallModules.timer
 
 
 // Module for doing a max pooling operation on a matrix. Arguments are: bit-width, kernel shape, pads, and strides, input and output dimensions.
@@ -21,6 +23,7 @@ class MaxPool(
   })
 
 
+  val results = Wire(Vec(xOutputDimension, Vec(yOutputDimension, UInt(w.W))))
   for (i <- 0 until xOutputDimension) {
     for (j <- 0 until yOutputDimension) {
       val xStart = i * strides._1
@@ -38,10 +41,22 @@ class MaxPool(
       val maxFinder = Module(new MaxFinder(w, kernelShape._1, kernelShape._2))
 
       maxFinder.io.inputs := inputSlice
-      io.resultChannel.bits(i)(j) := maxFinder.io.result
+      results(i)(j) := maxFinder.io.result
     }
   }
 
-  io.resultChannel.valid := io.inputChannel.valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+  private val cyclesUntilOutputValid: Int = 0
+  private val interfaceFSM = Module(new InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
+
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
+
+  val buffer = RegInit(VecInit.fill(xOutputDimension, yOutputDimension)(0.U(w.W)))
+  when(interfaceFSM.io.storeResult) {
+    buffer := results
+  }
+  io.resultChannel.bits := buffer
 }

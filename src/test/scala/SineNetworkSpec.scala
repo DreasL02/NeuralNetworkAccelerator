@@ -37,7 +37,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biases = Array(biasesL1Fixed, biasesL2Fixed, biasesL3Fixed)
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
-  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint * 2, wResult, signed))
+  val inputsFixed = inputs.map(i => floatToFixed((i).toFloat, fixedPoint * 2, wResult, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 

@@ -11,28 +11,28 @@ class ReLU4d(
 
   def this(reluType: onnx.Operators.ReluType) = this(reluType.w, reluType.dimensions, reluType.signed)
 
+  val shapeOutput = (dimensions._1, dimensions._2, dimensions._3, dimensions._4)
+
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(w.W)))))))
-    val resultChannel = new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(w.W)))))
-    )
+    val resultChannel = new DecoupledIO(Vec(shapeOutput._1, Vec(shapeOutput._2, Vec(shapeOutput._3, Vec(shapeOutput._4, UInt(w.W))))))
   })
 
-  for (i <- 0 until dimensions._1) {
-    for (j <- 0 until dimensions._2) {
-      for (k <- 0 until dimensions._3) {
-        for (l <- 0 until dimensions._4) {
-          io.resultChannel.bits(i)(j)(k)(l) := io.inputChannel.bits(i)(j)(k)(l) //default is the same value
+  private val relus = VecInit.fill(shapeOutput._1, shapeOutput._2)(Module(new ReLU(w, shapeOutput._3, shapeOutput._4)).io)
 
-          if (signed) { //if the values are signed
-            when(io.inputChannel.bits(i)(j)(k)(l) >> (w - 1).U === 1.U) { //if signed bit (@msb) is 1, the result is negative
-              io.resultChannel.bits(i)(j)(k)(l) := 0.U //ReLU gives 0
-            }
-          }
-        }
-      }
+  for (i <- 0 until shapeOutput._1) {
+    for (j <- 0 until shapeOutput._2) {
+
+      relus(i)(j).inputChannel.valid := io.inputChannel.valid
+      relus(i)(j).inputChannel.bits := io.inputChannel.bits(i)(j)
+
+      io.resultChannel.bits(i)(j) := relus(i)(j).resultChannel.bits
+      relus(i)(j).resultChannel.ready := io.resultChannel.ready
     }
   }
 
-  io.resultChannel.valid := io.inputChannel.valid // Output is valid as soon as input is valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // Ready to receive new inputs when the result channel is ready and valid
+  // if one is _, then  all are _.
+  io.inputChannel.ready := relus(0)(0).inputChannel.ready
+  io.resultChannel.valid := relus(0)(0).resultChannel.valid
+
 }

@@ -3,7 +3,7 @@ package systolic_array
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.Optional.optional
-import module_utils.ShiftedBuffer
+import module_utils.{InterfaceFSM, ShiftedBuffer}
 import module_utils.SmallModules.{risingEdge, timer}
 
 
@@ -26,15 +26,15 @@ class BufferedSystolicArray(
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
     val debugSystolicArrayResults = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
+    val debugComputationStart = optional(enableDebuggingIO, Output(Bool()))
   })
 
   private val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
 
-  private val readyToCompute = io.inputChannel.valid && io.weightChannel.valid // ready when both inputs are valid
-
-  private val load = risingEdge(readyToCompute) // load when readyToCompute is asserted
-
-  private val doneWithComputation = timer(cyclesUntilOutputValid, load, readyToCompute)
+  private val interfaceFSM = Module(new InterfaceFSM)
+  interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid
+  interfaceFSM.io.outputReady := io.resultChannel.ready
+  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
 
   private val inputsBuffers = for (i <- 0 until numberOfRows) yield { // create array of buffers for inputs
     val buffer = Module(new ShiftedBuffer(w, commonDimension, i)) // shift each buffer by i to create systolic effect
@@ -48,10 +48,9 @@ class BufferedSystolicArray(
 
   private val systolicArray = Module(new SystolicArray(w, wResult, numberOfRows, numberOfColumns, signed))
 
-
   // Connect buffers to signals
   for (i <- 0 until numberOfRows) {
-    inputsBuffers(i).io.load := load
+    inputsBuffers(i).io.load := interfaceFSM.io.calculateStart
     inputsBuffers(i).io.data := io.inputChannel.bits(i)
     systolicArray.io.a(i) := inputsBuffers(i).io.output
     if (enableDebuggingIO) {
@@ -62,7 +61,7 @@ class BufferedSystolicArray(
   private val transposedWeights = io.weightChannel.bits.transpose // transpose weights to match the systolic array's requirements
 
   for (i <- 0 until numberOfColumns) {
-    weightsBuffers(i).io.load := load
+    weightsBuffers(i).io.load := interfaceFSM.io.calculateStart
     weightsBuffers(i).io.data := transposedWeights(i)
     systolicArray.io.b(i) := weightsBuffers(i).io.output
     if (enableDebuggingIO) {
@@ -70,17 +69,25 @@ class BufferedSystolicArray(
     }
   }
 
-  systolicArray.io.clear := load // clear systolic array when load is asserted
+  systolicArray.io.clear := interfaceFSM.io.calculateStart // clear systolic array when load is asserted
+
+  // No need to buffer the result as it should not change after the calculation is done
+  // val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns)(0.U(wResult.W)))
+  // when(interfaceFSM.io.storeResult) {
+  //   buffer := systolicArray.io.c
+  // }
+  //  io.resultChannel.bits := buffer
 
   // Connect the result of the systolic array to the output
   io.resultChannel.bits := systolicArray.io.c
 
-  io.resultChannel.valid := doneWithComputation // valid when doneWithComputation is asserted
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new inputs when the result channel is ready and valid
-  io.weightChannel.ready := io.resultChannel.ready && io.resultChannel.valid // ready to receive new weights when the result channel is ready and valid
+  io.resultChannel.valid := interfaceFSM.io.outputValid
+  io.inputChannel.ready := interfaceFSM.io.inputReady
+  io.weightChannel.ready := interfaceFSM.io.inputReady
 
   if (enableDebuggingIO) {
     io.debugSystolicArrayResults.get := systolicArray.io.c
+    io.debugComputationStart.get := interfaceFSM.io.calculateStart
   }
 }
 

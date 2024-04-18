@@ -41,7 +41,7 @@ class Reshape(
 
 
   io.resultChannel.valid := io.inputChannel.valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+  io.inputChannel.ready := io.resultChannel.ready
 
   io.shapeChannel.ready := true.B
 }

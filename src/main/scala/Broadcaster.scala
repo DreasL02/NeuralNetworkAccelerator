@@ -33,5 +33,5 @@ class Broadcaster(
   }
 
   io.resultChannel.valid := io.inputChannel.valid
-  io.inputChannel.ready := io.resultChannel.ready && io.resultChannel.valid
+  io.inputChannel.ready := io.resultChannel.ready
 }

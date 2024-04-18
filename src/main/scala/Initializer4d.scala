@@ -13,13 +13,11 @@ class Initializer4d(
     val outputChannel = new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(w.W))))))
   })
 
-  private val outputValids = Wire(Vec(dimensions._1, Vec(dimensions._2, Bool())))
 
   private val initializers = for (i <- 0 until dimensions._1) yield {
     for (j <- 0 until dimensions._2) yield {
       val initializer = Module(new Initializer(w, dimensions._3, dimensions._4, data(i)(j)))
       initializer.io.outputChannel.ready := io.outputChannel.ready
-      outputValids(i)(j) := initializer.io.outputChannel.valid
       initializer.io.outputChannel
     }
   }
@@ -30,5 +28,5 @@ class Initializer4d(
     }
   }
 
-  io.outputChannel.valid := outputValids.flatten.reduce(_ && _)
+  io.outputChannel.valid := initializers(0)(0).valid
 }

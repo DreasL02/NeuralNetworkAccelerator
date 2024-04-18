@@ -140,9 +140,10 @@ class Conv4dMatmul(
     }
   }
 
-  io.outputChannel.valid := matMuls.map(_.resultChannel.valid).reduce(_ && _)
-  io.inputChannel.ready := matMuls.map(_.inputChannel.ready).reduce(_ && _) && io.outputChannel.ready && io.outputChannel.valid
-  io.kernelChannel.ready := matMuls.map(_.weightChannel.ready).reduce(_ && _) && io.outputChannel.ready && io.outputChannel.valid
+  // all components have the same flow, so if one is ready/valid, then all are ready/valid
+  io.outputChannel.valid := matMuls(0).resultChannel.valid
+  io.inputChannel.ready := matMuls(0).inputChannel.ready
+  io.kernelChannel.ready := matMuls(0).weightChannel.ready
 
   if (enableDebuggingIO) {
     io.debugInputIm2Col.get := im2colInputs
