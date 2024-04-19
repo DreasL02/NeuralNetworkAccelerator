@@ -51,7 +51,7 @@ class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScala
         dut.io.outputChannel.ready.poke(true.B)
 
         if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfInputs) {
-          println("Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal)
+          if (printToConsole) println("Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal)
           dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(inputNum).U)
           cycleStart(inputNum) = cycleTotal
           inputNum += 1
@@ -60,14 +60,14 @@ class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScala
         if (dut.io.outputChannel.valid.peek().litToBoolean) {
           val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
           results(resultNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
-          println("Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles Total: " + cycleTotal + " Cycles Since Input: " + (cycleTotal - cycleStart(resultNum)))
+          if (printToConsole) println("Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles Total: " + cycleTotal + " Cycles Since Input: " + (cycleTotal - cycleStart(resultNum)))
           resultNum += 1
         }
 
         dut.clock.step()
         cycleTotal += 1
 
-        if (cycleTotal > 1000) {
+        if (cycleTotal > 100 * numberOfInputs) {
           fail("Timeout")
         }
       }

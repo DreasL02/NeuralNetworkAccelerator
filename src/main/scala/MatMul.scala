@@ -39,7 +39,7 @@ class MatMul(
     val debugComputationStart = optional(enableDebuggingIO, Output(Bool()))
   })
 
-  private val config = "ParallelMatrixMultiplication"
+  private val config = "SystolicArray"
 
   if (config == "ParallelMatrixMultiplication") {
     val pure = Module(new MaximumParallelMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
