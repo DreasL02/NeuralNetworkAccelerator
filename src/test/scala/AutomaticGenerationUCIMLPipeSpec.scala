@@ -63,8 +63,8 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
 
 
   "AutomaticGenerationSpec should behave correctly" in {
-    //test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
-    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut => // test with verilator
+    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+      //test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut => 
       dut.clock.setTimeout(100000)
 
       var inputNum = 0
