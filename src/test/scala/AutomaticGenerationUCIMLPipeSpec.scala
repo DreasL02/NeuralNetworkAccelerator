@@ -63,7 +63,8 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
 
 
   "AutomaticGenerationSpec should behave correctly" in {
-    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+    //test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut => // test with verilator
       dut.clock.setTimeout(100000)
 
       var inputNum = 0
@@ -94,9 +95,9 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
             results(resultNum)(i) = fixedToFloat(resultFixed(i), fixedPointResult, wResult, signed)
           }
           if (printToConsole) {
+            println("Result for image " + resultNum + " Cycles Total: " + cycleTotal)
             println("Output:  \t\t" + results(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
             println("Expected:\t\t" + expectedResults(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
-            println("Cycles: " + cycleTotal)
             println()
           }
           resultNum += 1
