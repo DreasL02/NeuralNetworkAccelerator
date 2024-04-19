@@ -43,6 +43,7 @@ class MatMul(
 
   if (config == "ParallelMatrixMultiplication") {
     val pure = Module(new MaximumParallelMatrixMultiplication(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    println("Estimated DSP Usage: " + pure.estimatedDSPs)
     pure.io.inputChannel <> io.inputChannel
     pure.io.weightChannel <> io.weightChannel
     pure.io.resultChannel <> io.resultChannel
@@ -59,6 +60,7 @@ class MatMul(
   }
   else if (config == "SystolicArray") {
     val systolic = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+    println("Estimated DSP Usage: " + systolic.estimatedDSPs)
     systolic.io.inputChannel <> io.inputChannel
     systolic.io.weightChannel <> io.weightChannel
     systolic.io.resultChannel <> io.resultChannel

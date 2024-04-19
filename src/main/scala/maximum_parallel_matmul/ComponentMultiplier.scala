@@ -31,7 +31,7 @@ class ComponentMultiplier(
     }
   }
 
-  private val cyclesUntilOutputValid: Int = 3
+  private val cyclesUntilOutputValid: Int = 1
 
   private val interfaceFSM = Module(new module_utils.InterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid

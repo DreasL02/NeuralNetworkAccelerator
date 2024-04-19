@@ -20,6 +20,8 @@ class MaximumParallelMatrixMultiplication(
     val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
   })
 
+  val estimatedDSPs = numberOfRows * numberOfColumns * commonDimension
+
   private val componentMultiplier = Module(new ComponentMultiplier(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed))
   componentMultiplier.io.inputChannel <> io.inputChannel
   componentMultiplier.io.weightChannel <> io.weightChannel

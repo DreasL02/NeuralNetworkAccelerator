@@ -29,6 +29,8 @@ class BufferedSystolicArray(
     val debugComputationStart = optional(enableDebuggingIO, Output(Bool()))
   })
 
+  val estimatedDSPs = numberOfRows * numberOfColumns
+
   private val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
 
   private val interfaceFSM = Module(new InterfaceFSM)

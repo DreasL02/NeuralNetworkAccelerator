@@ -1,6 +1,6 @@
 import chisel3._
 import chisel3.util.DecoupledIO
-import module_utils.{Adders, InterfaceFSM}
+import module_utils.InterfaceFSM
 import module_utils.SmallModules.timer
 import scala_utils.Optional.optional
 
@@ -15,9 +15,13 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
     val debugBiases = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
   })
 
-  private val adders = Module(new Adders(w, numberOfRows, numberOfColumns))
-  adders.io.operandA := io.inputChannel.bits
-  adders.io.operandB := io.biasChannel.bits
+  val result = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W))))
+  // adds the values and biases together
+  for (row <- 0 until numberOfRows) {
+    for (column <- 0 until numberOfColumns) {
+      result(row)(column) := io.inputChannel.bits(row)(column) + io.biasChannel.bits(row)(column)
+    }
+  }
 
   if (enableDebuggingIO) {
     io.debugBiases.get := io.biasChannel.bits
@@ -35,7 +39,7 @@ class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDeb
 
   val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns)(0.U(w.W)))
   when(interfaceFSM.io.storeResult) {
-    buffer := adders.io.result
+    buffer := result
   }
   io.resultChannel.bits := buffer
 }

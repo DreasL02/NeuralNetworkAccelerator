@@ -26,11 +26,12 @@ class InterfaceFSM extends Module {
   io.storeResult := false.B
   io.enableTimer := false.B
 
+
   switch(state) {
     is(idle) {
       io.inputReady := true.B
       when(io.inputValid) {
-        // input is valid and calculation can start
+        // input is valid, input handshake can happen and we can start calculating
         state := calculating
         io.calculateStart := true.B
         io.enableTimer := true.B
@@ -45,16 +46,21 @@ class InterfaceFSM extends Module {
         io.storeResult := true.B
       }
       // otherwise, we are still calculating
+
+
     }
     is(finished) {
       io.outputValid := true.B
       when(io.outputReady) {
-        // handshake can happen
+        // output handshake can happen
         state := idle
-        io.inputReady := true.B
       }
-      // otherwise, handshake cannot happen yet because the output is not ready and we need to wait
+      // otherwise, output handshake cannot happen yet because the output is not ready and we need to wait
+
+
     }
   }
+
+
 }
 

@@ -16,8 +16,32 @@ class SineNetwork(
   extends Module {
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(1, Vec(1, UInt(wResult.W)))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(1, Vec(1, UInt(w.W)))))
     val outputChannel = new DecoupledIO(Vec(1, Vec(1, UInt(wResult.W))))
+
+    val probe1 = optional(enableDebuggingIO, new Bundle {
+      val ready = Output(Bool())
+      val valid = Output(Bool())
+      val value = Output(UInt(wResult.W))
+    })
+
+    val probe2 = optional(enableDebuggingIO, new Bundle {
+      val ready = Output(Bool())
+      val valid = Output(Bool())
+      val value = Output(UInt(wResult.W))
+    })
+
+    val probe3 = optional(enableDebuggingIO, new Bundle {
+      val ready = Output(Bool())
+      val valid = Output(Bool())
+      val value = Output(UInt(wResult.W))
+    })
+
+    val probe4 = optional(enableDebuggingIO, new Bundle {
+      val ready = Output(Bool())
+      val valid = Output(Bool())
+      val value = Output(UInt(wResult.W))
+    })
 
     val debugMMU1Input = optional(enableDebuggingIO, Output(Vec(1, UInt(w.W))))
     val debugMMU2Input = optional(enableDebuggingIO, Output(Vec(1, UInt(w.W))))
@@ -35,13 +59,11 @@ class SineNetwork(
     val debugBias2Biases = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
     val debugBias3Biases = optional(enableDebuggingIO, Output(Vec(1, Vec(1, UInt(wResult.W)))))
 
-    val debugRounder1Input = optional(enableDebuggingIO, Output(Vec(1, Vec(1, UInt(wResult.W)))))
+    val debugRounder1Input = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
     val debugRounder2Input = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
-    val debugRounder3Input = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
 
-    val debugRounder1Output = optional(enableDebuggingIO, Output(Vec(1, Vec(1, UInt(w.W)))))
+    val debugRounder1Output = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(w.W)))))
     val debugRounder2Output = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(w.W)))))
-    val debugRounder3Output = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(w.W)))))
 
     val debugReLU1Input = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
     val debugReLU2Input = optional(enableDebuggingIO, Output(Vec(1, Vec(16, UInt(wResult.W)))))
@@ -58,11 +80,8 @@ class SineNetwork(
   val biases2 = Module(new Initializer(wResult, 1, 16, initialBiasMemoryStates(1)))
   val biases3 = Module(new Initializer(wResult, 1, 1, initialBiasMemoryStates(2)))
 
-  val rounder1 = Module(new Rounder(w, wResult, 1, 1, signed, fixedPoint))
-  rounder1.io.inputChannel <> io.inputChannel
-
   val mmu1 = Module(new MatMul(w, wResult, 1, 16, 1, signed, enableDebuggingIO))
-  mmu1.io.inputChannel <> rounder1.io.resultChannel
+  mmu1.io.inputChannel <> io.inputChannel
   mmu1.io.weightChannel <> weights1.io.outputChannel
 
   val bias1 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
@@ -72,11 +91,11 @@ class SineNetwork(
   val relu1 = Module(new ReLU(wResult, 1, 16, enableDebuggingIO))
   relu1.io.inputChannel <> bias1.io.resultChannel
 
-  val rounder2 = Module(new Rounder(w, wResult, 1, 16, signed, fixedPoint))
-  rounder2.io.inputChannel <> relu1.io.resultChannel
+  val rounder1 = Module(new Rounder(wResult, w, 1, 16, signed, fixedPoint))
+  rounder1.io.inputChannel <> relu1.io.resultChannel
 
   val mmu2 = Module(new MatMul(w, wResult, 1, 16, 16, signed, enableDebuggingIO))
-  mmu2.io.inputChannel <> rounder2.io.resultChannel
+  mmu2.io.inputChannel <> rounder1.io.resultChannel
   mmu2.io.weightChannel <> weights2.io.outputChannel
 
   val bias2 = Module(new Add(wResult, 1, 16, enableDebuggingIO))
@@ -86,11 +105,11 @@ class SineNetwork(
   val relu2 = Module(new ReLU(wResult, 1, 16, enableDebuggingIO))
   relu2.io.inputChannel <> bias2.io.resultChannel
 
-  val rounder3 = Module(new Rounder(w, wResult, 1, 16, signed, fixedPoint))
-  rounder3.io.inputChannel <> relu2.io.resultChannel
+  val rounder2 = Module(new Rounder(wResult, w, 1, 16, signed, fixedPoint))
+  rounder2.io.inputChannel <> relu2.io.resultChannel
 
   val mmu3 = Module(new MatMul(w, wResult, 1, 1, 16, signed, enableDebuggingIO))
-  mmu3.io.inputChannel <> rounder3.io.resultChannel
+  mmu3.io.inputChannel <> rounder2.io.resultChannel
   mmu3.io.weightChannel <> weights3.io.outputChannel
 
   val bias3 = Module(new Add(wResult, 1, 1, enableDebuggingIO))
@@ -100,6 +119,22 @@ class SineNetwork(
   io.outputChannel <> bias3.io.resultChannel
 
   if (enableDebuggingIO) {
+    io.probe1.get.ready := mmu1.io.inputChannel.ready
+    io.probe1.get.valid := mmu1.io.resultChannel.valid
+    io.probe1.get.value := mmu1.io.resultChannel.bits(0)(0)
+
+    io.probe2.get.ready := mmu2.io.inputChannel.ready
+    io.probe2.get.valid := mmu2.io.resultChannel.valid
+    io.probe2.get.value := mmu2.io.resultChannel.bits(0)(0)
+
+    io.probe3.get.ready := mmu3.io.inputChannel.ready
+    io.probe3.get.valid := mmu3.io.resultChannel.valid
+    io.probe3.get.value := mmu3.io.resultChannel.bits(0)(0)
+
+    io.probe4.get.ready := bias3.io.inputChannel.ready
+    io.probe4.get.valid := bias3.io.resultChannel.valid
+    io.probe4.get.value := bias3.io.resultChannel.bits(0)(0)
+
     io.debugMMU1Input.get := mmu1.io.debugInputs.get
     io.debugMMU2Input.get := mmu2.io.debugInputs.get
     io.debugMMU3Input.get := mmu3.io.debugInputs.get
@@ -118,11 +153,9 @@ class SineNetwork(
 
     io.debugRounder1Input.get := rounder1.io.inputChannel.bits
     io.debugRounder2Input.get := rounder2.io.inputChannel.bits
-    io.debugRounder3Input.get := rounder3.io.inputChannel.bits
 
     io.debugRounder1Output.get := rounder1.io.resultChannel.bits
     io.debugRounder2Output.get := rounder2.io.resultChannel.bits
-    io.debugRounder3Output.get := rounder3.io.resultChannel.bits
 
     io.debugReLU1Input.get := relu1.io.inputChannel.bits
     io.debugReLU2Input.get := relu2.io.inputChannel.bits
@@ -130,6 +163,4 @@ class SineNetwork(
     io.debugReLU1Output.get := relu1.io.resultChannel.bits
     io.debugReLU2Output.get := relu2.io.resultChannel.bits
   }
-
-
 }

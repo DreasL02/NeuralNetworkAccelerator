@@ -1,7 +1,6 @@
 import activation_functions.ReLU
 import chisel3._
 import chisel3.util.DecoupledIO
-import module_utils.Adders
 import scala_utils.Optional.optional
 
 

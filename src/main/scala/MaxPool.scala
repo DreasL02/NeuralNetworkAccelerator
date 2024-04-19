@@ -38,10 +38,7 @@ class MaxPool(
         }
       }
 
-      val maxFinder = Module(new MaxFinder(w, kernelShape._1, kernelShape._2))
-
-      maxFinder.io.inputs := inputSlice
-      results(i)(j) := maxFinder.io.result
+      results(i)(j) := inputSlice.map(_.map(_.asUInt).reduce(_ max _)).reduce(_ max _) // TODO: maybe need to pipeline this
     }
   }
 

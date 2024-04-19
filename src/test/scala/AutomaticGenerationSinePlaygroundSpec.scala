@@ -4,13 +4,13 @@ import chiseltest._
 import onnx.Operators.Parameters
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
+import TestingUtils.Comparison.CompareWithErrorThreshold
 
 class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScalatestTester {
 
-  val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = false // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/sine_fixed_4.json"
+  val filepath = "ONNX Python/json/sine.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
   val parameters = lists._1
@@ -27,7 +27,8 @@ class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScala
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
   val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
-  val expected = inputs.map(i => Math.sin(i))
+  val cycleStart = Array.fill(numberOfInputs)(0)
+  val expected = inputs.map(i => Math.sin(i).toFloat)
 
   // Print the lists
   if (printToConsole) {
@@ -39,80 +40,41 @@ class AutomaticGenerationSinePlaygroundSpec extends AnyFreeSpec with ChiselScala
     println()
   }
 
-  var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   "Should work" in {
-    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut =>
+      var inputNum = 0
+      var resultNum = 0
+      var cycleTotal = 0
 
-      for (testNum <- 0 until numberOfInputs) {
-        var cycleTotal = 0
-
-        dut.reset.poke(true.B)
-        dut.clock.step()
-        dut.reset.poke(false.B)
-        dut.clock.step()
-
-        val statusMsg = "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum))
-        println(statusMsg)
-
-        dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(testNum).U)
+      while (resultNum < numberOfInputs) {
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.outputChannel.ready.poke(true.B)
+
+        if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfInputs) {
+          println("Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal)
+          dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(inputNum).U)
+          cycleStart(inputNum) = cycleTotal
+          inputNum += 1
+        }
+
+        if (dut.io.outputChannel.valid.peek().litToBoolean) {
+          val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
+          results(resultNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
+          println("Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles Total: " + cycleTotal + " Cycles Since Input: " + (cycleTotal - cycleStart(resultNum)))
+          resultNum += 1
+        }
+
         dut.clock.step()
         cycleTotal += 1
-        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
-          dut.clock.step()
-          cycleTotal += 1
 
-          if (cycleTotal > 1000) {
-            fail("Timeout")
-          }
+        if (cycleTotal > 1000) {
+          fail("Timeout")
         }
-        val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
+      }
 
-        dut.clock.step()
-        dut.io.inputChannel.valid.poke(false.B)
-        dut.io.outputChannel.ready.poke(false.B)
-        dut.clock.step()
-
-        if (printToConsole) {
-          println("Test: " + testNum)
-          println("Input: " + inputs(testNum))
-          println("Input Fixed: " + inputsFixed(testNum))
-          println("Input refloated: " + fixedToFloat(inputsFixed(testNum), fixedPoint, w, signed))
-          println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
-          println("Output Fixed: " + resultFixed)
-          println("Expected: " + expected(testNum))
-          println("Cycles: " + cycleTotal)
-          println()
-        }
-        results(testNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
-
-        // Evaluate
-        val a = results(testNum)
-        val b = expected(testNum).toFloat
-        var valid = false
-        if (a - threshold <= b && a + threshold >= b) { //within +-threshold of golden model
-          valid = true
-        }
-        assert(valid, ": input %f (test %d) did not match (got %f : expected %f)".format(inputs(testNum), testNum, a, b))
-
-        done += 1
-        if (done == numberOfInputs && printToFile) {
-          val file = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_results.txt")
-          // replace all '.' with ',' to make it easier to import into danish excel
-          file.write(results.mkString("; ").replace('.', ','))
-          file.close()
-
-          val file2 = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_expected.txt")
-          // replace all '.' with ',' to make it easier to import into danish excel
-          file2.write(expected.mkString("; ").replace('.', ','))
-          file2.close()
-
-          val file3 = new java.io.PrintWriter("src/main/scala/scala_utils/data/sine_inputs.txt")
-          // replace all '.' with ',' to make it easier to import into danish excel
-          file3.write(inputs.mkString("; ").replace('.', ','))
-          file3.close()
-        }
+      // Assert that the results are within the threshold
+      for (i <- 0 until numberOfInputs) {
+        assert(CompareWithErrorThreshold(results(i), expected(i), threshold), "Entry " + i + " is not within the threshold. Got: " + results(i) + " Expected: " + expected(i))
       }
     }
   }

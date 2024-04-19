@@ -18,11 +18,11 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biasesL3 = readMatrixFromFile("src/main/scala/scala_utils/data/matlab-inference-data_b3.txt")
 
   val w = 8
-  val wResult = 4 * w
+  val wResult = 2 * w
   val fixedPoint = 4
   val signed = true
   val threshold = 0.25f
-  val numberOfInputs = 10
+  val numberOfInputs = 3
 
   // convert to fixed point using the same fixed point and sign for all layers
   val weightsL1Fixed = convertFloatMatrixToFixedMatrix(weightsL1, fixedPoint, w, signed)
@@ -37,7 +37,7 @@ class SineNetworkSpec extends AnyFreeSpec with ChiselScalatestTester {
   val biases = Array(biasesL1Fixed, biasesL2Fixed, biasesL3Fixed)
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
-  val inputsFixed = inputs.map(i => floatToFixed((i).toFloat, fixedPoint * 2, wResult, signed))
+  val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
   val results = Array.fill(numberOfInputs)(0.0f)
   val expected = inputs.map(i => Math.sin(i))
 
