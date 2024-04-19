@@ -94,7 +94,7 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
             results(resultNum)(i) = fixedToFloat(resultFixed(i), fixedPointResult, wResult, signed)
           }
           if (printToConsole) {
-            println("Output:  \t\t" + results.map(f => "%+3.2f".format(f)).mkString("\t"))
+            println("Output:  \t\t" + results(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
             println("Expected:\t\t" + expectedResults(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
             println("Cycles: " + cycleTotal)
             println()
