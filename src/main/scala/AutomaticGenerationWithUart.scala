@@ -1,5 +1,6 @@
 import chisel3._
 import communication.Communicator
+import communication.chisel.lib.uart.{BufferedUartRxForTestingOnly, BufferedUartTxForTestingOnly}
 
 class AutomaticGenerationWithUart(
                                    frequency: Int,
@@ -15,27 +16,36 @@ class AutomaticGenerationWithUart(
   val io = IO(new Bundle {
     val uartRxPin = Input(UInt(1.W))
     val uartTxPin = Output(UInt(1.W))
+    val calculatorReady = Output(Bool())
+    val calculatorValid = Output(Bool())
+    val uartRxValid = Output(Bool())
   })
 
-  private val communicator = Module(new Communicator(matrixByteSize, frequency, baudRate))
-  communicator.io.uartRxPin := io.uartRxPin
-  io.uartTxPin := communicator.io.uartTxPin
-
-  private val automaticGeneration = Module(new AutomaticGeneration(listOfNodes, connectionList, pipelineIO, enableDebuggingIO, printing))
-
   val imageSize = 8
+  val imageByteSize = 8*8 // 8x8 image with 2 bytes per pixel
+  val responseByteSize = 10 // 10 value response with 2 bytes per value
 
+  val calculator = Module(new AutomaticGeneration(listOfNodes, connectionList, pipelineIO, enableDebuggingIO, printing))
+
+  val bufferedUartRx = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, imageByteSize))
+  bufferedUartRx.io.rxd := io.uartRxPin
+  calculator.io.inputChannel.valid := bufferedUartRx.io.outputChannel.valid
+  bufferedUartRx.io.outputChannel.ready := calculator.io.inputChannel.ready
   for (i <- 0 until imageSize) {
     for (j <- 0 until imageSize) {
       val flatIndex = i * imageSize + j
-      automaticGeneration.io.inputChannel.bits(0)(0)(i)(j) := communicator.io.dataOut(flatIndex)
+      //calculator.io.inputChannel.bits(0)(0)(i)(j) := 0.U
+      calculator.io.inputChannel.bits(0)(0)(i)(j) := bufferedUartRx.io.outputChannel.bits(flatIndex)
     }
   }
 
-  communicator.io.dataIn := automaticGeneration.io.outputChannel.bits(0)(0)(0)
+  val bufferedUartTx = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, 1))
+  io.uartTxPin := bufferedUartTx.io.txd
+  bufferedUartTx.io.inputChannel.valid := calculator.io.outputChannel.valid
+  calculator.io.outputChannel.ready := bufferedUartTx.io.inputChannel.ready
+  bufferedUartTx.io.inputChannel.bits(0) := "b01010101".U
 
-  automaticGeneration.io.outputChannel.ready := communicator.io.readEnable
-  automaticGeneration.io.inputChannel.valid := communicator.io.writeEnable
-  communicator.io.calculationDone := automaticGeneration.io.outputChannel.valid
-  automaticGeneration.io.inputChannel.valid := communicator.io.startCalculation
+  io.calculatorReady := calculator.io.inputChannel.ready
+  io.calculatorValid := calculator.io.outputChannel.valid
+  io.uartRxValid := bufferedUartRx.io.outputChannel.valid
 }

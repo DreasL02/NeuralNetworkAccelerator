@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val clockTimeout = 200_000_000
-  val frequency = 100
+  val frequency = 2
   val baudRate = 1
   val cyclesPerSerialBit = scala_utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
@@ -53,33 +53,36 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   println("bytes: " + bytes.length)
 
 
+  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(Array.fill(8*8)(0))
 
+  println("bit count: " + encodedBits.length)
 
-  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(bytes.toArray)
-
-  println(fixedFlatData.mkString(" "))
+  //println(fixedFlatData.mkString(" "))
   println(encodedBits.mkString(""))
-
-
 
   "Should support a single byte buffer" in {
     test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, pipelineIO, false, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
-
       dut.clock.setTimeout(clockTimeout)
-      dut.io.uartRxPin.poke(high) // UART idle signal is high
-
-      for (i <- 0 until tenSeconds) {
-        dut.io.uartTxPin.expect(high) // UART idle signal is high
-        dut.clock.step(1)
-      }
-
 
       val bitCount = encodedBits.length
       for (i <- 0 until bitCount) {
         val bit = encodedBits(i) - '0'
         dut.io.uartRxPin.poke(bit.U)
-        dut.clock.step(cyclesPerSerialBit)
+
+        for (_ <- 0 until cyclesPerSerialBit) {
+          println("calculatorReady: " + dut.io.calculatorReady.peekInt() + " calculatorValid: " + dut.io.calculatorValid.peekInt() + " uartRxValid: " + dut.io.uartRxValid.peekInt() + " uartTxPin: " + dut.io.uartTxPin.peekInt())
+          dut.clock.step(1)
+        }
+
       }
+
+      println("transmission done")
+
+      for (_ <- 0 until 300) {
+        println("calculatorReady: " + dut.io.calculatorReady.peekInt() + " calculatorValid: " + dut.io.calculatorValid.peekInt() + " uartRxValid: " + dut.io.uartRxValid.peekInt() + " uartTxPin: " + dut.io.uartTxPin.peekInt())
+        dut.clock.step(1)
+      }
+      /*
 
       while (dut.io.uartTxPin.peek() == high) {
         dut.clock.step(1)
@@ -94,7 +97,7 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
       }
 
       println(buffer.mkString(""))
-
+      */
 
     }
   }

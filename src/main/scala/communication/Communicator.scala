@@ -15,7 +15,7 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     val readEnable = Output(Bool())
     val writeEnable = Output(Bool())
 
-    val states = Output(Vec(3, Bool()))
+    val debugState = Output(UInt(3.W))
 
     val dataIn = Input(Vec(10, UInt(16.W)))
     val dataOut = Output(Vec(matrixByteSize, UInt(8.W)))
@@ -25,7 +25,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   })
 
   io.writeEnable := false.B
-  io.states := VecInit(Seq.fill(3)(false.B))
   io.startCalculation := false.B
   io.readEnable := false.B
 
@@ -53,7 +52,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   io.dataOut := bufferedInput.io.outputChannel.bits
 
   bufferedOutput.io.inputChannel.valid := false.B
-  // bufferedOutput.io.inputChannel.bits := io.dataIn // ham her
 
   val splitter = Module(new FlatVectorIntoByteSplitter(16, 10))
   splitter.io.input := io.dataIn
@@ -62,11 +60,10 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
   // Initially, we are receiving data.
   // The state of the accelerator is "receiving" according to the FSM diagram (initial condition).
   val state = RegInit(receivingData)
+  io.debugState := state
 
   switch(state) {
-
     is(receivingData) {
-      io.states(0) := true.B
       bufferedInput.io.outputChannel.ready := true.B
       when(bufferedInput.io.outputChannel.valid) {
         // We are done receiving data.
@@ -77,7 +74,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(waitForExternalCalculation) {
-      io.states(2) := true.B
       io.startCalculation := true.B // start the calculation of the layer through the layer FSM, will also increment the address
       when(io.calculationDone) { // wait until layer is done calculating
         state := sendingData // send the result back the the host
@@ -85,7 +81,6 @@ class Communicator(matrixByteSize: Int, frequency: Int, baudRate: Int) extends M
     }
 
     is(sendingData) {
-      io.states(1) := true.B
       io.readEnable := true.B
       bufferedOutput.io.inputChannel.valid := true.B
       when(bufferedOutput.io.inputChannel.ready) {
