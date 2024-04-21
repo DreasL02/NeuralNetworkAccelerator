@@ -7,8 +7,7 @@ class AutomaticGenerationWithUart(
                                    baudRate: Int,
                                    listOfNodes: List[Any],
                                    connectionList: List[List[Int]],
-                                   printing: Boolean = true,
-                                   matrixByteSize: Int,
+                                   printing: Boolean = true
                                  ) extends Module {
 
   val io = IO(new Bundle {
@@ -21,7 +20,7 @@ class AutomaticGenerationWithUart(
 
   val imageSize = 8
   val imageByteSize = 8 * 8 // 8x8 image with 2 bytes per pixel
-  val responseByteSize = 10 // 10 value response with 2 bytes per value
+  val responseByteSize = 10 // 10 value response
 
   val calculator = Module(new AutomaticGeneration(listOfNodes, connectionList, printing))
 
@@ -32,16 +31,18 @@ class AutomaticGenerationWithUart(
   for (i <- 0 until imageSize) {
     for (j <- 0 until imageSize) {
       val flatIndex = i * imageSize + j
-      //calculator.io.inputChannel.bits(0)(0)(i)(j) := 0.U
       calculator.io.inputChannels(0).bits(0)(0)(i)(j) := bufferedUartRx.io.outputChannel.bits(flatIndex)
     }
   }
 
-  val bufferedUartTx = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, 1))
+  val bufferedUartTx = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, responseByteSize))
   io.uartTxPin := bufferedUartTx.io.txd
   bufferedUartTx.io.inputChannel.valid := calculator.io.outputChannels(0).valid
   calculator.io.outputChannels(0).ready := bufferedUartTx.io.inputChannel.ready
-  bufferedUartTx.io.inputChannel.bits(0) := "b01010101".U
+
+  for (i <- 0 until responseByteSize) {
+    bufferedUartTx.io.inputChannel.bits(i) := calculator.io.outputChannels(0).bits(0)(0)(0)(i)
+  }
 
   io.calculatorReady := calculator.io.inputChannels(0).ready
   io.calculatorValid := calculator.io.outputChannels(0).valid
