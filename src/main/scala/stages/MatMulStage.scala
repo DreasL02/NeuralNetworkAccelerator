@@ -10,10 +10,10 @@ class MatMulStage(
                    shapeIn2: (Int, Int, Int, Int),
                    wOut: Int,
                    signed: Boolean,
-                   implementation: MatMulImplementation = MatMulImplementation.SystolicArray // TODO: remove this default value
+                   implementation: MatMulImplementation
                  ) extends Stage2(wIn, shapeIn1, wIn, shapeIn2, wOut) {
 
-  def this(matMulType: MatMulType) = this(matMulType.wOperands, matMulType.operandAShape, matMulType.operandBShape, matMulType.wResult, matMulType.signed)
+  def this(matMulType: MatMulType) = this(matMulType.wOperands, matMulType.operandAShape, matMulType.operandBShape, matMulType.wResult, matMulType.signed, matMulType.implementation)
 
   override lazy val shapeOut = (
     shapeIn1._1,

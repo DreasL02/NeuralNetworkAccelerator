@@ -7,12 +7,14 @@ class InputStage(
                   wOut: Int,
                   inputShape: (Int, Int, Int, Int),
                   outputShape: (Int, Int, Int, Int),
-                  implementation: InputImplementation = InputImplementation.Open
+                  implementation: InputImplementation,
+                  baudRate: Int,
+                  frequency: Int
                 ) extends Stage1(wIn, inputShape, wOut) {
 
   override lazy val shapeOut = outputShape
 
-  def this(inputType: InputType) = this(inputType.wIn, inputType.wOut, inputType.inputShape, inputType.outputShape)
+  def this(inputType: InputType) = this(inputType.wIn, inputType.wOut, inputType.inputShape, inputType.outputShape, inputType.implementation, inputType.baudRate, inputType.frequency)
 
   if (implementation == InputImplementation.Uart) {
     // TODO: Implement UART input, for now raise an error
@@ -27,6 +29,4 @@ class InputStage(
     latency = 0
     dspUsage = 0
   }
-
-
 }

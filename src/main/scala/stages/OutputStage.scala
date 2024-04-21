@@ -7,9 +7,12 @@ class OutputStage(
                    wOut: Int,
                    inputShape: (Int, Int, Int, Int),
                    outputShape: (Int, Int, Int, Int),
-                   implementation: OutputImplementation = OutputImplementation.Open
+                   implementation: OutputImplementation,
+                   baudRate: Int,
+                   frequency: Int
                  ) extends Stage1(wIn, inputShape, wOut) {
-  def this(outputType: OutputType) = this(outputType.wIn, outputType.wOut, outputType.inputShape, outputType.outputShape)
+
+  def this(outputType: OutputType) = this(outputType.wIn, outputType.wOut, outputType.inputShape, outputType.outputShape, outputType.implementation, outputType.baudRate, outputType.frequency)
 
   override lazy val shapeOut = outputShape
 

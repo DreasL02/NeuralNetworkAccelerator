@@ -12,14 +12,14 @@ class ConvStage(
                  signed: Boolean,
                  strides: (Int, Int),
                  pads: (Int, Int),
-                 implementation: ConvImplementation = ConvImplementation.Im2Col, // TODO: remove this default value
+                 implementation: ConvImplementation,
                  print: Boolean = false
                )
   extends Stage2(wIn, shapeInput, wIn, shapeKernel, wOut) {
 
   assert(shapeInput._2 == shapeKernel._2, "The second dimension of the input and kernel tensors must be the same")
 
-  def this(convType: ConvType) = this(convType.w, convType.wResult, convType.inputShape, convType.kernelShape, convType.signed, convType.strides, convType.pads)
+  def this(convType: ConvType) = this(convType.w, convType.wResult, convType.inputShape, convType.kernelShape, convType.signed, convType.strides, convType.pads, convType.implementation)
 
   override lazy val shapeOut = (
     shapeInput._1, // batch size

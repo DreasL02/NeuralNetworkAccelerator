@@ -1,6 +1,7 @@
 package onnx
 
 import scala_utils.MatrixUtils.tensorToString
+import stages.{ConvImplementation, InputImplementation, MatMulImplementation, OutputImplementation}
 
 import scala.math.BigDecimal.double2bigDecimal
 
@@ -54,7 +55,7 @@ object SpecToListConverter {
       val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       if (toPrint) println("Input: " + index + " " + w + " " + shape)
-      (index, Operators.InputType(w, w, shape, shape), List())
+      (index, Operators.InputType(w, w, shape, shape, InputImplementation.Open, 1, 1), List())
     }).toList
 
     val outputList = outputs.map(entry => {
@@ -63,7 +64,7 @@ object SpecToListConverter {
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
       if (toPrint) println("Output: " + index + " " + w + " " + shape + " " + connectionIndex)
-      (index, Operators.OutputType(w, w, shape, shape), connectionIndex)
+      (index, Operators.OutputType(w, w, shape, shape, OutputImplementation.Open, 1, 1), connectionIndex)
     }).toList
 
     val rounderList = rounders.map(entry => {
@@ -89,7 +90,7 @@ object SpecToListConverter {
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
       if (toPrint) println("Conv: " + index + " " + w + " " + wResult + " " + inputShape + " " + kernelShape + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
-      (index, Operators.ConvType(w, wResult, inputShape, kernelShape, signed, strides, pads), connectionIndex)
+      (index, Operators.ConvType(w, wResult, inputShape, kernelShape, signed, strides, pads, ConvImplementation.Im2Col), connectionIndex)
     }).toList
 
     val matmulList = matmuls.map(entry => {
@@ -101,7 +102,7 @@ object SpecToListConverter {
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
       if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandAShape + " " + operandBShape + " " + connectionIndex)
-      (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape), connectionIndex)
+      (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape, MatMulImplementation.SystolicArray), connectionIndex)
     }).toList
 
     val maxPoolList = maxPools.map(entry => {
