@@ -48,18 +48,18 @@ class AutomaticGenerationSinePipeSpec extends AnyFreeSpec with ChiselScalatestTe
       var cycleTotal = 0
 
       while (resultNum < numberOfInputs) {
-        dut.io.inputChannel.valid.poke(true.B)
-        dut.io.outputChannel.ready.poke(true.B)
+        dut.io.inputChannels(0).valid.poke(true.B)
+        dut.io.outputChannels(0).ready.poke(true.B)
 
-        if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfInputs) {
+        if (dut.io.inputChannels(0).ready.peek().litToBoolean && inputNum < numberOfInputs) {
           if (printToConsole) println("Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal)
-          dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(inputNum).U)
+          dut.io.inputChannels(0).bits(0)(0)(0)(0).poke(inputsFixed(inputNum).U)
           cycleStart(inputNum) = cycleTotal
           inputNum += 1
         }
 
-        if (dut.io.outputChannel.valid.peek().litToBoolean) {
-          val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
+        if (dut.io.outputChannels(0).valid.peek().litToBoolean) {
+          val resultFixed = dut.io.outputChannels(0).bits(0)(0)(0)(0).peek().litValue
           results(resultNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
           if (printToConsole) println("Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles Total: " + cycleTotal + " Cycles Since Input: " + (cycleTotal - cycleStart(resultNum)))
           resultNum += 1

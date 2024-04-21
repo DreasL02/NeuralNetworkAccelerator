@@ -1,5 +1,5 @@
 import chisel3._
-import chisel3.util.DecoupledIO
+import chisel3.util.{DecoupledIO, MixedVec}
 import onnx.Operators._
 import operators._
 import stages._
@@ -9,81 +9,68 @@ class AutomaticGeneration(
                            connectionList: List[List[Int]],
                            printing: Boolean = false
                          ) extends Module {
-
-
-  val inputNode = listOfNodes.head.asInstanceOf[InputType] // right now, the first node is always the input node
-  val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
-
-  val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.shape._1, Vec(inputNode.shape._2,
-      Vec(inputNode.shape._3, Vec(inputNode.shape._4, UInt(inputNode.w.W)))))))
-    val outputChannel = new DecoupledIO(Vec(outputNode.shape._1, Vec(outputNode.shape._2,
-      Vec(outputNode.shape._3, Vec(outputNode.shape._4, UInt(outputNode.w.W)))))
-    )
-  })
-
   var latency = 0
   var dspUsage = 0
+
+  private val inputs = listOfNodes.filter(_.isInstanceOf[InputType])
+  private val automaticInputChannels = for (i <- inputs.indices) yield {
+    val inputChannels = Flipped(DecoupledIO(Vec(inputs(i).asInstanceOf[InputType].shape._1, Vec(inputs(i).asInstanceOf[InputType].shape._2, Vec(inputs(i).asInstanceOf[InputType].shape._3, Vec(inputs(i).asInstanceOf[InputType].shape._4, UInt(inputs(i).asInstanceOf[InputType].w.W)))))))
+    inputChannels
+  }
+
+  private val outputs = listOfNodes.filter(_.isInstanceOf[OutputType])
+  private val automaticOutputChannels = for (i <- outputs.indices) yield {
+    val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].shape._1, Vec(outputs(i).asInstanceOf[OutputType].shape._2, Vec(outputs(i).asInstanceOf[OutputType].shape._3, Vec(outputs(i).asInstanceOf[OutputType].shape._4, UInt(outputs(i).asInstanceOf[OutputType].w.W))))))
+    outputChannel
+  }
+
+  val io = IO(new Bundle {
+    val inputChannels = MixedVec(automaticInputChannels)
+    val outputChannels = MixedVec(automaticOutputChannels)
+  })
 
   // Module Creation
   val stages: List[Stage] = listOfNodes.map {
     case inputType: InputType =>
       val input = Module(new InputStage(inputType))
-      latency += input.latency
-      dspUsage += input.dspUsage
       input
     case outputType: OutputType =>
       val output = Module(new OutputStage(outputType))
-      latency += output.latency
-      dspUsage += output.dspUsage
       output
     case initializerType: InitializerType =>
       val initializer = Module(new InitializerStage(initializerType))
-      latency += initializer.latency
-      dspUsage += initializer.dspUsage
       initializer
     case addType: AddType =>
       val add = Module(new AddStage(addType))
-      latency += add.latency
-      dspUsage += add.dspUsage
       add
     case matMulType: MatMulType =>
       val matMul = Module(new MatMulStage(matMulType))
-      latency += matMul.latency
-      dspUsage += matMul.dspUsage
       matMul
     case reluType: ReluType =>
       val relu = Module(new ReLUStage(reluType))
-      latency += relu.latency
-      dspUsage += relu.dspUsage
       relu
     case rounderType: RounderType =>
       val rounder = Module(new RounderStage(rounderType))
-      latency += rounder.latency
-      dspUsage += rounder.dspUsage
       rounder
     case reshapeType: ReshapeType =>
       val reshape = Module(new ReshapeStage(reshapeType))
-      latency += reshape.latency
-      dspUsage += reshape.dspUsage
       reshape
     case convType: ConvType =>
       val conv = Module(new ConvStage(convType))
-      latency += conv.latency
-      dspUsage += conv.dspUsage
       conv
     case maxPoolType: MaxPoolType =>
       val maxPool = Module(new MaxPoolStage(maxPoolType))
-      latency += maxPool.latency
-      dspUsage += maxPool.dspUsage
       maxPool
     case broadcasterType: BroadcasterType =>
       val broadcaster = Module(new BroadcasterStage(broadcasterType))
-      latency += broadcaster.latency
-      dspUsage += broadcaster.dspUsage
       broadcaster
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
+  }
+
+  stages.foreach { stage =>
+    latency += stage.latency
+    dspUsage += stage.dspUsage
   }
 
   if (printing) {
@@ -92,7 +79,7 @@ class AutomaticGeneration(
     println("Total estimated DSP usage: " + dspUsage)
     println("====================================")
   }
-
+  
   if (printing) println("Modules Initialized. Beginning connection logic.")
 
   // Connection Logic (Wiring)
@@ -104,7 +91,7 @@ class AutomaticGeneration(
       case input: InputStage =>
         if (printing) println("Connecting to input channel")
         // Should only happen once
-        input.io.inputChannel <> io.inputChannel
+        input.io.inputChannel <> io.inputChannels(0)
 
       case output: OutputStage =>
         // Should only happen once
@@ -122,9 +109,9 @@ class AutomaticGeneration(
             throw new Exception("Unknown stage type")
         }
         if (printing) println("Connecting to output channel")
-        io.outputChannel <> output.io.outputChannel
+        io.outputChannels(0) <> output.io.outputChannel
 
-      case stage0: Stage0 =>
+      case _: Stage0 =>
       // Does not have any input channels, so no need to connect anything
       case stage1: Stage1 =>
         if (printing) {
@@ -172,10 +159,7 @@ class AutomaticGeneration(
       case _ =>
         throw new Exception("Unknown stage type")
     }
-
     if (printing) println("Connections generated for: " + currentStage)
-
-
   }
 
   if (printing) println("Connections done.")

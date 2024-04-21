@@ -72,26 +72,26 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
       var cycleTotal = 0
 
       while (resultNum < numberOfInputs) {
-        dut.io.inputChannel.valid.poke(true.B)
-        dut.io.outputChannel.ready.poke(true.B)
+        dut.io.inputChannels(0).valid.poke(true.B)
+        dut.io.outputChannels(0).ready.poke(true.B)
 
-        if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfInputs) {
+        if (dut.io.inputChannels(0).ready.peek().litToBoolean && inputNum < numberOfInputs) {
           if (printToConsole) {
             println("Inputted image " + inputNum + " Cycles: " + cycleTotal)
             println()
           }
           for (i <- 0 until imageSize) {
             for (j <- 0 until imageSize) {
-              dut.io.inputChannel.bits(0)(0)(i)(j).poke(floatToFixed(testData(inputNum)(i)(j), fixedPoint, w, signed).U)
+              dut.io.inputChannels(0).bits(0)(0)(i)(j).poke(floatToFixed(testData(inputNum)(i)(j), fixedPoint, w, signed).U)
             }
           }
           inputNum += 1
         }
 
-        if (dut.io.outputChannel.valid.peek().litToBoolean) {
+        if (dut.io.outputChannels(0).valid.peek().litToBoolean) {
           val resultFixed = Array.fill(10)(BigInt(0))
           for (i <- 0 until 10) {
-            resultFixed(i) = dut.io.outputChannel.bits(0)(0)(0)(i).peek().litValue
+            resultFixed(i) = dut.io.outputChannels(0).bits(0)(0)(0)(i).peek().litValue
             results(resultNum)(i) = fixedToFloat(resultFixed(i), fixedPointResult, wResult, signed)
           }
           if (printToConsole) {

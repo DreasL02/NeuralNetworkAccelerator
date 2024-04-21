@@ -69,15 +69,15 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         var cycleTotal = 0
         for (i <- 0 until imageSize) {
           for (j <- 0 until imageSize) {
-            dut.io.inputChannel.bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
+            dut.io.inputChannels(0).bits(0)(0)(i)(j).poke(groupedData(i)(j).U)
           }
         }
 
-        dut.io.inputChannel.valid.poke(true.B)
-        dut.io.outputChannel.ready.poke(true.B)
+        dut.io.inputChannels(0).valid.poke(true.B)
+        dut.io.outputChannels(0).ready.poke(true.B)
         dut.clock.step()
         cycleTotal += 1
-        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
+        while (!dut.io.outputChannels(0).valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
         }
@@ -85,13 +85,13 @@ class AutomaticGenerationMNISTSpec extends AnyFreeSpec with ChiselScalatestTeste
         val resultFixed = Array.fill(10)(BigInt(0))
         val resultsFloat = Array.fill(10)(0.0f)
         for (i <- 0 until 10) {
-          resultFixed(i) = dut.io.outputChannel.bits(0)(0)(0)(i).peek().litValue
+          resultFixed(i) = dut.io.outputChannels(0).bits(0)(0)(0)(i).peek().litValue
           resultsFloat(i) = fixedToFloat(resultFixed(i), fixedPointResult, wResult, signed)
         }
 
         dut.clock.step()
-        dut.io.inputChannel.valid.poke(false.B)
-        dut.io.outputChannel.ready.poke(false.B)
+        dut.io.inputChannels(0).valid.poke(false.B)
+        dut.io.outputChannels(0).ready.poke(false.B)
         dut.clock.step()
 
         if (printToConsole) {

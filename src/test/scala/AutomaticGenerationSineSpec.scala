@@ -44,12 +44,12 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
       test(new AutomaticGeneration(lists._2, lists._3, printConnections)) { dut =>
         var cycleTotal = 0
-        dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(testNum).U)
-        dut.io.inputChannel.valid.poke(true.B)
-        dut.io.outputChannel.ready.poke(true.B)
+        dut.io.inputChannels(0).bits(0)(0)(0)(0).poke(inputsFixed(testNum).U)
+        dut.io.inputChannels(0).valid.poke(true.B)
+        dut.io.outputChannels(0).ready.poke(true.B)
         dut.clock.step()
         cycleTotal += 1
-        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
+        while (!dut.io.outputChannels(0).valid.peek().litToBoolean) {
           dut.clock.step()
           cycleTotal += 1
 
@@ -57,7 +57,7 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
             fail("Timeout")
           }
         }
-        val resultFixed = dut.io.outputChannel.bits(0)(0)(0)(0).peek().litValue
+        val resultFixed = dut.io.outputChannels(0).bits(0)(0)(0)(0).peek().litValue
 
         if (printToConsole) {
           println("Test: " + testNum)
