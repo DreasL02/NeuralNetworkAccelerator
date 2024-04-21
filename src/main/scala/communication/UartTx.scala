@@ -24,6 +24,7 @@ class UartTx(frequency: Int, baudRate: Int) extends Module {
   })
 
   val CYCLES_PER_SERIAL_BIT = ((frequency + baudRate / 2) / baudRate - 1).asUInt
+  println("CYCLES_PER_SERIAL_BIT: " + CYCLES_PER_SERIAL_BIT)
   val SEQUENCE_LENGTH = 1 + 8 + 2 // one start bit, 8 data bits, two stop bits
   val ELEVEN_HIGH_BITS = 0x7ff.U
 

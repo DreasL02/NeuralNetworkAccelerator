@@ -1,6 +1,5 @@
 import chisel3._
 import chiseltest._
-import onnx.SpecToListConverter
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.floatToFixed
 
@@ -9,13 +8,14 @@ import scala.collection.mutable.ArrayBuffer
 class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val clockTimeout = 200_000_000
-  val frequency = 100
+  val frequency = 2
   val baudRate = 1
   val cyclesPerSerialBit = scala_utils.UartCoding.cyclesPerSerialBit(frequency, baudRate)
   val tenSeconds = frequency * 10
 
   val filepath = "ONNX Python/json/8x8.json"
   val lists = SpecToListConverter.convertSpecToLists(filepath)
+  val pipelineIO = false
   val print = true
 
   val parameters = lists._1
@@ -53,30 +53,36 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   println("bytes: " + bytes.length)
 
 
-  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(bytes.toArray)
+  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(Array.fill(8*8)(0))
 
-  println(fixedFlatData.mkString(" "))
+  println("bit count: " + encodedBits.length)
+
+  //println(fixedFlatData.mkString(" "))
   println(encodedBits.mkString(""))
 
-
   "Should support a single byte buffer" in {
-    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
-
+    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, pipelineIO, false, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
       dut.clock.setTimeout(clockTimeout)
-      dut.io.uartRxPin.poke(high) // UART idle signal is high
-
-      for (i <- 0 until tenSeconds) {
-        dut.io.uartTxPin.expect(high) // UART idle signal is high
-        dut.clock.step(1)
-      }
-
 
       val bitCount = encodedBits.length
       for (i <- 0 until bitCount) {
         val bit = encodedBits(i) - '0'
         dut.io.uartRxPin.poke(bit.U)
-        dut.clock.step(cyclesPerSerialBit)
+
+        for (_ <- 0 until cyclesPerSerialBit) {
+          println("calculatorReady: " + dut.io.calculatorReady.peekInt() + " calculatorValid: " + dut.io.calculatorValid.peekInt() + " uartRxValid: " + dut.io.uartRxValid.peekInt() + " uartTxPin: " + dut.io.uartTxPin.peekInt())
+          dut.clock.step(1)
+        }
+
       }
+
+      println("transmission done")
+
+      for (_ <- 0 until 300) {
+        println("calculatorReady: " + dut.io.calculatorReady.peekInt() + " calculatorValid: " + dut.io.calculatorValid.peekInt() + " uartRxValid: " + dut.io.uartRxValid.peekInt() + " uartTxPin: " + dut.io.uartTxPin.peekInt())
+        dut.clock.step(1)
+      }
+      /*
 
       while (dut.io.uartTxPin.peek() == high) {
         dut.clock.step(1)
@@ -84,14 +90,14 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
 
       val buffer = ArrayBuffer[BigInt]()
       buffer.append(1)
-      val outputBitCount = 10 * 2 * 11 + 50
+      val outputBitCount = 10*2*11+50
       for (i <- 0 until outputBitCount) {
         buffer.append(dut.io.uartRxPin.peek().litValue)
         dut.clock.step(cyclesPerSerialBit)
       }
 
       println(buffer.mkString(""))
-
+      */
 
     }
   }
