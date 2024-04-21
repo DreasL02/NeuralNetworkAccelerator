@@ -52,7 +52,7 @@ class LayerCalculator(
     io.debugRounderInputs.get := add.io.outputChannel.bits
   }
 
-  private val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
+  private val rounder = Module(new Rounder(wResult, w, numberOfRows, numberOfColumns, signed, fixedPoint))
   rounder.io.inputChannel <> add.io.outputChannel
 
   if (enableDebuggingIO) {

@@ -8,7 +8,7 @@ import scala_utils.RandomData.randomMatrix
 import TestingUtils.Comparison.CompareWithErrorThreshold
 import operators.systolic_array.BufferedSystolicArray
 
-class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
+class BufferedSystolicArrayPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -80,7 +80,7 @@ class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   // for each test, generate a random set of matrices and test
 
-  "operators.MatMul should calculate correctly for in pipeline test" in {
+  "BufferedSystolicArray should calculate correctly for in pipeline test" in {
     test(new BufferedSystolicArray(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
       var inputNum = 0
       var resultNum = 0

@@ -5,7 +5,7 @@ import operators.SingleChannelConvolution
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
-class ConvSpec extends AnyFreeSpec with ChiselScalatestTester {
+class SingleChannelConvolutionSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   // Using tests from https://github.com/onnx/onnx/blob/main/docs/Operators.md#Conv
 

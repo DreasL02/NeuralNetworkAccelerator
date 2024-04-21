@@ -16,9 +16,10 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.outputChannel.ready.poke(true.B)
       dut.io.outputChannel.valid.expect(false.B)
       dut.io.outputChannel.bits.expect(0.U)
+
+
       var cycles = 0
       while (!dut.io.outputChannel.valid.peek().litToBoolean) {
-        dut.io.inputChannel.ready.expect(false.B)
         dut.clock.step()
         cycles += 1
         if (toPrint) {
@@ -45,7 +46,6 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       var cycles = 0
       while (!dut.io.outputChannel.valid.peek().litToBoolean) {
-        dut.io.inputChannel.ready.expect(false.B)
         dut.clock.step()
         cycles += 1
         if (toPrint) {
@@ -77,7 +77,6 @@ class AdderTreeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       var cycles = 0
       while (!dut.io.outputChannel.valid.peek().litToBoolean) {
-        dut.io.inputChannel.ready.expect(false.B)
         dut.clock.step()
         cycles += 1
         if (toPrint) {

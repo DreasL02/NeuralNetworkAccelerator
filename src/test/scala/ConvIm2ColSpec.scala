@@ -4,7 +4,7 @@ import operators.ConvIm2Col
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
-class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
+class ConvIm2ColSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   // Using tests from https://github.com/onnx/onnx/blob/main/docs/Operators.md#Conv
 
@@ -34,7 +34,10 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
       kernelShape = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
-      pads = (1, 1))) {
+      pads = (1, 1),
+      enableDebuggingIO = true,
+      print = toPrintPadding
+    )) {
       dut =>
         val expectedOutput = Array(Array(Array(
           Array(12, 21, 27, 33, 24),
@@ -147,7 +150,10 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
       kernelShape = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
-      pads = (0, 0))) {
+      pads = (0, 0),
+      enableDebuggingIO = true,
+      print = toPrintNoPadding
+    )) {
       dut =>
         val expectedOutput = Array(Array(Array(
           Array(54, 63, 72),
@@ -306,7 +312,10 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
       kernelShape = (test3Weights.length, test3Weights(0).length, test3Weights(0)(0).length, test3Weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
-      pads = (0, 0))) {
+      pads = (0, 0),
+      enableDebuggingIO = true,
+      print = toPrintNoPadding
+    )) {
       dut =>
         val expectedOutput = Array(
           Array(

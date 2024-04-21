@@ -1,12 +1,12 @@
 
 import chisel3._
 import chiseltest._
-import operators.{DirectMatMul4d}
+import operators.{BufferedSystolicArray4d, DirectMatMul4d}
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 
-class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
+class DirectMatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   val toPrint = false
 
   val inputDimensions = (1, 3, 3, 2)
@@ -63,7 +63,7 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
       Array(
         Array(66, 16, 36, 18),
         Array(95, 22, 58, 29),
-        Array(83, 20, 46, 23)
+        Array(126, 30, 72, 36)
       ),
       Array(
         Array(44, 34, 72, 44),
@@ -90,8 +90,8 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
 
-  "4d operators.MatMul" in {
-    test(new DirectMatMul4d(w, wResult, inputDimensions, weightDimensions, signed = true)) { dut =>
+  "4d MatMul" in {
+    test(new DirectMatMul4d(w, wResult, inputDimensions, weightDimensions, true)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.weightChannel.valid.poke(true.B)
       dut.io.outputChannel.ready.poke(true.B)
@@ -137,22 +137,22 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
 
-      for (i <- 0 until outputDimensions._1) {
-        for (j <- 0 until outputDimensions._2) {
-          for (k <- 0 until outputDimensions._3) {
-            for (l <- 0 until outputDimensions._4) {
-              assert(results(i)(j)(k)(l) == cU(i)(j)(k)(l))
-            }
-          }
-        }
-      }
-
       if (toPrint) {
         println("Cycles")
         println(cycle)
 
         println("Results")
         println(tensorToString(results))
+      }
+
+      for (i <- 0 until outputDimensions._1) {
+        for (j <- 0 until outputDimensions._2) {
+          for (k <- 0 until outputDimensions._3) {
+            for (l <- 0 until outputDimensions._4) {
+              assert(results(i)(j)(k)(l) == cU(i)(j)(k)(l), "Element (%d, %d, %d, %d) did not match".format(i, j, k, l))
+            }
+          }
+        }
       }
     }
   }

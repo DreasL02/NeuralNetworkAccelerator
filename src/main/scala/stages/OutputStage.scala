@@ -1,6 +1,7 @@
 package stages
 
 import onnx.Operators.OutputType
+import chisel3._
 
 class OutputStage(
                    wIn: Int,
@@ -22,6 +23,9 @@ class OutputStage(
     assert(wOut == 1, "UART output only supports one bit-width output")
 
     throw new NotImplementedError("UART output not implemented")
+
+    io.outputChannel.ready := true.B
+
     latency = 0
     dspUsage = 0
   } else {

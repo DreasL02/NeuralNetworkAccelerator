@@ -61,7 +61,7 @@ class ConvDirect(
         adderTree(i)(j).inputChannel.bits(k) := singleChannelConvolutions(i)(j)(k).outputChannel.bits
         singleChannelConvolutions(i)(j)(k).outputChannel.ready := adderTree(i)(j).inputChannel.ready
       }
-      adderTree(i)(j).inputChannel.valid := singleChannelConvolutions(i)(j).map(_.outputChannel.valid).reduce(_ && _)
+      adderTree(i)(j).inputChannel.valid := singleChannelConvolutions(i)(j)(0).outputChannel.valid
       io.outputChannel.bits(i)(j) := adderTree(i)(j).outputChannel.bits
       adderTree(i)(j).outputChannel.ready := io.outputChannel.ready
     }
@@ -69,6 +69,6 @@ class ConvDirect(
 
   io.inputChannel.ready := singleChannelConvolutions(0)(0)(0).inputChannel.ready
   io.kernelChannel.ready := singleChannelConvolutions(0)(0)(0).kernelChannel.ready
-  io.outputChannel.valid := singleChannelConvolutions(0)(0)(0).outputChannel.valid
+  io.outputChannel.valid := adderTree(0)(0).outputChannel.valid
 }
 
