@@ -14,13 +14,13 @@ class AutomaticGeneration(
 
   private val inputs = listOfNodes.filter(_.isInstanceOf[InputType])
   private val automaticInputChannels = for (i <- inputs.indices) yield {
-    val inputChannels = Flipped(DecoupledIO(Vec(inputs(i).asInstanceOf[InputType].shape._1, Vec(inputs(i).asInstanceOf[InputType].shape._2, Vec(inputs(i).asInstanceOf[InputType].shape._3, Vec(inputs(i).asInstanceOf[InputType].shape._4, UInt(inputs(i).asInstanceOf[InputType].w.W)))))))
+    val inputChannels = Flipped(DecoupledIO(Vec(inputs(i).asInstanceOf[InputType].inputShape._1, Vec(inputs(i).asInstanceOf[InputType].inputShape._2, Vec(inputs(i).asInstanceOf[InputType].inputShape._3, Vec(inputs(i).asInstanceOf[InputType].inputShape._4, UInt(inputs(i).asInstanceOf[InputType].wIn.W)))))))
     inputChannels
   }
 
   private val outputs = listOfNodes.filter(_.isInstanceOf[OutputType])
   private val automaticOutputChannels = for (i <- outputs.indices) yield {
-    val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].shape._1, Vec(outputs(i).asInstanceOf[OutputType].shape._2, Vec(outputs(i).asInstanceOf[OutputType].shape._3, Vec(outputs(i).asInstanceOf[OutputType].shape._4, UInt(outputs(i).asInstanceOf[OutputType].w.W))))))
+    val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].outputShape._1, Vec(outputs(i).asInstanceOf[OutputType].outputShape._2, Vec(outputs(i).asInstanceOf[OutputType].outputShape._3, Vec(outputs(i).asInstanceOf[OutputType].outputShape._4, UInt(outputs(i).asInstanceOf[OutputType].wOut.W))))))
     outputChannel
   }
 
@@ -79,8 +79,11 @@ class AutomaticGeneration(
     println("Total estimated DSP usage: " + dspUsage)
     println("====================================")
   }
-  
+
   if (printing) println("Modules Initialized. Beginning connection logic.")
+
+  private var inputIndex = 0
+  private var outputIndex = 0
 
   // Connection Logic (Wiring)
   for (i <- stages.indices) {
@@ -91,7 +94,8 @@ class AutomaticGeneration(
       case input: InputStage =>
         if (printing) println("Connecting to input channel")
         // Should only happen once
-        input.io.inputChannel <> io.inputChannels(0)
+        input.io.inputChannel <> io.inputChannels(inputIndex)
+        inputIndex += 1
 
       case output: OutputStage =>
         // Should only happen once
@@ -109,7 +113,8 @@ class AutomaticGeneration(
             throw new Exception("Unknown stage type")
         }
         if (printing) println("Connecting to output channel")
-        io.outputChannels(0) <> output.io.outputChannel
+        io.outputChannels(outputIndex) <> output.io.outputChannel
+        outputIndex += 1
 
       case _: Stage0 =>
       // Does not have any input channels, so no need to connect anything

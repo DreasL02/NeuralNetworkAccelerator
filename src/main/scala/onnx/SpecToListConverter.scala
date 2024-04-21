@@ -54,7 +54,7 @@ object SpecToListConverter {
       val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       if (toPrint) println("Input: " + index + " " + w + " " + shape)
-      (index, Operators.InputType(w, shape), List())
+      (index, Operators.InputType(w, w, shape, shape), List())
     }).toList
 
     val outputList = outputs.map(entry => {
@@ -63,7 +63,7 @@ object SpecToListConverter {
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
       if (toPrint) println("Output: " + index + " " + w + " " + shape + " " + connectionIndex)
-      (index, Operators.OutputType(w, shape), connectionIndex)
+      (index, Operators.OutputType(w, w, shape, shape), connectionIndex)
     }).toList
 
     val rounderList = rounders.map(entry => {

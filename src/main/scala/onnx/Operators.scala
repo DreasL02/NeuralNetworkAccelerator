@@ -8,20 +8,30 @@ object Operators {
     require(fixedPointResult >= 0, "fixedPointResult must be greater than or equal 0")
   }
 
-  case class InputType(w: Int, shape: (Int, Int, Int, Int)) {
-    require(w > 0, "w must be greater than 0")
-    require(shape._1 > 0, "dimensions._1 must be greater than 0")
-    require(shape._2 > 0, "dimensions._2 must be greater than 0")
-    require(shape._3 > 0, "dimensions._3 must be greater than 0")
-    require(shape._4 > 0, "dimensions._4 must be greater than 0")
+  case class InputType(wIn: Int, wOut: Int, inputShape: (Int, Int, Int, Int), outputShape: (Int, Int, Int, Int)) {
+    require(wIn > 0, "w must be greater than 0")
+    require(wOut > 0, "w must be greater than 0")
+    require(inputShape._1 > 0, "dimensions._1 must be greater than 0")
+    require(inputShape._2 > 0, "dimensions._2 must be greater than 0")
+    require(inputShape._3 > 0, "dimensions._3 must be greater than 0")
+    require(inputShape._4 > 0, "dimensions._4 must be greater than 0")
+    require(outputShape._1 > 0, "dimensions._1 must be greater than 0")
+    require(outputShape._2 > 0, "dimensions._2 must be greater than 0")
+    require(outputShape._3 > 0, "dimensions._3 must be greater than 0")
+    require(outputShape._4 > 0, "dimensions._4 must be greater than 0")
   }
 
-  case class OutputType(w: Int, shape: (Int, Int, Int, Int)) {
-    require(w > 0, "w must be greater than 0")
-    require(shape._1 > 0, "dimensions._1 must be greater than 0")
-    require(shape._2 > 0, "dimensions._2 must be greater than 0")
-    require(shape._3 > 0, "dimensions._3 must be greater than 0")
-    require(shape._4 > 0, "dimensions._4 must be greater than 0")
+  case class OutputType(wIn: Int, wOut: Int, inputShape: (Int, Int, Int, Int), outputShape: (Int, Int, Int, Int)) {
+    require(wIn > 0, "w must be greater than 0")
+    require(wOut > 0, "w must be greater than 0")
+    require(inputShape._1 > 0, "dimensions._1 must be greater than 0")
+    require(inputShape._2 > 0, "dimensions._2 must be greater than 0")
+    require(inputShape._3 > 0, "dimensions._3 must be greater than 0")
+    require(inputShape._4 > 0, "dimensions._4 must be greater than 0")
+    require(outputShape._1 > 0, "dimensions._1 must be greater than 0")
+    require(outputShape._2 > 0, "dimensions._2 must be greater than 0")
+    require(outputShape._3 > 0, "dimensions._3 must be greater than 0")
+    require(outputShape._4 > 0, "dimensions._4 must be greater than 0")
   }
 
   case class RounderType(wOperands: Int, wResult: Int, signed: Boolean, shape: (Int, Int, Int, Int), fixedPoint: Int) {

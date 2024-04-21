@@ -3,14 +3,27 @@ package stages
 import onnx.Operators.OutputType
 
 class OutputStage(
-                   w: Int,
-                   shape: (Int, Int, Int, Int)
-                 ) extends Stage1(w, shape, w) {
+                   wIn: Int,
+                   wOut: Int,
+                   inputShape: (Int, Int, Int, Int),
+                   outputShape: (Int, Int, Int, Int),
+                   implementation: OutputImplementation = OutputImplementation.Open
+                 ) extends Stage1(wIn, inputShape, wOut) {
+  def this(outputType: OutputType) = this(outputType.wIn, outputType.wOut, outputType.inputShape, outputType.outputShape)
 
-  def this(outputType: OutputType) = this(outputType.w, outputType.shape)
+  override lazy val shapeOut = outputShape
 
-  io.outputChannel <> io.inputChannel
+  if (implementation == OutputImplementation.Uart) {
+    // TODO: Implement UART output, for now raise an error
+    assert(outputShape == (1, 1, 1, 1), "UART output only supports one output")
+    assert(wOut == 1, "UART output only supports one bit-width output")
 
-  latency = 0
-  dspUsage = 0
+    throw new NotImplementedError("UART output not implemented")
+    latency = 0
+    dspUsage = 0
+  } else {
+    io.outputChannel <> io.inputChannel
+    latency = 0
+    dspUsage = 0
+  }
 }
