@@ -1,5 +1,6 @@
 import chisel3._
 import chiseltest._
+import onnx.SpecToListConverter
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.floatToFixed
 
@@ -53,7 +54,7 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   println("bytes: " + bytes.length)
 
 
-  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(Array.fill(8*8)(0))
+  val encodedBits = scala_utils.UartCoding.encodeBytesToUartBits(Array.fill(8 * 8)(0))
 
   println("bit count: " + encodedBits.length)
 
@@ -61,7 +62,7 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   println(encodedBits.mkString(""))
 
   "Should support a single byte buffer" in {
-    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, pipelineIO, false, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
       dut.clock.setTimeout(clockTimeout)
 
       val bitCount = encodedBits.length

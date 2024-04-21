@@ -7,8 +7,6 @@ class AutomaticGenerationWithUart(
                                    baudRate: Int,
                                    listOfNodes: List[Any],
                                    connectionList: List[List[Int]],
-                                   pipelineIO: Boolean = false,
-                                   enableDebuggingIO: Boolean = true,
                                    printing: Boolean = true,
                                    matrixByteSize: Int,
                                  ) extends Module {
@@ -22,10 +20,10 @@ class AutomaticGenerationWithUart(
   })
 
   val imageSize = 8
-  val imageByteSize = 8*8 // 8x8 image with 2 bytes per pixel
+  val imageByteSize = 8 * 8 // 8x8 image with 2 bytes per pixel
   val responseByteSize = 10 // 10 value response with 2 bytes per value
 
-  val calculator = Module(new AutomaticGeneration(listOfNodes, connectionList, pipelineIO, enableDebuggingIO, printing))
+  val calculator = Module(new AutomaticGeneration(listOfNodes, connectionList, printing))
 
   val bufferedUartRx = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, imageByteSize))
   bufferedUartRx.io.rxd := io.uartRxPin
