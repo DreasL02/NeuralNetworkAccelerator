@@ -9,11 +9,11 @@ import chisel3.util.log2Ceil
 // http://ecelabs.njit.edu/ece459/lab3.php (Visited 08-04-2024)
 
 class SystolicArray(
-                     w: Int = 8, // width of the inputs
-                     wResult: Int = 32, // width of the result
-                     numberOfRows: Int = 4, // number of rows in the result matrix (number of PEs in the vertical direction)
-                     numberOfColumns: Int = 4, // number of columns in the result matrix (number of PEs in the horizontal direction)
-                     signed: Boolean = true // to determine if signed or unsigned multiplication should be used
+                     w: Int, // width of the inputs
+                     wResult: Int, // width of the result
+                     numberOfRows: Int, // number of rows in the result matrix (number of PEs in the vertical direction)
+                     numberOfColumns: Int, // number of columns in the result matrix (number of PEs in the horizontal direction)
+                     signed: Boolean // to determine if signed or unsigned multiplication should be used
                    ) extends Module {
   val io = IO(new Bundle {
     val a = Input(Vec(numberOfRows, UInt(w.W))) // values shifted in from the left, equal to the number of rows in the systolic array

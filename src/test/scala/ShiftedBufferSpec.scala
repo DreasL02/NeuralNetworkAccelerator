@@ -7,7 +7,7 @@ class ShiftedBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Buffer should behave correctly" in {
     val dimension = 4
     val shift = 0
-    test(new ShiftedBuffer(w = 8, dimension = dimension, shift = shift)) { dut =>
+    test(new ShiftedBuffer(8, dimension, shift)) { dut =>
       dut.io.load.poke(true.B)
       dut.io.data(0).poke(1.U)
       dut.io.data(1).poke(2.U)

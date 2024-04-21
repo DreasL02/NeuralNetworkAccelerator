@@ -5,51 +5,51 @@ import chisel3.util.DecoupledIO
 import scala_utils.Optional.optional
 
 class Conv4dMatmul(
-                    val w: Int = 8,
-                    val wResult: Int = 32,
-                    val inputDimensions: (Int, Int, Int, Int) = (32, 32, 32, 32),
+                    val w: Int,
+                    val wResult: Int,
+                    val inputShape: (Int, Int, Int, Int),
                     // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
-                    val kernelDimensions: (Int, Int, Int, Int) = (3, 3, 3, 3),
+                    val kernelShape: (Int, Int, Int, Int),
                     // number of output channels (also called feature maps), number of input channels (e.g. RGB), height, width
-                    val signed: Boolean = true, // whether the input and kernel matrices are signed
-                    val strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-                    val pads: (Int, Int) = (0, 0), // the padding to use for the convolution
-                    val enableDebuggingIO: Boolean = true,
+                    val signed: Boolean, // whether the input and kernel matrices are signed
+                    val strides: (Int, Int), // the stride to use for the convolution
+                    val pads: (Int, Int), // the padding to use for the convolution
+                    val enableDebuggingIO: Boolean = false,
                     val print: Boolean = false
                   ) extends Module {
 
-  assert(inputDimensions._2 == kernelDimensions._2, "The second dimension of the input and kernel tensors must be the same")
-  assert(kernelDimensions._3 == kernelDimensions._4, "Only square kernels are supported")
+  assert(inputShape._2 == kernelShape._2, "The second dimension of the input and kernel tensors must be the same")
+  assert(kernelShape._3 == kernelShape._4, "Only square kernels are supported")
 
   private val outputDimensions = (
-    inputDimensions._1, // batch size
-    kernelDimensions._1, // number of output channels
-    (inputDimensions._3 - kernelDimensions._3 + 2 * pads._1) / strides._1 + 1, // height
-    (inputDimensions._4 - kernelDimensions._4 + 2 * pads._2) / strides._2 + 1 // width
+    inputShape._1, // batch size
+    kernelShape._1, // number of output channels
+    (inputShape._3 - kernelShape._3 + 2 * pads._1) / strides._1 + 1, // height
+    (inputShape._4 - kernelShape._4 + 2 * pads._2) / strides._2 + 1 // width
   )
 
   private val paddedInputDimensions = (
-    inputDimensions._1,
-    inputDimensions._2,
-    inputDimensions._3 + 2 * pads._1,
-    inputDimensions._4 + 2 * pads._2
+    inputShape._1,
+    inputShape._2,
+    inputShape._3 + 2 * pads._1,
+    inputShape._4 + 2 * pads._2
   )
 
   if (print) {
-    println("inputDimensions: " + inputDimensions)
+    println("inputDimensions: " + inputShape)
     println("paddedInputDimensions: " + paddedInputDimensions)
-    println("kernelDimensions: " + kernelDimensions)
+    println("kernelDimensions: " + kernelShape)
     println("outputDimensions: " + outputDimensions)
   }
 
   private val batchsize = paddedInputDimensions._1
   private val inputChannels = paddedInputDimensions._2
-  private val kernelSize = kernelDimensions._3
+  private val kernelSize = kernelShape._3
   private val outputHeight = outputDimensions._3
   private val outputWidth = outputDimensions._4
 
   private val im2colInputsDimensions = (batchsize, inputChannels * kernelSize * kernelSize, outputHeight * outputWidth)
-  private val flatKernelDimensions = (kernelDimensions._1, inputChannels * kernelSize * kernelSize)
+  private val flatKernelDimensions = (kernelShape._1, inputChannels * kernelSize * kernelSize)
   private val matrixResultDimensions = (batchsize, flatKernelDimensions._1, im2colInputsDimensions._3)
 
   if (print) {
@@ -59,8 +59,8 @@ class Conv4dMatmul(
   }
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(inputDimensions._1, Vec(inputDimensions._2, Vec(inputDimensions._3, Vec(inputDimensions._4, UInt(w.W)))))))
-    val kernelChannel = Flipped(new DecoupledIO(Vec(kernelDimensions._1, Vec(kernelDimensions._2, Vec(kernelDimensions._3, Vec(kernelDimensions._4, UInt(w.W)))))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(inputShape._1, Vec(inputShape._2, Vec(inputShape._3, Vec(inputShape._4, UInt(w.W)))))))
+    val kernelChannel = Flipped(new DecoupledIO(Vec(kernelShape._1, Vec(kernelShape._2, Vec(kernelShape._3, Vec(kernelShape._4, UInt(w.W)))))))
     val outputChannel = new DecoupledIO(Vec(outputDimensions._1, Vec(outputDimensions._2, Vec(outputDimensions._3, Vec(outputDimensions._4, UInt(wResult.W))))))
 
     val debugInputIm2Col = optional(enableDebuggingIO, Output(Vec(im2colInputsDimensions._1, Vec(im2colInputsDimensions._2, Vec(im2colInputsDimensions._3, UInt(w.W))))))
@@ -72,7 +72,7 @@ class Conv4dMatmul(
     for (inputChannel <- 0 until paddedInputDimensions._2) {
       for (row <- 0 until paddedInputDimensions._3) {
         for (col <- 0 until paddedInputDimensions._4) {
-          if (row < pads._1 || row >= inputDimensions._3 + pads._1 || col < pads._2 || col >= inputDimensions._4 + pads._2) {
+          if (row < pads._1 || row >= inputShape._3 + pads._1 || col < pads._2 || col >= inputShape._4 + pads._2) {
             paddedInputs(batch)(inputChannel)(row)(col) := 0.U
           } else {
             paddedInputs(batch)(inputChannel)(row)(col) := io.inputChannel.bits(batch)(inputChannel)(row - pads._1)(col - pads._2)
@@ -108,7 +108,7 @@ class Conv4dMatmul(
 
   // flatten the kernel
   private val flatKernel = Wire(Vec(flatKernelDimensions._1, Vec(flatKernelDimensions._2, UInt(w.W))))
-  for (outputChannel <- 0 until kernelDimensions._1) {
+  for (outputChannel <- 0 until kernelShape._1) {
     for (col <- 0 until inputChannels * kernelSize * kernelSize) {
       flatKernel(outputChannel)(col) := io.kernelChannel.bits(outputChannel)(col / (kernelSize * kernelSize))(col / kernelSize % kernelSize)(col % kernelSize)
     }

@@ -6,12 +6,12 @@ import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFS
 import module_utils.SmallModules.timer
 
 class Rounder(
-               wBefore: Int = 8,
-               wAfter: Int = 16,
-               numberOfRows: Int = 4,
-               numberOfColumns: Int = 4,
-               signed: Boolean = true,
-               fixedPoint: Int = 0
+               wBefore: Int,
+               wAfter: Int,
+               numberOfRows: Int,
+               numberOfColumns: Int,
+               signed: Boolean,
+               fixedPoint: Int
              ) extends Module {
 
   val io = IO(new Bundle {

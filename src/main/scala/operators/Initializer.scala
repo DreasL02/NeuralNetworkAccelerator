@@ -3,9 +3,9 @@ package operators
 import chisel3._
 import chisel3.util.DecoupledIO
 
-class Initializer(w: Int = 8,
-                  numberOfRows: Int = 4,
-                  numberOfColumns: Int = 4,
+class Initializer(w: Int,
+                  numberOfRows: Int,
+                  numberOfColumns: Int,
                   data: Array[Array[BigInt]],
                  ) extends Module {
 

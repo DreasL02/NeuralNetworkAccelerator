@@ -8,11 +8,11 @@ import module_utils.SmallModules.{mult, timer}
 // Hadamard product
 
 class ElementWiseMultiplier(
-                             w: Int = 8,
-                             wResult: Int = 32,
-                             numberOfRows: Int = 4,
-                             numberOfColumns: Int = 4,
-                             signed: Boolean = true
+                             w: Int,
+                             wResult: Int,
+                             numberOfRows: Int,
+                             numberOfColumns: Int,
+                             signed: Boolean
                            ) extends Module {
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))

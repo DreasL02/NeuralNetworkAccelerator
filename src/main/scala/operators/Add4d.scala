@@ -5,26 +5,24 @@ import chisel3.util.DecoupledIO
 import scala_utils.Optional.optional
 
 class Add4d(
-             w: Int = 8,
-             dimensionsInput: (Int, Int, Int, Int) = (4, 4, 4, 4),
-             enableDebuggingIO: Boolean = true
+             w: Int,
+             shape: (Int, Int, Int, Int),
+             enableDebuggingIO: Boolean = false
            ) extends Module {
 
-  val dimensionsOutput = (dimensionsInput._1, dimensionsInput._2, dimensionsInput._3, dimensionsInput._4)
-
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
-    val biasChannel = Flipped(new DecoupledIO(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(w.W)))))))
+    val biasChannel = Flipped(new DecoupledIO(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(w.W)))))))
 
-    val outputChannel = new DecoupledIO(Vec(dimensionsOutput._1, Vec(dimensionsOutput._2, Vec(dimensionsOutput._3, Vec(dimensionsOutput._4, UInt(w.W))))))
+    val outputChannel = new DecoupledIO(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(w.W))))))
 
-    val debugBiases = optional(enableDebuggingIO, Output(Vec(dimensionsInput._1, Vec(dimensionsInput._2, Vec(dimensionsInput._3, Vec(dimensionsInput._4, UInt(w.W)))))))
+    val debugBiases = optional(enableDebuggingIO, Output(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(w.W)))))))
   })
 
-  private val adds = VecInit.fill(dimensionsOutput._1, dimensionsOutput._2)(Module(new Add(w, dimensionsOutput._3, dimensionsOutput._4, enableDebuggingIO)).io)
+  private val adds = VecInit.fill(shape._1, shape._2)(Module(new Add(w, shape._3, shape._4, enableDebuggingIO)).io)
 
-  for (i <- 0 until dimensionsOutput._1) {
-    for (j <- 0 until dimensionsOutput._2) {
+  for (i <- 0 until shape._1) {
+    for (j <- 0 until shape._2) {
 
       adds(i)(j).inputChannel.valid := io.inputChannel.valid
       adds(i)(j).inputChannel.bits := io.inputChannel.bits(i)(j)

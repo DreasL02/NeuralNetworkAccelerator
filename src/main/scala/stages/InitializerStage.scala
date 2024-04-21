@@ -5,8 +5,8 @@ import onnx.Operators.InitializerType
 import operators.Initializer
 
 class InitializerStage(
-                        wOut: Int = 8,
-                        shapeOut: (Int, Int, Int, Int) = (4, 4, 4, 4),
+                        wOut: Int,
+                        shapeOut: (Int, Int, Int, Int),
                         data: Array[Array[Array[Array[BigInt]]]]
                       ) extends Stage0(wOut, shapeOut) {
   def this(initializerType: InitializerType) = this(initializerType.w, initializerType.dimensions, initializerType.data)

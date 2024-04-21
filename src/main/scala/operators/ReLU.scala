@@ -5,7 +5,7 @@ import chisel3.util.DecoupledIO
 import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFSM}
 import module_utils.SmallModules.timer
 
-class ReLU(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, signed: Boolean = true) extends Module {
+class ReLU(w: Int, numberOfRows: Int, numberOfColumns: Int, signed: Boolean) extends Module {
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))

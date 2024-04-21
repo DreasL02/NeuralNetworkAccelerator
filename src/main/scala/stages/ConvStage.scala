@@ -5,14 +5,14 @@ import onnx.Operators.ConvType
 import operators.{Conv4d, Conv4dMatmul}
 
 class ConvStage(
-                 wIn: Int = 8, // the width of the input tensor
-                 wOut: Int = 32, // the width of the output tensor
-                 shapeInput: (Int, Int, Int, Int) = (32, 32, 32, 32), // batch size, number of input channels, height, width
-                 shapeKernel: (Int, Int, Int, Int) = (3, 3, 3, 3), // number of output channels, number of input channels, height, width
-                 signed: Boolean = true, // whether the input and kernel tensors are signed
-                 strides: (Int, Int) = (1, 1), // the stride to use for the convolution
-                 pads: (Int, Int) = (0, 0), // the padding to use for the convolution
-                 implementation: ConvImplementation = ConvImplementation.Im2Col,
+                 wIn: Int,
+                 wOut: Int,
+                 shapeInput: (Int, Int, Int, Int),
+                 shapeKernel: (Int, Int, Int, Int),
+                 signed: Boolean,
+                 strides: (Int, Int),
+                 pads: (Int, Int),
+                 implementation: ConvImplementation = ConvImplementation.Im2Col, // TODO: remove this default value
                  print: Boolean = false
                )
   extends Stage2(wIn, shapeInput, wIn, shapeKernel, wOut) {

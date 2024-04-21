@@ -10,9 +10,9 @@ import module_utils.SmallModules.mult
 // http://ecelabs.njit.edu/ece459/lab3.php (Visited 08-04-2024)
 
 class ProcessingElement(
-                         w: Int = 8, // width of the inputs
-                         wResult: Int = 32, // width of the result / register
-                         signed: Boolean = true // to determine if signed or unsigned multiplication should be used
+                         w: Int, // width of the inputs
+                         wResult: Int, // width of the result / register
+                         signed: Boolean // to determine if signed or unsigned multiplication should be used
                        ) extends Module {
 
   assert(wResult >= w * 2, "wResult must be at least twice the width of w")

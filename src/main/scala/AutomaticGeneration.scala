@@ -7,7 +7,7 @@ import stages._
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           printing: Boolean = true
+                           printing: Boolean = false
                          ) extends Module {
 
 

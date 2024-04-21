@@ -22,7 +22,7 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
       Array(4, 6)
     )
 
-    test(new MaxPool(8, matrix.length, matrix(0).length, (2, 2), (0, 0), (2, 2))) { dut =>
+    test(new MaxPool(8, matrix.length, matrix(0).length, (2, 2), (0, 0), (2, 2), true)) { dut =>
       for (i <- 0 until matrix.length) {
         for (j <- 0 until matrix(i).length) {
           dut.io.inputChannel.bits(i)(j).poke(matrix(i)(j).U)
@@ -66,7 +66,7 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
       Array(6, 6),
     )
 
-    test(new MaxPool(8, matrix.length, matrix(0).length, (3, 3), (0, 0), (1, 1))) { dut =>
+    test(new MaxPool(8, matrix.length, matrix(0).length, (3, 3), (0, 0), (1, 1), true)) { dut =>
       for (i <- 0 until matrix.length) {
         for (j <- 0 until matrix(i).length) {
           dut.io.inputChannel.bits(i)(j).poke(matrix(i)(j).U)
@@ -109,7 +109,7 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
       Array(5),
     )
 
-    test(new MaxPool(8, matrix.length, matrix(0).length, (3, 3), (0, 0), (2, 2))) { dut =>
+    test(new MaxPool(8, matrix.length, matrix(0).length, (3, 3), (0, 0), (2, 2), true)) { dut =>
       for (i <- 0 until matrix.length) {
         for (j <- 0 until matrix(i).length) {
           dut.io.inputChannel.bits(i)(j).poke(matrix(i)(j).U)

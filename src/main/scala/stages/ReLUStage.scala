@@ -7,7 +7,7 @@ import operators.ReLU4d
 class ReLUStage(
                  w: Int,
                  shape: (Int, Int, Int, Int),
-                 signed: Boolean = true
+                 signed: Boolean
                ) extends Stage1(w, shape, w) {
 
   def this(reluType: ReluType) = this(reluType.w, reluType.dimensions, reluType.signed)

@@ -8,11 +8,11 @@ class MatMulStage(
                    shapeIn1: (Int, Int, Int, Int),
                    shapeIn2: (Int, Int, Int, Int),
                    wOut: Int,
-                   signed: Boolean = true,
-                   implementation: MatMulImplementation = MatMulImplementation.Direct
+                   signed: Boolean,
+                   implementation: MatMulImplementation = MatMulImplementation.Direct // TODO: remove this default value
                  ) extends Stage2(wIn, shapeIn1, wIn, shapeIn2, wOut) {
 
-  def this(matMulType: MatMulType) = this(matMulType.wOperands, matMulType.operandADimensions, matMulType.operandBDimensions, matMulType.wResult)
+  def this(matMulType: MatMulType) = this(matMulType.wOperands, matMulType.operandADimensions, matMulType.operandBDimensions, matMulType.wResult, matMulType.signed)
 
   override lazy val shapeOut = (
     shapeIn1._1,

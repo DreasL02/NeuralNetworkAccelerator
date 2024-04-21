@@ -31,8 +31,8 @@ class ConvSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new SingleChannelConvolution(
       w = 8,
       wResult = 32,
-      inputDimensions = (inputs.length, inputs(0).length),
-      kernelDimensions = (weights.length, weights(0).length),
+      inputShape = (inputs.length, inputs(0).length),
+      kernelShape = (weights.length, weights(0).length),
       signed = true,
       strides = (1, 1),
       pads = (1, 1))) {
@@ -98,8 +98,8 @@ class ConvSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new SingleChannelConvolution(
       w = 8,
       wResult = 32,
-      inputDimensions = (inputs.length, inputs(0).length),
-      kernelDimensions = (weights.length, weights(0).length),
+      inputShape = (inputs.length, inputs(0).length),
+      kernelShape = (weights.length, weights(0).length),
       signed = true,
       strides = (1, 1),
       pads = (0, 0))) {

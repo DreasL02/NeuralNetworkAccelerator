@@ -6,7 +6,7 @@ import module_utils.NoCalculationDelayInterfaceFSM
 import module_utils.SmallModules.timer
 import scala_utils.Optional.optional
 
-class Add(w: Int = 8, numberOfRows: Int = 4, numberOfColumns: Int = 4, enableDebuggingIO: Boolean = true) extends Module {
+class Add(w: Int, numberOfRows: Int, numberOfColumns: Int, enableDebuggingIO: Boolean) extends Module {
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))
     val biasChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(w.W)))))

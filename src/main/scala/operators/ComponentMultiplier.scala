@@ -5,12 +5,12 @@ import chisel3.util.DecoupledIO
 import module_utils.SmallModules.{mult, timer}
 
 class ComponentMultiplier(
-                           w: Int = 8,
-                           wResult: Int = 32,
-                           numberOfRows: Int = 4, // number of rows in the result matrix / number of rows in the first matrix
-                           numberOfColumns: Int = 4, // number of columns in the result matrix / number of columns in the second matrix
-                           commonDimension: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
-                           signed: Boolean = true
+                           w: Int,
+                           wResult: Int,
+                           numberOfRows: Int, // number of rows in the result matrix / number of rows in the first matrix
+                           numberOfColumns: Int, // number of columns in the result matrix / number of columns in the second matrix
+                           commonDimension: Int, // number of columns in the first matrix and number of rows in the second matrix
+                           signed: Boolean
                          ) extends Module {
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))

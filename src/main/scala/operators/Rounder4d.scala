@@ -4,23 +4,23 @@ import chisel3._
 import chisel3.util.DecoupledIO
 
 class Rounder4d(
-                 wBefore: Int = 8,
-                 wAfter: Int = 16,
-                 dimensions: (Int, Int, Int, Int) = (4, 4, 4, 4),
-                 signed: Boolean = true,
-                 fixedPoint: Int = 8
+                 wBefore: Int,
+                 wAfter: Int,
+                 shape: (Int, Int, Int, Int),
+                 signed: Boolean,
+                 fixedPoint: Int
                ) extends Module {
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(wBefore.W)))))))
-    val outputChannel = new DecoupledIO(Vec(dimensions._1, Vec(dimensions._2, Vec(dimensions._3, Vec(dimensions._4, UInt(wAfter.W)))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(wBefore.W)))))))
+    val outputChannel = new DecoupledIO(Vec(shape._1, Vec(shape._2, Vec(shape._3, Vec(shape._4, UInt(wAfter.W)))))
     )
   })
 
-  private val rounders = VecInit.fill(dimensions._1, dimensions._2)(Module(new Rounder(wBefore, wAfter, dimensions._3, dimensions._4, signed, fixedPoint)).io)
+  private val rounders = VecInit.fill(shape._1, shape._2)(Module(new Rounder(wBefore, wAfter, shape._3, shape._4, signed, fixedPoint)).io)
 
-  for (i <- 0 until dimensions._1) {
-    for (j <- 0 until dimensions._2) {
+  for (i <- 0 until shape._1) {
+    for (j <- 0 until shape._2) {
       rounders(i)(j).inputChannel.valid := io.inputChannel.valid
       rounders(i)(j).inputChannel.bits := io.inputChannel.bits(i)(j)
 

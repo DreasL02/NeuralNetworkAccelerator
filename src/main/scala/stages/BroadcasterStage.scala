@@ -5,9 +5,9 @@ import onnx.Operators.BroadcasterType
 import operators.Broadcaster
 
 class BroadcasterStage(
-                        wIn: Int = 8,
-                        shapeIn: (Int, Int, Int, Int) = (4, 4, 4, 4),
-                        shapeTarget: (Int, Int, Int, Int) = (4, 4, 4, 4),
+                        wIn: Int,
+                        shapeIn: (Int, Int, Int, Int),
+                        shapeTarget: (Int, Int, Int, Int),
                       )
   extends Stage1(wIn, shapeIn, wIn) {
 

@@ -10,8 +10,8 @@ import module_utils.SmallModules._
 // by Konstantin Pavlov.
 
 class AdderTree(
-                 w: Int = 8,
-                 numberOfInputs: Int = 4, // number of columns in the first matrix and number of rows in the second matrix
+                 w: Int,
+                 numberOfInputs: Int, // number of columns in the first matrix and number of rows in the second matrix
                  toPrint: Boolean = false
                ) extends Module {
 

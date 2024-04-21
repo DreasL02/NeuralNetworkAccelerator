@@ -4,36 +4,36 @@ import chisel3._
 import chisel3.util.DecoupledIO
 
 class Reshape(
-               w: Int = 8,
-               inputDimensions: (Int, Int, Int, Int) = (32, 32, 32, 32),
-               shapeDimensions: (Int, Int, Int, Int) = (16, 64, 16, 32),
-               newDimensions: (Int, Int, Int, Int) = (16, 64, 16, 32),
+               w: Int,
+               inputShape: (Int, Int, Int, Int),
+               shapeShape: (Int, Int, Int, Int),
+               newShape: (Int, Int, Int, Int),
              ) extends Module {
-  assert(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4 == newDimensions._1 * newDimensions._2 * newDimensions._3 * newDimensions._4, "Total sum of dimensions must be the same")
+  assert(inputShape._1 * inputShape._2 * inputShape._3 * inputShape._4 == newShape._1 * newShape._2 * newShape._3 * newShape._4, "Total sum of dimensions must be the same")
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(inputDimensions._1, Vec(inputDimensions._2, Vec(inputDimensions._3, Vec(inputDimensions._4, UInt(w.W)))))))
-    val shapeChannel = Flipped(new DecoupledIO(Vec(shapeDimensions._1, Vec(shapeDimensions._2, Vec(shapeDimensions._3, Vec(shapeDimensions._4, UInt(1.W)))))))
-    val outputChannel = new DecoupledIO(Vec(newDimensions._1, Vec(newDimensions._2, Vec(newDimensions._3, Vec(newDimensions._4, UInt(w.W))))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(inputShape._1, Vec(inputShape._2, Vec(inputShape._3, Vec(inputShape._4, UInt(w.W)))))))
+    val shapeChannel = Flipped(new DecoupledIO(Vec(shapeShape._1, Vec(shapeShape._2, Vec(shapeShape._3, Vec(shapeShape._4, UInt(1.W)))))))
+    val outputChannel = new DecoupledIO(Vec(newShape._1, Vec(newShape._2, Vec(newShape._3, Vec(newShape._4, UInt(w.W))))))
   })
 
-  private val flatInput = Wire(Vec(inputDimensions._1 * inputDimensions._2 * inputDimensions._3 * inputDimensions._4, UInt(w.W)))
+  private val flatInput = Wire(Vec(inputShape._1 * inputShape._2 * inputShape._3 * inputShape._4, UInt(w.W)))
 
-  for (i <- 0 until inputDimensions._1) {
-    for (j <- 0 until inputDimensions._2) {
-      for (k <- 0 until inputDimensions._3) {
-        for (l <- 0 until inputDimensions._4) {
-          flatInput(i * inputDimensions._2 * inputDimensions._3 * inputDimensions._4 + j * inputDimensions._3 * inputDimensions._4 + k * inputDimensions._4 + l) := io.inputChannel.bits(i)(j)(k)(l)
+  for (i <- 0 until inputShape._1) {
+    for (j <- 0 until inputShape._2) {
+      for (k <- 0 until inputShape._3) {
+        for (l <- 0 until inputShape._4) {
+          flatInput(i * inputShape._2 * inputShape._3 * inputShape._4 + j * inputShape._3 * inputShape._4 + k * inputShape._4 + l) := io.inputChannel.bits(i)(j)(k)(l)
         }
       }
     }
   }
 
-  for (i <- 0 until newDimensions._1) {
-    for (j <- 0 until newDimensions._2) {
-      for (k <- 0 until newDimensions._3) {
-        for (l <- 0 until newDimensions._4) {
-          io.outputChannel.bits(i)(j)(k)(l) := flatInput(i * newDimensions._2 * newDimensions._3 * newDimensions._4 + j * newDimensions._3 * newDimensions._4 + k * newDimensions._4 + l)
+  for (i <- 0 until newShape._1) {
+    for (j <- 0 until newShape._2) {
+      for (k <- 0 until newShape._3) {
+        for (l <- 0 until newShape._4) {
+          io.outputChannel.bits(i)(j)(k)(l) := flatInput(i * newShape._2 * newShape._3 * newShape._4 + j * newShape._3 * newShape._4 + k * newShape._4 + l)
         }
       }
     }

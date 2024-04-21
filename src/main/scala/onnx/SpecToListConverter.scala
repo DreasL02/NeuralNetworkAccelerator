@@ -5,8 +5,6 @@ import scala_utils.MatrixUtils.tensorToString
 import scala.math.BigDecimal.double2bigDecimal
 
 object SpecToListConverter {
-  // https://stackoverflow.com/a/11305313
-
   private def toTuple2(array: Array[Int]): (Int, Int) = {
     require(array.length == 2)
     (array(0), array(1))
@@ -76,7 +74,7 @@ object SpecToListConverter {
       val fixedPoint = entry("fixed_point_result").num.toInt
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("operators.Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandShape + " " + fixedPoint + " " + connectionIndex)
+      if (toPrint) println("Rounder: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandShape + " " + fixedPoint + " " + connectionIndex)
       (index, Operators.RounderType(wOperands, wResult, signed, operandShape, fixedPoint), connectionIndex)
     }).toList
 
@@ -102,7 +100,7 @@ object SpecToListConverter {
       val operandBShape = toTuple4(entry("input_shape")(1).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("operators.MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandAShape + " " + operandBShape + " " + connectionIndex)
+      if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandAShape + " " + operandBShape + " " + connectionIndex)
       (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape), connectionIndex)
     }).toList
 
@@ -115,7 +113,7 @@ object SpecToListConverter {
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("operators.MaxPool: " + index + " " + w + " " + inputShape + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
+      if (toPrint) println("MaxPool: " + index + " " + w + " " + inputShape + " " + signed + " " + kernelShape + " " + strides + " " + pads + " " + connectionIndex)
       (index, Operators.MaxPoolType(w, inputShape, signed, kernelShape, strides, pads), connectionIndex)
     }).toList
 
@@ -126,7 +124,7 @@ object SpecToListConverter {
       val outputShape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("operators.Reshape: " + index + " " + w + " " + inputShape + " " + shapeShape + " " + outputShape + " " + connectionIndex)
+      if (toPrint) println("Reshape: " + index + " " + w + " " + inputShape + " " + shapeShape + " " + outputShape + " " + connectionIndex)
       (index, Operators.ReshapeType(w, inputShape, shapeShape, outputShape), connectionIndex)
     }).toList
 
@@ -145,7 +143,7 @@ object SpecToListConverter {
       val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
-      if (toPrint) println("operators.Add: " + index + " " + w + " " + inputShape + " " + connectionIndex)
+      if (toPrint) println("Add: " + index + " " + w + " " + inputShape + " " + connectionIndex)
       (index, Operators.AddType(w, inputShape), connectionIndex)
     }).toList
 

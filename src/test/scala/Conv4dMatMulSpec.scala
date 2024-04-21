@@ -30,8 +30,8 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new Conv4dMatmul(
       w = 8,
       wResult = 32,
-      inputDimensions = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
-      kernelDimensions = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
+      inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
+      kernelShape = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
       pads = (1, 1))) {
@@ -143,8 +143,8 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new Conv4dMatmul(
       w = 8,
       wResult = 32,
-      inputDimensions = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
-      kernelDimensions = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
+      inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
+      kernelShape = (weights.length, weights(0).length, weights(0)(0).length, weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
       pads = (0, 0))) {
@@ -302,8 +302,8 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new Conv4dMatmul(
       w = 8,
       wResult = 32,
-      inputDimensions = (test3Input.length, test3Input(0).length, test3Input(0)(0).length, test3Input(0)(0)(0).length),
-      kernelDimensions = (test3Weights.length, test3Weights(0).length, test3Weights(0)(0).length, test3Weights(0)(0)(0).length),
+      inputShape = (test3Input.length, test3Input(0).length, test3Input(0)(0).length, test3Input(0)(0)(0).length),
+      kernelShape = (test3Weights.length, test3Weights(0).length, test3Weights(0)(0).length, test3Weights(0)(0)(0).length),
       signed = true,
       strides = (1, 1),
       pads = (0, 0))) {
