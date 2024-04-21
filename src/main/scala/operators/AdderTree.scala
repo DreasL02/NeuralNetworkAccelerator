@@ -2,7 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
-import module_utils.InterfaceFSM
+import module_utils.CalculationDelayInterfaceFSM
 import module_utils.SmallModules._
 
 // General design is inspired by the approach presented at
@@ -59,7 +59,7 @@ class AdderTree(
 
   private val cyclesUntilOutputValid: Int = numberOfStages - 1 // number of cycles until the adder tree is done and the result is valid
   if (toPrint) println("cyclesUntilOutputValid: " + cyclesUntilOutputValid)
-  private val interfaceFSM = Module(new InterfaceFSM)
+  private val interfaceFSM = Module(new CalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
   interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)

@@ -33,7 +33,7 @@ class ComponentMultiplier(
 
   private val cyclesUntilOutputValid: Int = 1
 
-  private val interfaceFSM = Module(new module_utils.InterfaceFSM)
+  private val interfaceFSM = Module(new module_utils.CalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
   interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)

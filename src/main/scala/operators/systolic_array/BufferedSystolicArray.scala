@@ -3,7 +3,7 @@ package operators.systolic_array
 import chisel3._
 import chisel3.util.{DecoupledIO, log2Ceil}
 import scala_utils.Optional.optional
-import module_utils.{InterfaceFSM, ShiftedBuffer}
+import module_utils.{CalculationDelayInterfaceFSM, ShiftedBuffer}
 import module_utils.SmallModules.{risingEdge, timer}
 
 
@@ -31,7 +31,7 @@ class BufferedSystolicArray(
 
   private val cyclesUntilOutputValid: Int = numberOfColumns + numberOfRows + commonDimension - 2 // number of cycles until the systolic array is done and the result is valid
 
-  private val interfaceFSM = Module(new InterfaceFSM)
+  private val interfaceFSM = Module(new CalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
   interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)

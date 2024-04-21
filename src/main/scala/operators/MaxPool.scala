@@ -2,8 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util.DecoupledIO
-import module_utils.InterfaceFSM
-import module_utils.SmallModules.timer
+import module_utils.NoCalculationDelayInterfaceFSM
 
 
 // Module for doing a max pooling operation on a matrix. Arguments are: bit-width, kernel shape, pads, and strides, input and output dimensions.
@@ -50,11 +49,9 @@ class MaxPool(
     }
   }
 
-  private val cyclesUntilOutputValid: Int = 0
-  private val interfaceFSM = Module(new InterfaceFSM)
+  private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
-  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
 
   io.outputChannel.valid := interfaceFSM.io.outputValid
   io.inputChannel.ready := interfaceFSM.io.inputReady

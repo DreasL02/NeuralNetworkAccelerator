@@ -15,17 +15,6 @@ class MatMul(
               enableDebuggingIO: Boolean = true
             ) extends Module {
 
-  // Additional constructor to create a operators.MatMul module from a MatMulType
-  def this(matMulType: onnx.Operators.MatMulType, enableDebuggingIO: Boolean) = this(
-    matMulType.wOperands,
-    matMulType.wResult,
-    matMulType.operandADimensions._1,
-    matMulType.operandBDimensions._2,
-    matMulType.operandADimensions._2,
-    matMulType.signed,
-    enableDebuggingIO
-  )
-
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
     val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))

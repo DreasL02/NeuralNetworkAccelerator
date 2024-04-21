@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util.{Enum, is, switch}
 
 // Mealy FSM
-class InterfaceFSM extends Module {
+class CalculationDelayInterfaceFSM extends Module {
   val io = IO(new Bundle {
     val doneWithCalculation = Input(Bool())
     val inputValid = Input(Bool())
@@ -46,8 +46,6 @@ class InterfaceFSM extends Module {
         io.storeResult := true.B
       }
       // otherwise, we are still calculating
-
-
     }
     is(finished) {
       io.outputValid := true.B
@@ -56,8 +54,6 @@ class InterfaceFSM extends Module {
         state := idle
       }
       // otherwise, output handshake cannot happen yet because the output is not ready and we need to wait
-
-
     }
   }
 

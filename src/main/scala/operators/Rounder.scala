@@ -2,7 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util._
-import module_utils.InterfaceFSM
+import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFSM}
 import module_utils.SmallModules.timer
 
 class Rounder(
@@ -40,11 +40,9 @@ class Rounder(
     }
   }
 
-  private val cyclesUntilOutputValid: Int = 0
-  private val interfaceFSM = Module(new InterfaceFSM)
+  private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
-  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
 
   io.outputChannel.valid := interfaceFSM.io.outputValid
   io.inputChannel.ready := interfaceFSM.io.inputReady

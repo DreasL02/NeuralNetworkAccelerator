@@ -88,12 +88,12 @@ class AutomaticGeneration(
 
   if (printing) {
     println("====================================")
-    println("Total latency: " + latency)
+    println("Total estimated latency: " + latency)
     println("Total estimated DSP usage: " + dspUsage)
     println("====================================")
   }
 
-  if (printing) println("Modules done. Beginning connection logic.")
+  if (printing) println("Modules Initialized. Beginning connection logic.")
 
   // Connection Logic (Wiring)
   for (i <- stages.indices) {
