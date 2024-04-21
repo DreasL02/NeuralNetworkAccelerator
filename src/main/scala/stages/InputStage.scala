@@ -7,7 +7,7 @@ class InputStage(
                   shape: (Int, Int, Int, Int)
                 ) extends Stage1(w, shape, w) {
 
-  def this(inputType: InputType) = this(inputType.w, inputType.dimensions)
+  def this(inputType: InputType) = this(inputType.w, inputType.shape)
 
   io.outputChannel <> io.inputChannel
 

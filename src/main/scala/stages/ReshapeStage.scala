@@ -9,15 +9,16 @@ class ReshapeStage(
                     shapeIn: (Int, Int, Int, Int),
                     shapeDimensions: (Int, Int, Int, Int),
                     shapeTarget: (Int, Int, Int, Int)
-                  ) extends Stage1(w, shapeIn, w) {
+                  ) extends Stage2(w, shapeIn, w, shapeDimensions, 1) {
 
-  def this(reshapeType: ReshapeType) = this(reshapeType.w, reshapeType.inputDimensions, reshapeType.shapeDimensions, reshapeType.newDimensions)
+  def this(reshapeType: ReshapeType) = this(reshapeType.w, reshapeType.inputShape, reshapeType.shapeShape, reshapeType.newShape)
 
   override lazy val shapeOut = shapeTarget
 
   val reshape = Module(new Reshape(w, shapeIn, shapeDimensions, shapeOut))
 
-  reshape.io.inputChannel <> io.inputChannel
+  reshape.io.inputChannel <> io.input1Channel
+  reshape.io.shapeChannel <> io.input2Channel
   io.outputChannel <> reshape.io.outputChannel
 
   latency = 0

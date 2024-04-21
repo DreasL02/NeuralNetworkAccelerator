@@ -13,7 +13,7 @@ class BroadcasterStage(
 
   override lazy val shapeOut = shapeTarget
 
-  def this(broadcasterType: BroadcasterType) = this(broadcasterType.w, broadcasterType.operandDimensions, broadcasterType.newDimensions)
+  def this(broadcasterType: BroadcasterType) = this(broadcasterType.w, broadcasterType.operandShape, broadcasterType.newShape)
 
   val broadcaster = Module(new Broadcaster(wIn, shapeIn, shapeOut))
 

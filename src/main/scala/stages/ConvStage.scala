@@ -19,7 +19,7 @@ class ConvStage(
 
   assert(shapeInput._2 == shapeKernel._2, "The second dimension of the input and kernel tensors must be the same")
 
-  def this(convType: ConvType) = this(convType.w, convType.wResult, convType.inputDimensions, convType.kernelDimensions, convType.signed, convType.strides, convType.pads)
+  def this(convType: ConvType) = this(convType.w, convType.wResult, convType.inputShape, convType.kernelShape, convType.signed, convType.strides, convType.pads)
 
   override lazy val shapeOut = (
     shapeInput._1, // batch size

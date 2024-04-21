@@ -10,7 +10,7 @@ class ReLUStage(
                  signed: Boolean
                ) extends Stage1(w, shape, w) {
 
-  def this(reluType: ReluType) = this(reluType.w, reluType.dimensions, reluType.signed)
+  def this(reluType: ReluType) = this(reluType.w, reluType.shape, reluType.signed)
 
   val relu = Module(new ReLU4d(w, shape, signed))
 

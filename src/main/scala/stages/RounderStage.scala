@@ -12,7 +12,7 @@ class RounderStage(
                     fixedPoint: Int
                   ) extends Stage1(wBefore, shape, wAfter) {
 
-  def this(rounderType: RounderType) = this(rounderType.wOperands, rounderType.wResult, rounderType.dimensions, rounderType.signed, rounderType.fixedPoint)
+  def this(rounderType: RounderType) = this(rounderType.wOperands, rounderType.wResult, rounderType.shape, rounderType.signed, rounderType.fixedPoint)
 
   val rounder = Module(new Rounder4d(wBefore, wAfter, shape, signed, fixedPoint))
 

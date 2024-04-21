@@ -10,7 +10,7 @@ class AddStage(
               )
   extends Stage2(w, shape, w, shape, w) {
 
-  def this(addType: AddType) = this(addType.w, addType.operandDimensions)
+  def this(addType: AddType) = this(addType.w, addType.shape)
 
   val add = Module(new Add4d(w, shape))
 

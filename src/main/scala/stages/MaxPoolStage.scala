@@ -13,9 +13,9 @@ class MaxPoolStage(
                     signed: Boolean
                   ) extends Stage1(w, inputShape, w) {
 
-  def this(maxPoolType: MaxPoolType) = this(maxPoolType.w, maxPoolType.inputDimensions, maxPoolType.kernelShape, maxPoolType.pads, maxPoolType.strides, maxPoolType.signed)
+  def this(maxPoolType: MaxPoolType) = this(maxPoolType.w, maxPoolType.inputShape, maxPoolType.kernelShape, maxPoolType.pads, maxPoolType.strides, maxPoolType.signed)
 
-  val outputShape = (
+  override lazy val shapeOut = (
     inputShape._1,
     inputShape._2,
     (inputShape._3 - kernelShape._1 + 2 * pads._1) / strides._1 + 1,

@@ -9,7 +9,7 @@ class InitializerStage(
                         shapeOut: (Int, Int, Int, Int),
                         data: Array[Array[Array[Array[BigInt]]]]
                       ) extends Stage0(wOut, shapeOut) {
-  def this(initializerType: InitializerType) = this(initializerType.w, initializerType.dimensions, initializerType.data)
+  def this(initializerType: InitializerType) = this(initializerType.w, initializerType.shape, initializerType.data)
 
   private val initializers = for (i <- 0 until shapeOut._1) yield {
     for (j <- 0 until shapeOut._2) yield {

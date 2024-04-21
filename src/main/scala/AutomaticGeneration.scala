@@ -15,10 +15,10 @@ class AutomaticGeneration(
   val outputNode = listOfNodes.last.asInstanceOf[OutputType] // right now, the last node is always the output node
 
   val io = IO(new Bundle {
-    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2,
-      Vec(inputNode.dimensions._3, Vec(inputNode.dimensions._4, UInt(inputNode.w.W)))))))
-    val outputChannel = new DecoupledIO(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2,
-      Vec(outputNode.dimensions._3, Vec(outputNode.dimensions._4, UInt(outputNode.w.W)))))
+    val inputChannel = Flipped(new DecoupledIO(Vec(inputNode.shape._1, Vec(inputNode.shape._2,
+      Vec(inputNode.shape._3, Vec(inputNode.shape._4, UInt(inputNode.w.W)))))))
+    val outputChannel = new DecoupledIO(Vec(outputNode.shape._1, Vec(outputNode.shape._2,
+      Vec(outputNode.shape._3, Vec(outputNode.shape._4, UInt(outputNode.w.W)))))
     )
   })
 
