@@ -6,8 +6,6 @@ class AutomaticGenerationWithUart(
                                    baudRate: Int,
                                    listOfNodes: List[Any],
                                    connectionList: List[List[Int]],
-                                   pipelineIO: Boolean = false,
-                                   enableDebuggingIO: Boolean = true,
                                    printing: Boolean = true,
                                    matrixByteSize: Int,
                                  ) extends Module {
@@ -21,7 +19,7 @@ class AutomaticGenerationWithUart(
   communicator.io.uartRxPin := io.uartRxPin
   io.uartTxPin := communicator.io.uartTxPin
 
-  private val automaticGeneration = Module(new AutomaticGeneration(listOfNodes, connectionList, pipelineIO, enableDebuggingIO, printing))
+  private val automaticGeneration = Module(new AutomaticGeneration(listOfNodes, connectionList, printing))
 
   val imageSize = 8
 

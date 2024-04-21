@@ -1,13 +1,12 @@
-import activation_functions.{ReLU4d}
 import chisel3._
 import chisel3.util.DecoupledIO
 import onnx.Operators._
+import operators._
+import stages._
 
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           pipelineIO: Boolean = false,
-                           enableDebuggingIO: Boolean = true,
                            printing: Boolean = true
                          ) extends Module {
 
@@ -23,490 +22,160 @@ class AutomaticGeneration(
     )
   })
 
-  val inputs = Wire(Vec(inputNode.dimensions._1, Vec(inputNode.dimensions._2, Vec(inputNode.dimensions._3,
-    Vec(inputNode.dimensions._4, UInt(inputNode.w.W))))))
-  val inputReady = Wire(Bool())
-  val inputValid = Wire(Bool())
-
-  val outputs = Wire(Vec(outputNode.dimensions._1, Vec(outputNode.dimensions._2, Vec(outputNode.dimensions._3,
-    Vec(outputNode.dimensions._4, UInt(outputNode.w.W))))))
-  val outputReady = Wire(Bool())
-  val outputValid = Wire(Bool())
-
+  var latency = 0
+  var dspUsage = 0
 
   // Module Creation
-  val modules = listOfNodes.map {
+  val stages: List[Stage] = listOfNodes.map {
     case inputType: InputType =>
-      val input = Module(new InputModule(inputType))
+      val input = Module(new InputStage(inputType))
+      latency += input.latency
+      dspUsage += input.dspUsage
       input
     case outputType: OutputType =>
-      val output = Module(new OutputModule(outputType))
+      val output = Module(new OutputStage(outputType))
+      latency += output.latency
+      dspUsage += output.dspUsage
       output
     case initializerType: InitializerType =>
-      val initializer = Module(new Initializer4d(initializerType))
+      val initializer = Module(new InitializerStage(initializerType))
+      latency += initializer.latency
+      dspUsage += initializer.dspUsage
       initializer
     case addType: AddType =>
-      val add = Module(new Add4d(addType, enableDebuggingIO))
+      val add = Module(new AddStage(addType))
+      latency += add.latency
+      dspUsage += add.dspUsage
       add
     case matMulType: MatMulType =>
-      val matMul = Module(new MatMul4d(matMulType, enableDebuggingIO))
+      val matMul = Module(new MatMulStage(matMulType))
+      latency += matMul.latency
+      dspUsage += matMul.dspUsage
       matMul
     case reluType: ReluType =>
-      val relu = Module(new ReLU4d(reluType))
+      val relu = Module(new ReLUStage(reluType))
+      latency += relu.latency
+      dspUsage += relu.dspUsage
       relu
     case rounderType: RounderType =>
-      val rounder = Module(new Rounder4d(rounderType))
+      val rounder = Module(new RounderStage(rounderType))
+      latency += rounder.latency
+      dspUsage += rounder.dspUsage
       rounder
     case reshapeType: ReshapeType =>
-      val reshape = Module(new Reshape(reshapeType))
+      val reshape = Module(new ReshapeStage(reshapeType))
+      latency += reshape.latency
+      dspUsage += reshape.dspUsage
       reshape
     case convType: ConvType =>
-      val conv = Module(new Conv4dMatmul(convType))
+      val conv = Module(new ConvStage(convType))
+      latency += conv.latency
+      dspUsage += conv.dspUsage
       conv
     case maxPoolType: MaxPoolType =>
-      val maxPool = Module(new MaxPool4d(maxPoolType))
+      val maxPool = Module(new MaxPoolStage(maxPoolType))
+      latency += maxPool.latency
+      dspUsage += maxPool.dspUsage
       maxPool
     case broadcasterType: BroadcasterType =>
-      val broadcaster = Module(new Broadcaster(broadcasterType))
+      val broadcaster = Module(new BroadcasterStage(broadcasterType))
+      latency += broadcaster.latency
+      dspUsage += broadcaster.dspUsage
       broadcaster
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
   }
 
+  if (printing) {
+    println("====================================")
+    println("Total latency: " + latency)
+    println("Total estimated DSP usage: " + dspUsage)
+    println("====================================")
+  }
+
   if (printing) println("Modules done. Beginning connection logic.")
 
   // Connection Logic (Wiring)
-  for (i <- modules.indices) {
-    val currentModule = modules(i)
-    if (printing) println("Generating connections for: " + currentModule)
+  for (i <- stages.indices) {
+    val currentStage = stages(i)
+    if (printing) println("Generating connections for: " + currentStage)
     val connectionIndices = connectionList(i)
-    currentModule match {
-      case input: InputModule =>
+    currentStage match {
+      case input: InputStage =>
+        if (printing) println("Connecting to input channel")
         // Should only happen once
-        input.io.inputChannel.bits := inputs
-        input.io.inputChannel.valid := inputValid
-        inputReady := input.io.inputChannel.ready
+        input.io.inputChannel <> io.inputChannel
 
-      case add: Add4d =>
-        val connectedModule1 = modules(connectionIndices.head)
-        val connectedModule2 = modules(connectionIndices.last)
-        if (printing) {
-          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
-          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
-        }
-        connectedModule1 match {
-          case conInput: InputModule =>
-            add.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            add.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            add.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            add.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            add.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            add.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            add.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            add.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            add.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            add.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to an add module")
-          case _ =>
-            throw new Exception("Unknown module connected to add module inputs")
-        }
-        connectedModule2 match {
-          case conInput: InputModule =>
-            add.io.biasChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            add.io.biasChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            add.io.biasChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            add.io.biasChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            add.io.biasChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            add.io.biasChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            add.io.biasChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            add.io.biasChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            add.io.biasChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            add.io.biasChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to an add module")
-          case _ =>
-            throw new Exception("Unknown module connected to add module inputs")
-        }
-
-      case matMul: MatMul4d =>
-        val connectedModule1 = modules(connectionIndices.head)
-        val connectedModule2 = modules(connectionIndices.last)
-        if (printing) {
-          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
-          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
-        }
-        connectedModule1 match {
-          case conInput: InputModule =>
-            matMul.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            matMul.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            matMul.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            matMul.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            matMul.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            matMul.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            matMul.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            matMul.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            matMul.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            matMul.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a matmul module")
-          case _ =>
-            throw new Exception("Unknown module connected to matmul module inputs")
-        }
-        connectedModule2 match {
-          case conInput: InputModule =>
-            matMul.io.weightChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            matMul.io.weightChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            matMul.io.weightChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            matMul.io.weightChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            matMul.io.weightChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            matMul.io.weightChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            matMul.io.weightChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            matMul.io.weightChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            matMul.io.weightChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            matMul.io.weightChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a matmul module")
-          case _ =>
-            throw new Exception("Unknown module connected to matmul module inputs")
-        }
-
-      case relu: ReLU4d =>
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
-        connectedModule match {
-          case conInput: InputModule =>
-            relu.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            relu.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            relu.io.inputChannel <> conMatMul.io.outputChannel
-          case conInitializer: Initializer4d =>
-            relu.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            relu.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            relu.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            relu.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            relu.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            relu.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a relu module")
-          case _ =>
-            throw new Exception("Unknown module connected to relu module")
-        }
-
-      case _: Initializer4d =>
-      // Initializers do not have any inputs
-
-      case output: OutputModule =>
+      case output: OutputStage =>
         // Should only happen once
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
-        connectedModule match {
-          case conInput: InputModule =>
-            output.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            output.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            output.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            output.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            output.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            output.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            output.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            output.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            output.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            output.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to an output module")
-          case _ =>
-            throw new Exception("Unknown module connected to output module")
-        }
-        outputs := output.io.outputChannel.bits
-        outputValid := output.io.outputChannel.valid
-        output.io.outputChannel.ready := outputReady
-
-      case rounder: Rounder4d =>
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
-        connectedModule match {
-          case conInput: InputModule =>
-            rounder.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            rounder.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            rounder.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            rounder.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            rounder.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            rounder.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            rounder.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            rounder.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            rounder.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            rounder.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a rounder module")
-          case _ =>
-            throw new Exception("Unknown module connected to rounder module")
-        }
-
-      case reshape: Reshape =>
-        val connectedModule1 = modules(connectionIndices.head)
-        val connectedModule2 = modules(connectionIndices.last)
         if (printing) {
-          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
-          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
+          println("Connecting to module: " + stages(connectionIndices.head) + " index: " + connectionIndices.head)
         }
-        connectedModule1 match {
-          case conInput: InputModule =>
-            reshape.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            reshape.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            reshape.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            reshape.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            reshape.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            reshape.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            reshape.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            reshape.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            reshape.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            reshape.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a reshape module")
+        stages(connectionIndices.head) match {
+          case conStage0: Stage0 =>
+            output.io.inputChannel <> conStage0.io.outputChannel
+          case conStage1: Stage1 =>
+            output.io.inputChannel <> conStage1.io.outputChannel
+          case conStage2: Stage2 =>
+            output.io.inputChannel <> conStage2.io.outputChannel
           case _ =>
-            throw new Exception("Unknown module connected to reshape module inputs")
+            throw new Exception("Unknown stage type")
         }
-        connectedModule2 match {
-          case _: InputModule =>
-            throw new Exception("Input module cannot be connected to a reshape shape")
-          case _: Add4d =>
-            throw new Exception("Add module cannot be connected to a reshape shape")
-          case _: MatMul4d =>
-            throw new Exception("MatMul module cannot be connected to a reshape shape")
-          case _: ReLU4d =>
-            throw new Exception("ReLU module cannot be connected to a reshape shape")
-          case conInitializer: Initializer4d =>
-            reshape.io.shapeChannel <> conInitializer.io.outputChannel
-          case conRounder: Rounder4d =>
-            reshape.io.shapeChannel <> conRounder.io.resultChannel
-          case _: Reshape =>
-            throw new Exception("Reshape module cannot be connected to a reshape shape")
-          case _: Conv4dMatmul =>
-            throw new Exception("Conv module cannot be connected to a reshape shape")
-          case _: MaxPool4d =>
-            throw new Exception("Maxpool module cannot be connected to a reshape shape")
-          case _: Broadcaster =>
-            throw new Exception("Broadcaster cannot be connected to a reshape shape")
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a reshape shape")
-          case _ =>
-            throw new Exception("Unknown module connected to reshape module inputs")
-        }
+        if (printing) println("Connecting to output channel")
+        io.outputChannel <> output.io.outputChannel
 
-
-      case conv: Conv4dMatmul =>
-        val connectedModule1 = modules(connectionIndices.head)
-        val connectedModule2 = modules(connectionIndices.last)
+      case stage0: Stage0 =>
+      // Does not have any input channels, so no need to connect anything
+      case stage1: Stage1 =>
         if (printing) {
-          println("Connected module 1: " + connectedModule1 + " index: " + connectionIndices.head)
-          println("Connected module 2: " + connectedModule2 + " index: " + connectionIndices.last)
+          println("Connecting to module: " + stages(connectionIndices.head) + " index: " + connectionIndices.head)
         }
-        connectedModule1 match {
-          case conInput: InputModule =>
-            conv.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            conv.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            conv.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            conv.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            conv.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            conv.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            conv.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            conv.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            conv.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            conv.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a conv module")
+        stages(connectionIndices.head) match {
+          case conStage0: Stage0 =>
+            stage1.io.inputChannel <> conStage0.io.outputChannel
+          case conStage1: Stage1 =>
+            stage1.io.inputChannel <> conStage1.io.outputChannel
+          case conStage2: Stage2 =>
+            stage1.io.inputChannel <> conStage2.io.outputChannel
           case _ =>
-            throw new Exception("Unknown module connected to conv module inputs")
-        }
-        connectedModule2 match {
-          case conInput: InputModule =>
-            conv.io.kernelChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            conv.io.kernelChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            conv.io.kernelChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            conv.io.kernelChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            conv.io.kernelChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            conv.io.kernelChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            conv.io.kernelChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            conv.io.kernelChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            conv.io.kernelChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            conv.io.kernelChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a conv module")
-          case _ =>
-            throw new Exception("Unknown module connected to conv module inputs")
+            throw new Exception("Unknown stage type")
         }
 
-      case maxPool: MaxPool4d =>
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
-        connectedModule match {
-          case conInput: InputModule =>
-            maxPool.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            maxPool.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            maxPool.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            maxPool.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            maxPool.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            maxPool.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            maxPool.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            maxPool.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            maxPool.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            maxPool.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a maxpool module")
-          case _ =>
-            throw new Exception("Unknown module connected to maxpool module")
+      case stage2: Stage2 =>
+        if (printing) {
+          println("Connecting to module 1: " + stages(connectionIndices.head) + " index: " + connectionIndices.head)
+          println("Connecting to module 2: " + stages(connectionIndices.last) + " index: " + connectionIndices.last)
         }
 
-      case broadcaster: Broadcaster =>
-        val connectedModule = modules(connectionIndices.head)
-        if (printing) println("Connected module: " + connectedModule + " index: " + connectionIndices.head)
-        connectedModule match {
-          case conInput: InputModule =>
-            broadcaster.io.inputChannel <> conInput.io.outputChannel
-          case conAdd: Add4d =>
-            broadcaster.io.inputChannel <> conAdd.io.resultChannel
-          case conMatMul: MatMul4d =>
-            broadcaster.io.inputChannel <> conMatMul.io.outputChannel
-          case conReLU: ReLU4d =>
-            broadcaster.io.inputChannel <> conReLU.io.resultChannel
-          case conInitializer: Initializer4d =>
-            broadcaster.io.inputChannel <> conInitializer.io.outputChannel
-          case conRound: Rounder4d =>
-            broadcaster.io.inputChannel <> conRound.io.resultChannel
-          case conReshape: Reshape =>
-            broadcaster.io.inputChannel <> conReshape.io.resultChannel
-          case conConv: Conv4dMatmul =>
-            broadcaster.io.inputChannel <> conConv.io.outputChannel
-          case conMaxPool: MaxPool4d =>
-            broadcaster.io.inputChannel <> conMaxPool.io.resultChannel
-          case conBroadcaster: Broadcaster =>
-            broadcaster.io.inputChannel <> conBroadcaster.io.resultChannel
-          case _: OutputModule =>
-            throw new Exception("Output module cannot be connected to a broadcaster module")
+        stages(connectionIndices.head) match {
+          case conStage0: Stage0 =>
+            stage2.io.input1Channel <> conStage0.io.outputChannel
+          case conStage1: Stage1 =>
+            stage2.io.input1Channel <> conStage1.io.outputChannel
+          case conStage2: Stage2 =>
+            stage2.io.input1Channel <> conStage2.io.outputChannel
           case _ =>
-            throw new Exception("Unknown module connected to broadcaster module")
+            throw new Exception("Unknown stage type")
+        }
+
+        stages(connectionIndices.last) match {
+          case conStage0: Stage0 =>
+            stage2.io.input2Channel <> conStage0.io.outputChannel
+          case conStage1: Stage1 =>
+            stage2.io.input2Channel <> conStage1.io.outputChannel
+          case conStage2: Stage2 =>
+            stage2.io.input2Channel <> conStage2.io.outputChannel
+          case _ =>
+            throw new Exception("Unknown stage type")
         }
 
       case _ =>
-        throw new Exception("Unknown module type")
+        throw new Exception("Unknown stage type")
     }
 
-    if (printing) println("Connections generated for: " + currentModule)
+    if (printing) println("Connections generated for: " + currentStage)
 
 
-  }
-  if (pipelineIO) {
-    inputs := RegNext(io.inputChannel.bits)
-    inputValid := RegNext(io.inputChannel.valid)
-    io.inputChannel.ready := RegNext(inputReady)
-
-    io.outputChannel.bits := RegNext(outputs)
-    io.outputChannel.valid := RegNext(outputValid)
-    outputReady := RegNext(io.outputChannel.ready)
-  } else {
-    inputs := io.inputChannel.bits
-    inputValid := io.inputChannel.valid
-    io.inputChannel.ready := inputReady
-
-    io.outputChannel.bits := outputs
-    io.outputChannel.valid := outputValid
-    outputReady := io.outputChannel.ready
   }
 
   if (printing) println("Connections done.")

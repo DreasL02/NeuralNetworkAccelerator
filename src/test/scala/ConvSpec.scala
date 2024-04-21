@@ -1,6 +1,7 @@
 
 import chisel3._
 import chiseltest._
+import operators.SingleChannelConvolution
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 

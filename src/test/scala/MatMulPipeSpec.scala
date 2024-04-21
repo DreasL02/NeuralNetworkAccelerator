@@ -6,6 +6,7 @@ import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 import TestingUtils.Comparison.CompareWithErrorThreshold
+import operators.MatMul
 
 class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
@@ -79,7 +80,7 @@ class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   // for each test, generate a random set of matrices and test
 
-  "MatMul should calculate correctly for in pipeline test" in {
+  "operators.MatMul should calculate correctly for in pipeline test" in {
     test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
       var inputNum = 0
       var resultNum = 0
@@ -88,7 +89,7 @@ class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
       while (resultNum < numberOfTests) {
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.weightChannel.valid.poke(true.B)
-        dut.io.resultChannel.ready.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
 
         if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfTests) {
           if (printing) {
@@ -113,10 +114,10 @@ class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
           inputNum += 1
         }
 
-        if (dut.io.resultChannel.valid.peek().litToBoolean) {
+        if (dut.io.outputChannel.valid.peek().litToBoolean) {
           for (i <- 0 until numberOfRows) {
             for (j <- 0 until numberOfColumns) {
-              val resultFixed = dut.io.resultChannel.bits(i)(j).peek().litValue
+              val resultFixed = dut.io.outputChannel.bits(i)(j).peek().litValue
               resultsFloat(resultNum)(i)(j) = fixedToFloat(resultFixed, fixedPoint * 2, wResult, signed)
             }
           }

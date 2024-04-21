@@ -93,7 +93,7 @@ for node in graph:
     node_type = graph[node]["type"]
 
     if (node_type == "operation"):
-        if (graph[node]["op_type"] == "MatMul"):
+        if (graph[node]["op_type"] == "operators.MatMul"):
             graph[node]["bit_width_operands"] = bit_width_multiplication
             graph[node]["bit_width_result"] = bit_width_base
             graph[node]["fixed_point_operands"] = fixed_point_multiplication
@@ -112,7 +112,7 @@ for node in graph:
                     if input == output_name:
                         output = graph[node_]
 
-        if output["type"] == "operation" and output["op_type"] == "MatMul":
+        if output["type"] == "operation" and output["op_type"] == "operators.MatMul":
             graph[node]["bit_width_operands"] = bit_width_multiplication
             graph[node]["bit_width_result"] = bit_width_multiplication
             graph[node]["fixed_point_operands"] = fixed_point_multiplication
@@ -158,7 +158,7 @@ for node in graph:
                 "fixed_point_result": graph[node]["fixed_point_operands"],
                 "input": [demote_dimensions(rounder_input)],
                 "output": [name],
-                "op_type": "Rounder",
+                "op_type": "operators.Rounder",
                 "index": index
             }
             index += 1
@@ -173,7 +173,7 @@ for rounder in rounders:
     graph[rounder["name"]] = rounder
 # Introduced rounders
 
-# Add outputs to the graph as the index has been calculated final
+# operators.Add outputs to the graph as the index has been calculated final
 
 for output in onnx_model.graph.output:
     output_node = {
@@ -214,7 +214,7 @@ def find_dimension(node_name):
     if graph[node_name]["type"] in ["input", "initializer", "output"]:
         return list(graph[node_name]["dims"])
 
-    if graph[node_name]["op_type"] == "MatMul":
+    if graph[node_name]["op_type"] == "operators.MatMul":
         dim_x = find_dimension(graph[node_name]["input"][0])[0]
         dim_y = find_dimension(graph[node_name]["input"][1])[1]
         return [dim_x, dim_y]
@@ -233,8 +233,8 @@ for node in graph:
     if graph[node]["type"] in ["input", "initializer", "output"]:
         graph[node]["input_dims"] = find_dimension(node)
 
-supported_nodes = ["Input", "MatMul", "Add",
-                   "Relu", "Rounder", "Initializer", "Output"]
+supported_nodes = ["Input", "operators.MatMul", "operators.Add",
+                   "Relu", "operators.Rounder", "operators.Initializer", "Output"]
 scala_dict = {k: [] for k in supported_nodes}
 
 for node in graph:
@@ -276,7 +276,7 @@ for node in graph:
             "data": raw_data
         }
 
-        scala_dict["Initializer"].append(initializer_details)
+        scala_dict["operators.Initializer"].append(initializer_details)
 
     if graph[node]["type"] == "input":
         input_details = {

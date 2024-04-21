@@ -1,6 +1,7 @@
 
 import chisel3._
 import chiseltest._
+import operators.Reshape
 import org.scalatest.freespec.AnyFreeSpec
 
 class ReshapeSpec extends AnyFreeSpec with ChiselScalatestTester {
@@ -48,11 +49,11 @@ class ReshapeSpec extends AnyFreeSpec with ChiselScalatestTester {
     )
   )
 
-  "Reshape should reshape correctly" in {
+  "operators.Reshape should reshape correctly" in {
     test(new Reshape(w = 8, inputDimensions = (2, 2, 4, 4), shapeDimensions = (1, 1, 1, 1), newDimensions = (1, 1, 4, 16))) {
       dut =>
         dut.io.inputChannel.valid.poke(true.B)
-        dut.io.resultChannel.ready.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
         for (i <- inputs.indices) {
           for (j <- inputs(i).indices) {
             for (k <- inputs(i)(j).indices) {
@@ -64,7 +65,7 @@ class ReshapeSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         var cycle = 0
-        while (!dut.io.resultChannel.valid.peek().litToBoolean) {
+        while (!dut.io.outputChannel.valid.peek().litToBoolean) {
           dut.clock.step()
           cycle += 1
         }
@@ -73,7 +74,7 @@ class ReshapeSpec extends AnyFreeSpec with ChiselScalatestTester {
           for (j <- expectedOutput(i).indices) {
             for (k <- expectedOutput(i)(j).indices) {
               for (l <- expectedOutput(i)(j)(k).indices) {
-                dut.io.resultChannel.bits(i)(j)(k)(l).expect(expectedOutput(i)(j)(k)(l).U)
+                dut.io.outputChannel.bits(i)(j)(k)(l).expect(expectedOutput(i)(j)(k)(l).U)
               }
             }
           }

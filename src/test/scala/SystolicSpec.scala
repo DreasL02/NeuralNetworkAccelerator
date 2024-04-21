@@ -2,8 +2,8 @@
 import chisel3._
 import chisel3.util.Fill
 import chiseltest._
+import operators.systolic_array.SystolicArray
 import org.scalatest.freespec.AnyFreeSpec
-import systolic_array.SystolicArray
 import scala_utils.RandomData._
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._

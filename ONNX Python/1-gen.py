@@ -16,14 +16,14 @@ output_tensor = helper.make_tensor_value_info(
 
 
 matmul_node = helper.make_node(
-    'MatMul',
+    'operators.MatMul',
     ['input', 'weight_1'],
     ['matmul-output'],
     "matmul-node"
 )
 
 bias_node = helper.make_node(
-    "Add",
+    "operators.Add",
     ["matmul-output", "bias_1"],
     ["bias-output"],
     "bias-node"
@@ -37,14 +37,14 @@ relu_node = helper.make_node(
 )
 
 matmul2_node = helper.make_node(
-    'MatMul',
+    'operators.MatMul',
     ['relu-output', 'weight_2'],
     ['matmul2-output'],
     "matmul2-node"
 )
 
 bias2_node = helper.make_node(
-    "Add",
+    "operators.Add",
     ["matmul2-output", "bias_2"],
     ["output"],
     "bias2-node"

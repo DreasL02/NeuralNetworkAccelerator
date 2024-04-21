@@ -1,4 +1,4 @@
-import activation_functions.ReLU
+import operators.{Add, MatMul, ReLU, Rounder}
 import chisel3._
 import chisel3.util.DecoupledIO
 import scala_utils.Optional.optional
@@ -21,7 +21,7 @@ class LayerCalculator(
 
     val biasChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
 
-    val resultChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
+    val outputChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W))))
 
     val debugInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, UInt(w.W))))
     val debugWeights = optional(enableDebuggingIO, Output(Vec(numberOfColumns, UInt(w.W))))
@@ -42,26 +42,26 @@ class LayerCalculator(
   }
 
   private val add = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))
-  add.io.inputChannel <> matMul.io.resultChannel
+  add.io.inputChannel <> matMul.io.outputChannel
   add.io.biasChannel <> io.biasChannel
 
 
   if (enableDebuggingIO) {
     io.debugBiases.get := add.io.debugBiases.get
-    io.debugRounderInputs.get := add.io.resultChannel.bits
+    io.debugRounderInputs.get := add.io.outputChannel.bits
   }
 
   private val rounder = Module(new Rounder(w, wResult, numberOfRows, numberOfColumns, signed, fixedPoint))
-  rounder.io.inputChannel <> add.io.resultChannel
+  rounder.io.inputChannel <> add.io.outputChannel
 
   if (enableDebuggingIO) {
-    io.debugReLUInputs.get := rounder.io.resultChannel.bits
+    io.debugReLUInputs.get := rounder.io.outputChannel.bits
   }
 
   // ReLU
   private val reLU = Module(new ReLU(w, numberOfRows, numberOfColumns, signed))
-  reLU.io.inputChannel <> rounder.io.resultChannel
+  reLU.io.inputChannel <> rounder.io.outputChannel
 
   // Result of computations
-  io.resultChannel <> reLU.io.resultChannel
+  io.outputChannel <> reLU.io.outputChannel
 }

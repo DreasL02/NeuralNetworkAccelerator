@@ -2,13 +2,14 @@
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3._
 import chiseltest._
+import operators.MaxPool
 
 
 // Test cases from:
 // https://www.quora.com/What-is-max-pooling-in-convolutional-neural-networks
 class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
   val toPrint = false
-  "MaxPool should calculate correctly for 4x4 input, 2x2 kernel and (2,2) strides" in {
+  "operators.MaxPool should calculate correctly for 4x4 input, 2x2 kernel and (2,2) strides" in {
     val matrix = Array(
       Array(2, 3, 4, 0),
       Array(1, 5, 3, 2),
@@ -28,10 +29,10 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
       dut.io.inputChannel.valid.poke(true.B)
-      dut.io.resultChannel.ready.poke(true.B)
-      dut.io.resultChannel.valid.expect(true.B)
+      dut.io.outputChannel.ready.poke(true.B)
+      dut.io.outputChannel.valid.expect(true.B)
 
-      val result = dut.io.resultChannel.bits
+      val result = dut.io.outputChannel.bits
 
       if (toPrint) {
         for (i <- 0 until result.length) {
@@ -52,7 +53,7 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "MaxPool should calculate correctly for 4x4 input, 3x3 kernel and (1,1) strides" in {
+  "operators.MaxPool should calculate correctly for 4x4 input, 3x3 kernel and (1,1) strides" in {
     val matrix = Array(
       Array(2, 3, 4, 0),
       Array(1, 5, 3, 2),
@@ -72,10 +73,10 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
       dut.io.inputChannel.valid.poke(true.B)
-      dut.io.resultChannel.ready.poke(true.B)
-      dut.io.resultChannel.valid.expect(true.B)
+      dut.io.outputChannel.ready.poke(true.B)
+      dut.io.outputChannel.valid.expect(true.B)
 
-      val result = dut.io.resultChannel.bits
+      val result = dut.io.outputChannel.bits
 
       if (toPrint) {
         for (i <- 0 until result.length) {
@@ -96,7 +97,7 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "MaxPool should calculate correctly for 4x4 input, 3x3 kernel and (2,2) strides" in {
+  "operators.MaxPool should calculate correctly for 4x4 input, 3x3 kernel and (2,2) strides" in {
     val matrix = Array(
       Array(2, 3, 4, 0),
       Array(1, 5, 3, 2),
@@ -115,10 +116,10 @@ class MaxPoolSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
       }
       dut.io.inputChannel.valid.poke(true.B)
-      dut.io.resultChannel.ready.poke(true.B)
-      dut.io.resultChannel.valid.expect(true.B)
+      dut.io.outputChannel.ready.poke(true.B)
+      dut.io.outputChannel.valid.expect(true.B)
 
-      val result = dut.io.resultChannel.bits
+      val result = dut.io.outputChannel.bits
 
       if (toPrint) {
         for (i <- 0 until result.length) {

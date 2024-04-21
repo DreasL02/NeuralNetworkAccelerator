@@ -2,6 +2,7 @@
 import chisel3._
 import chiseltest._
 import onnx.Operators.Parameters
+import onnx.SpecToListConverter
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
@@ -22,7 +23,6 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
   val signed = true
   val threshold = 0.25f
   val numberOfInputs = 10
-  val pipelineIO = false
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
   val inputsFixed = inputs.map(i => floatToFixed(i.toFloat, fixedPoint, w, signed))
@@ -42,7 +42,7 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
   var done = 0 // keep track of how many tests are done to write the results to a file when all tests are done
   for (testNum <- 0 until numberOfInputs) {
     "AutomaticGenerationSpec should behave correctly for test %d (input = %f, expect = %f)".format(testNum, inputs(testNum), expected(testNum)) in {
-      test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)) { dut =>
+      test(new AutomaticGeneration(lists._2, lists._3, printConnections)) { dut =>
         var cycleTotal = 0
         dut.io.inputChannel.bits(0)(0)(0)(0).poke(inputsFixed(testNum).U)
         dut.io.inputChannel.valid.poke(true.B)

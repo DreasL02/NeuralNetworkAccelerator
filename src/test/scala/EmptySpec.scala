@@ -1,6 +1,7 @@
 
 import chisel3._
 import chiseltest._
+import onnx.SpecToListConverter
 import org.scalatest.freespec.AnyFreeSpec
 
 class EmptySpec extends AnyFreeSpec with ChiselScalatestTester {

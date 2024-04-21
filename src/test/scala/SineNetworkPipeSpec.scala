@@ -8,7 +8,6 @@ import scala_utils.FixedPointConversion.{convertFloatMatrixToFixedMatrix, fixedT
 
 class SineNetworkPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
-  val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
 
   // Load the weights and biases into the ROMs from the files stored in the scala_utils/data folder
@@ -54,14 +53,15 @@ class SineNetworkPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
       while (resultNum < numberOfInputs) {
         dut.io.outputChannel.ready.poke(true.B)
 
-        println()
-        println("Result: " + fixedToFloat(dut.io.outputChannel.bits(0)(0).peek().litValue, fixedPointResult, wResult, signed) + " Expected: " + expected(resultNum) + " Cycles: " + cycleTotal)
-        println("General ready: " + dut.io.inputChannel.ready.peek().litToBoolean + " Valid: " + dut.io.outputChannel.valid.peek().litToBoolean)
-        println("Probe1 ready: " + dut.io.probe1.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe1.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe1.get.value.peek().litValue, fixedPointResult, wResult, signed))
-        println("Probe2 ready: " + dut.io.probe2.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe2.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe2.get.value.peek().litValue, fixedPointResult, wResult, signed))
-        println("Probe3 ready: " + dut.io.probe3.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe3.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe3.get.value.peek().litValue, fixedPointResult, wResult, signed))
-        println("Probe4 ready: " + dut.io.probe4.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe4.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe4.get.value.peek().litValue, fixedPointResult, wResult, signed))
-
+        if (printToConsole) {
+          println()
+          println("Result: " + fixedToFloat(dut.io.outputChannel.bits(0)(0).peek().litValue, fixedPointResult, wResult, signed) + " Expected: " + expected(resultNum) + " Cycles: " + cycleTotal)
+          println("General ready: " + dut.io.inputChannel.ready.peek().litToBoolean + " Valid: " + dut.io.outputChannel.valid.peek().litToBoolean)
+          println("Probe1 ready: " + dut.io.probe1.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe1.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe1.get.value.peek().litValue, fixedPointResult, wResult, signed))
+          println("Probe2 ready: " + dut.io.probe2.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe2.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe2.get.value.peek().litValue, fixedPointResult, wResult, signed))
+          println("Probe3 ready: " + dut.io.probe3.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe3.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe3.get.value.peek().litValue, fixedPointResult, wResult, signed))
+          println("Probe4 ready: " + dut.io.probe4.get.ready.peek().litToBoolean + " Valid: " + dut.io.probe4.get.valid.peek().litToBoolean + " Value: " + fixedToFloat(dut.io.probe4.get.value.peek().litValue, fixedPointResult, wResult, signed))
+        }
         if (inputNum >= numberOfInputs) {
           dut.io.inputChannel.valid.poke(false.B)
         } else {
@@ -69,7 +69,7 @@ class SineNetworkPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         if (dut.io.inputChannel.ready.peek().litToBoolean && inputNum < numberOfInputs) {
-          println("=== Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal + " ===")
+          if (printToConsole) println("=== Inputted: " + fixedToFloat(inputsFixed(inputNum), fixedPoint, w, signed) + " Cycles: " + cycleTotal + " ===")
           dut.io.inputChannel.bits(0)(0).poke(inputsFixed(inputNum).U)
           inputNum += 1
         }
@@ -77,7 +77,7 @@ class SineNetworkPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
         if (dut.io.outputChannel.valid.peek().litToBoolean) {
           val resultFixed = dut.io.outputChannel.bits(0)(0).peek().litValue
           results(resultNum) = fixedToFloat(resultFixed, fixedPointResult, wResult, signed)
-          println("=== Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles: " + cycleTotal + " ===")
+          if (printToConsole) println("=== Result: " + results(resultNum) + " Expected: " + expected(resultNum) + " Cycles: " + cycleTotal + " ===")
           resultNum += 1
         }
 
@@ -85,7 +85,7 @@ class SineNetworkPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
         cycleTotal += 1
 
-        if (cycleTotal > 200) {
+        if (cycleTotal > 200 * numberOfInputs) {
           fail("Timeout")
         }
       }

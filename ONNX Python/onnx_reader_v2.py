@@ -25,29 +25,29 @@ signed = True  # True if the model is signed, False if the model is unsigned
 
 # full list: https://github.com/onnx/onnx/blob/main/docs/IR.md#graphs
 # + node, but that is handled in more detail below
-supported_graphs = ["Input", "Initializer", "Output"]
+supported_graphs = ["Input", "operators.Initializer", "Output"]
 # full list: https://github.com/onnx/onnx/blob/main/docs/Operators.md
-supported_node_operations = ["Conv", "MatMul", "MaxPool",
-                             "Reshape", "Relu", "Constant",  "Add"]
+supported_node_operations = ["Conv", "operators.MatMul", "operators.MaxPool",
+                             "operators.Reshape", "Relu", "Constant",  "operators.Add"]
 
 # stages that use multiplication (and thus need a lower bit width than the base bit width)
-stages_using_multiplication = ["Conv", "MatMul"]
+stages_using_multiplication = ["Conv", "operators.MatMul"]
 
 # stages that don't have inputs
-static_stages = ["Initializer", "Constant", "Input"]
+static_stages = ["operators.Initializer", "Constant", "Input"]
 
 # stages that are not defined in the ONNX specification but are used in the Chisel generator
 # (e.g. to handle different bit widths between stages)
-inferred_stages = ["Rounder", "Broadcaster"]
+inferred_stages = ["operators.Rounder", "operators.Broadcaster"]
 
 # stages that (can) broadcast their inputs (https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md)
-broadcast_operations = ["Add", "And", "Div", "Equal", "Greater", "Less", "Max", "Mean", "Min",
+broadcast_operations = ["operators.Add", "And", "Div", "Equal", "Greater", "Less", "Max", "Mean", "Min",
                         "Mul", "Or", "Pow", "Sub", "Sum", "Xor"]
 
 # Chisel module that are supported for automatic generation.
-# Note that some modules are used for multiple operations, e.g. Initializer is used for both Constant and Initializer
-chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
-                  "Reshape", "Relu", "Add", "Initializer", "Broadcaster"]
+# Note that some modules are used for multiple operations, e.g. operators.Initializer is used for both Constant and operators.Initializer
+chisel_modules = ["Input", "Output", "operators.Rounder", "Conv", "operators.MatMul", "operators.MaxPool",
+                  "operators.Reshape", "Relu", "operators.Add", "operators.Initializer", "operators.Broadcaster"]
 
 # -------------------------------------------- Constants end --------------------------------------------
 
@@ -126,7 +126,7 @@ for initializer in onnx_model.graph.initializer:
         "input": "?",
         "output": initializer.name,
         "shape": ensure_dims_are_4d(initializer.dims),
-        "op_type": "Initializer",
+        "op_type": "operators.Initializer",
         "attributes": [numpy_helper.to_array(initializer)],
         "extra": [],
         "index": index
@@ -197,10 +197,10 @@ for stage in graph:
         graph[stage]["fixed_point_result"] = fixed_point_base
         bit_width_set = True
 
-    elif stage_op_type == "Reshape":
-        # Reshape has a lot of special cases that need to be handled
+    elif stage_op_type == "operators.Reshape":
+        # operators.Reshape has a lot of special cases that need to be handled
         if graph[stage]["input"].__len__() not in [1, 2]:
-            raise Exception("Reshape with only supported with 1 or 2 inputs")
+            raise Exception("operators.Reshape with only supported with 1 or 2 inputs")
 
         if graph[stage]["input"].__len__() == 1:
             # Old version of reshape where the shape is given as an attribute
@@ -222,8 +222,8 @@ for stage in graph:
             shape = graph[graph[stage]["input"][1]]
             output = find_output(stage)
 
-            if shape["op_type"] not in ["Constant", "Initializer"]:
-                raise Exception("Reshape with dynamic shape not supported")
+            if shape["op_type"] not in ["Constant", "operators.Initializer"]:
+                raise Exception("operators.Reshape with dynamic shape not supported")
 
             if output["op_type"] in stages_using_multiplication:
                 operands[0].append(bit_width_multiplication)
@@ -257,7 +257,7 @@ for stage in graph:
             graph[stage]["fixed_point_result"] = fixed_point_multiplication
             bit_width_set = True
 
-        elif output["op_type"] == "Reshape":
+        elif output["op_type"] == "operators.Reshape":
             # if we feed into a reshape shape input, then we need to set the output to 0 as this is infered compile time
 
             if output["input"].__len__() == 2:
@@ -280,7 +280,7 @@ for stage in graph:
                         graph[stage]["fixed_point_result"] = fixed_point_multiplication
                         bit_width_set = True
                 else:
-                    raise Exception("Reshape with dynamic shape not supported")
+                    raise Exception("operators.Reshape with dynamic shape not supported")
 
             else:
                 # if feed into a reshape with a constant shape,
@@ -337,7 +337,7 @@ for stage in graph:
                 "output": [name],
                 # temporary shape, actual shape are calculated in the later step
                 "shape": [0, 0, 0, 0],
-                "op_type": "Rounder",
+                "op_type": "operators.Rounder",
                 "index": index,
                 "bit_width_operands": bit_width_input,
                 "bit_width_result": bit_width_of_stage_operand,
@@ -380,7 +380,7 @@ def find_shape(stage_name):
                 else:
                     new_shape = ensure_dims_are_4d(attribute.t.dims)
 
-    elif graph[stage_name]["op_type"] == "MatMul":
+    elif graph[stage_name]["op_type"] == "operators.MatMul":
         # a x b x n x m * a x b x m x p = a x b x n x p
         input1 = find_shape(graph[stage_name]["input"][0])
         input2 = find_shape(graph[stage_name]["input"][1])
@@ -455,7 +455,7 @@ def find_shape(stage_name):
         i = floor((d - g + 2*padding[1]) / strides[1] + 1)
         new_shape = [a, e, h, i]
 
-    elif graph[stage_name]["op_type"] == "MaxPool":
+    elif graph[stage_name]["op_type"] == "operators.MaxPool":
         # Input: a x b x c x d
         # Attributes: kernel_shape, pads (default: 0), strides (default: 1), auto_pad (default: NOTSET),
         # ceil_mode (default: 0), dilations (default: 1), storage_order (default: 0) are not supported and assumed to be default values.
@@ -533,7 +533,7 @@ def find_shape(stage_name):
 
         new_shape = [a, b, e, f]
 
-    elif graph[stage_name]["op_type"] == "Reshape":
+    elif graph[stage_name]["op_type"] == "operators.Reshape":
         # from ONNX docs:
         # At most one dimension of the new shape can be -1.
         # In this case, the value is inferred from the size of the tensor and the remaining dimensions.
@@ -549,14 +549,14 @@ def find_shape(stage_name):
         if shape.__len__() == 0:
             # if no shape is given, then a newer version of reshape is used where the shape is given as an input
             input2 = graph[stage_name]["input"][1]
-            if graph[input2]["op_type"] not in ["Constant", "Initializer"]:
-                if graph[input2]["op_type"] != "Rounder":
-                    raise Exception("Reshape with dynamic shape not supported")
+            if graph[input2]["op_type"] not in ["Constant", "operators.Initializer"]:
+                if graph[input2]["op_type"] != "operators.Rounder":
+                    raise Exception("operators.Reshape with dynamic shape not supported")
 
                 # Could be a rounder stage that may be connected to a constant or initializer
                 input2 = graph[input2]["input"][0]
-                if graph[input2]["op_type"] not in ["Constant", "Initializer"]:
-                    raise Exception("Reshape with dynamic shape not supported")
+                if graph[input2]["op_type"] not in ["Constant", "operators.Initializer"]:
+                    raise Exception("operators.Reshape with dynamic shape not supported")
 
             shape = graph[input2]["attributes"][0].flatten().tolist()
 
@@ -565,7 +565,7 @@ def find_shape(stage_name):
 
         if shape.__len__() > 4:
             raise Exception(
-                "Reshape with more than 4 dimensions not supported")
+                "operators.Reshape with more than 4 dimensions not supported")
 
         new_shape = []
         for i in range(shape.__len__()):
@@ -623,7 +623,7 @@ def find_shape(stage_name):
                 "input": [demote_dimensions(graph[stage_name]["input"][1])],
                 "output": [name],
                 "shape": input1,
-                "op_type": "Broadcaster",
+                "op_type": "operators.Broadcaster",
                 "index": index,
                 "bit_width_operands": graph[stage_name]["bit_width_operands"][1],
                 "bit_width_result": graph[stage_name]["bit_width_operands"][1],
@@ -667,7 +667,7 @@ for stage in graph:
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
 # pprint.pprint(graph)
 # -------------------------------------------- Introduce output --------------------------------------------
-# Add the output stage to the graph dictionary
+# operators.Add the output stage to the graph dictionary
 if len(onnx_model.graph.output) > 1:
     raise Exception("Models with multiple outputs are not supported")
 
@@ -747,7 +747,7 @@ for stage in graph:
             "shape": current_stage["shape"]
         })
 
-    elif current_stage["op_type"] in ["Rounder"]:
+    elif current_stage["op_type"] in ["operators.Rounder"]:
         chisel_dict[current_stage["op_type"]].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"],
@@ -758,8 +758,8 @@ for stage in graph:
             "input_shape": current_stage["input_shape"]
         })
 
-    elif current_stage["op_type"] == "MatMul":
-        chisel_dict["MatMul"].append({
+    elif current_stage["op_type"] == "operators.MatMul":
+        chisel_dict["operators.MatMul"].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
@@ -767,7 +767,7 @@ for stage in graph:
             "input_shape": current_stage["input_shape"]
         })
 
-    elif current_stage["op_type"] in ["Add", "Relu"]:
+    elif current_stage["op_type"] in ["operators.Add", "Relu"]:
         chisel_dict[current_stage["op_type"]].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
@@ -786,8 +786,8 @@ for stage in graph:
             "strides": current_stage["extra"][1],
         })
 
-    elif current_stage["op_type"] == "MaxPool":
-        chisel_dict["MaxPool"].append({
+    elif current_stage["op_type"] == "operators.MaxPool":
+        chisel_dict["operators.MaxPool"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
@@ -797,8 +797,8 @@ for stage in graph:
             "kernel_shape": current_stage["extra"][2],
         })
 
-    elif current_stage["op_type"] == "Reshape":
-        chisel_dict["Reshape"].append({
+    elif current_stage["op_type"] == "operators.Reshape":
+        chisel_dict["operators.Reshape"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
@@ -814,27 +814,27 @@ for stage in graph:
                 raw_data = [convert_to_fixed_point(
                     x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
-        chisel_dict["Initializer"].append({
+        chisel_dict["operators.Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "shape": current_stage["shape"],
             "data": raw_data
         })
 
-    elif current_stage["op_type"] == "Initializer":
+    elif current_stage["op_type"] == "operators.Initializer":
         raw_data = current_stage["attributes"][0].flatten().tolist()
         raw_data = [convert_to_fixed_point(
             x, current_stage["fixed_point_result"], current_stage["bit_width_result"], signed) for x in raw_data]
 
-        chisel_dict["Initializer"].append({
+        chisel_dict["operators.Initializer"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "shape": current_stage["shape"],
             "data": raw_data
         })
 
-    elif current_stage["op_type"] == "Broadcaster":
-        chisel_dict["Broadcaster"].append({
+    elif current_stage["op_type"] == "operators.Broadcaster":
+        chisel_dict["operators.Broadcaster"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "connections": current_stage["connections"],

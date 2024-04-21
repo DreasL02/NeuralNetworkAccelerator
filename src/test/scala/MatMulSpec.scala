@@ -1,6 +1,7 @@
 
 import chisel3._
 import chiseltest._
+import operators.MatMul
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
@@ -42,7 +43,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   for (testNum <- 0 until numberOfTests) {
     val enablePrinting = printing(testNum)
 
-    "MatMul should calculate correctly for test %d".format(testNum) in {
+    "operators.MatMul should calculate correctly for test %d".format(testNum) in {
       test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
         var weightsFloat = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
@@ -81,8 +82,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
           println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
           println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
-          println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
-          println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+          println("Result Channel Valid: %b".format(dut.io.outputChannel.valid.peek().litToBoolean))
+          println("Result Channel Ready: %b".format(dut.io.outputChannel.ready.peek().litToBoolean))
           println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
           println()
         }
@@ -102,11 +103,11 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
         dut.io.weightChannel.valid.poke(true.B)
 
-        dut.io.resultChannel.ready.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
 
         // Wait for the systolic array to be done
         var cycles = 0
-        while (!dut.io.resultChannel.valid.peekBoolean()) {
+        while (!dut.io.outputChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println()
@@ -116,8 +117,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
               println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
               println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
               println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
-              println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
-              println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+              println("Result Channel Valid: %b".format(dut.io.outputChannel.valid.peek().litToBoolean))
+              println("Result Channel Ready: %b".format(dut.io.outputChannel.ready.peek().litToBoolean))
               println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
               println()
             }
@@ -162,7 +163,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
             val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
             for (i <- multiplicationResultFixed.indices) {
               for (j <- multiplicationResultFixed(0).indices) {
-                resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
+                resultFixed(i)(j) = dut.io.outputChannel.bits(i)(j).peek().litValue
               }
             }
             val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
@@ -179,8 +180,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
           println("Input Channel Ready: %b".format(dut.io.inputChannel.ready.peek().litToBoolean))
           println("Weight Channel Valid: %b".format(dut.io.weightChannel.valid.peek().litToBoolean))
           println("Weight Channel Ready: %b".format(dut.io.weightChannel.ready.peek().litToBoolean))
-          println("Result Channel Valid: %b".format(dut.io.resultChannel.valid.peek().litToBoolean))
-          println("Result Channel Ready: %b".format(dut.io.resultChannel.ready.peek().litToBoolean))
+          println("Result Channel Valid: %b".format(dut.io.outputChannel.valid.peek().litToBoolean))
+          println("Result Channel Ready: %b".format(dut.io.outputChannel.ready.peek().litToBoolean))
           println("DEBUG COMPUTATION START: %b".format(dut.io.debugComputationStart.get.peek().litToBoolean))
           println()
         }
@@ -188,7 +189,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
         for (i <- multiplicationResultFixed.indices) {
           for (j <- multiplicationResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.outputChannel.bits(i)(j).peek().litValue
           }
         }
 

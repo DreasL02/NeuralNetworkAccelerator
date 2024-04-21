@@ -5,6 +5,7 @@ import onnx.Operators.Parameters
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 import TestingUtils.Comparison
+import onnx.SpecToListConverter
 
 class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToFile = false // set to true to print the results to a file
@@ -23,7 +24,6 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val signed = true
   val threshold = 1.75f
   val numberOfInputs = 10
-  val pipelineIO = false
 
   val imageSize = 8
 
@@ -38,7 +38,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   }
 
   "AutomaticGenerationSpec should behave correctly" in {
-    test(new AutomaticGeneration(lists._2, lists._3, pipelineIO, true, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
+    test(new AutomaticGeneration(lists._2, lists._3, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
       dut.clock.setTimeout(100000)
       for (testNum <- 0 until numberOfInputs) {
 

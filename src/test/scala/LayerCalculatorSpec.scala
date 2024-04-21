@@ -102,13 +102,13 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
         dut.io.biasChannel.valid.poke(true.B)
 
-        dut.io.resultChannel.ready.poke(true.B)
+        dut.io.outputChannel.ready.poke(true.B)
 
         dut.clock.step()
         // All values should now be loaded
 
         var cycles = 0
-        while (!dut.io.resultChannel.valid.peekBoolean()) {
+        while (!dut.io.outputChannel.valid.peekBoolean()) {
           if (enablePrinting) {
             println("Cycle %d".format(cycles))
             println("DEBUG SYSTOLIC ARRAY RESULTS")
@@ -153,7 +153,7 @@ class LayerCalculatorSpec extends AnyFreeSpec with ChiselScalatestTester {
         val resultFixed: Array[Array[BigInt]] = Array.fill(additionResultFixed.length, additionResultFixed(0).length)(0)
         for (i <- additionResultFixed.indices) {
           for (j <- additionResultFixed(0).indices) {
-            resultFixed(i)(j) = dut.io.resultChannel.bits(i)(j).peek().litValue
+            resultFixed(i)(j) = dut.io.outputChannel.bits(i)(j).peek().litValue
           }
         }
 
