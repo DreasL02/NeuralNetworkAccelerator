@@ -2,7 +2,7 @@ package module_utils
 
 import chisel3._
 
-class ShiftedBuffer(w: Int = 8, depth: Int = 4, shift: Int) extends Module {
+class ShiftedBuffer(w: Int, depth: Int, shift: Int) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values?
     val data = Input(Vec(depth, UInt(w.W))) // data to be loaded

@@ -6,7 +6,7 @@ import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 import TestingUtils.Comparison.CompareWithErrorThreshold
-import operators.MatMul
+import operators.systolic_array.BufferedSystolicArray
 
 class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
@@ -81,7 +81,7 @@ class MatMulPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   // for each test, generate a random set of matrices and test
 
   "operators.MatMul should calculate correctly for in pipeline test" in {
-    test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
+    test(new BufferedSystolicArray(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
       var inputNum = 0
       var resultNum = 0
       var cycleTotal = 0

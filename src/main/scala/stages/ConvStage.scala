@@ -2,7 +2,7 @@ package stages
 
 import chisel3._
 import onnx.Operators.ConvType
-import operators.{Conv4d, Conv4dMatmul}
+import operators.{ConvDirect, ConvIm2Col}
 
 class ConvStage(
                  wIn: Int,
@@ -29,7 +29,7 @@ class ConvStage(
   )
 
   if (implementation == ConvImplementation.Im2Col) {
-    val im2col = Module(new Conv4dMatmul(wIn, wOut, shapeInput, shapeKernel, signed, strides, pads, print))
+    val im2col = Module(new ConvIm2Col(wIn, wOut, shapeInput, shapeKernel, signed, strides, pads, print))
     im2col.io.inputChannel <> io.input1Channel
     im2col.io.kernelChannel <> io.input2Channel
     io.outputChannel <> im2col.io.outputChannel
@@ -37,7 +37,7 @@ class ConvStage(
     latency = 0 // TODO: calculate latency
     dspUsage = 0 // TODO: calculate DSP usage
   } else {
-    val conv = Module(new Conv4d(wIn, wOut, shapeInput, shapeKernel, signed, strides, pads, print))
+    val conv = Module(new ConvDirect(wIn, wOut, shapeInput, shapeKernel, signed, strides, pads, print))
     conv.io.inputChannel <> io.input1Channel
     conv.io.kernelChannel <> io.input2Channel
     io.outputChannel <> conv.io.outputChannel

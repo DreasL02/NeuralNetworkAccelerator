@@ -4,15 +4,14 @@ import chisel3._
 import chisel3.util.DecoupledIO
 
 
-class MaximumParallelMatrixMultiplication(
-                                           w: Int,
-                                           wResult: Int,
-                                           numberOfRows: Int, // number of rows in the result matrix / number of rows in the first matrix
-                                           numberOfColumns: Int, // number of columns in the result matrix / number of columns in the second matrix
-                                           commonDimension: Int, // number of columns in the first matrix and number of rows in the second matrix
-                                           signed: Boolean,
-                                           enableDebuggingIO: Boolean = false
-                                         ) extends Module {
+class DirectMatMul(
+                    w: Int,
+                    wResult: Int,
+                    numberOfRows: Int, // number of rows in the result matrix / number of rows in the first matrix
+                    numberOfColumns: Int, // number of columns in the result matrix / number of columns in the second matrix
+                    commonDimension: Int, // number of columns in the first matrix and number of rows in the second matrix
+                    signed: Boolean,
+                  ) extends Module {
   val io = IO(new Bundle {
     val inputChannel = Flipped(new DecoupledIO(Vec(numberOfRows, Vec(commonDimension, UInt(w.W)))))
     val weightChannel = Flipped(new DecoupledIO(Vec(commonDimension, Vec(numberOfColumns, UInt(w.W)))))

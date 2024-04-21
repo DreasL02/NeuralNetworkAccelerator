@@ -2,21 +2,22 @@ package operators
 
 import chisel3._
 import chisel3.util.DecoupledIO
+import operators.systolic_array.BufferedSystolicArray
 import scala_utils.Optional.optional
 
-class Conv4dMatmul(
-                    val w: Int,
-                    val wResult: Int,
-                    val inputShape: (Int, Int, Int, Int),
-                    // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
-                    val kernelShape: (Int, Int, Int, Int),
-                    // number of output channels (also called feature maps), number of input channels (e.g. RGB), height, width
-                    val signed: Boolean, // whether the input and kernel matrices are signed
-                    val strides: (Int, Int), // the stride to use for the convolution
-                    val pads: (Int, Int), // the padding to use for the convolution
-                    val enableDebuggingIO: Boolean = false,
-                    val print: Boolean = false
-                  ) extends Module {
+class ConvIm2Col(
+                  val w: Int,
+                  val wResult: Int,
+                  val inputShape: (Int, Int, Int, Int),
+                  // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
+                  val kernelShape: (Int, Int, Int, Int),
+                  // number of output channels (also called feature maps), number of input channels (e.g. RGB), height, width
+                  val signed: Boolean, // whether the input and kernel matrices are signed
+                  val strides: (Int, Int), // the stride to use for the convolution
+                  val pads: (Int, Int), // the padding to use for the convolution
+                  val enableDebuggingIO: Boolean = false,
+                  val print: Boolean = false
+                ) extends Module {
 
   assert(inputShape._2 == kernelShape._2, "The second dimension of the input and kernel tensors must be the same")
   assert(kernelShape._3 == kernelShape._4, "Only square kernels are supported")
@@ -116,7 +117,8 @@ class Conv4dMatmul(
 
   private val result = Wire(Vec(matrixResultDimensions._1, Vec(matrixResultDimensions._2, Vec(matrixResultDimensions._3, UInt(wResult.W)))))
 
-  private val matMuls = VecInit(Seq.fill(matrixResultDimensions._1)(Module(new MatMul(w, wResult, matrixResultDimensions._2, matrixResultDimensions._3, flatKernelDimensions._2, signed)).io))
+  // create the matrix multipliers, using the systolic array as direct matmul would not gain any performance when compared to the direct conv
+  private val matMuls = VecInit(Seq.fill(matrixResultDimensions._1)(Module(new BufferedSystolicArray(w, wResult, matrixResultDimensions._2, matrixResultDimensions._3, flatKernelDimensions._2, signed)).io))
 
   for (batch <- 0 until matrixResultDimensions._1) {
     matMuls(batch).inputChannel.bits := flatKernel

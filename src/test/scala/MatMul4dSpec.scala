@@ -1,11 +1,10 @@
 
 import chisel3._
 import chiseltest._
-import operators.MatMul4d
+import operators.{DirectMatMul4d}
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
-import scala_utils.RandomData.randomMatrix
 
 class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   val toPrint = false
@@ -92,7 +91,7 @@ class MatMul4dSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
   "4d operators.MatMul" in {
-    test(new MatMul4d(w, wResult, inputDimensions, weightDimensions, signed = true, enableDebuggingIO = true)) { dut =>
+    test(new DirectMatMul4d(w, wResult, inputDimensions, weightDimensions, signed = true)) { dut =>
       dut.io.inputChannel.valid.poke(true.B)
       dut.io.weightChannel.valid.poke(true.B)
       dut.io.outputChannel.ready.poke(true.B)

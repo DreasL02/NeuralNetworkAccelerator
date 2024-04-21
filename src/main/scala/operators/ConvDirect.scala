@@ -4,19 +4,19 @@ package operators
 import chisel3._
 import chisel3.util.DecoupledIO
 
-class Conv4d(
-              w: Int,
-              wResult: Int,
-              inputShape: (Int, Int, Int, Int), // the dimensions of the input tensor
-              // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
-              kernelShape: (Int, Int, Int, Int), // the dimensions of the kernel tensor
-              // number of output channels (also called feature maps), number of input channels (e.g. RGB), height, width
+class ConvDirect(
+                  w: Int,
+                  wResult: Int,
+                  inputShape: (Int, Int, Int, Int), // the dimensions of the input tensor
+                  // batch size (e.g. number of images), number of input channels (e.g. RGB), height, width
+                  kernelShape: (Int, Int, Int, Int), // the dimensions of the kernel tensor
+                  // number of output channels (also called feature maps), number of input channels (e.g. RGB), height, width
 
-              signed: Boolean, // whether the input and kernel tensors are signed
-              strides: (Int, Int), // the stride to use for the convolution
-              pads: (Int, Int), // the padding to use for the convolution
-              print: Boolean = false
-            )
+                  signed: Boolean, // whether the input and kernel tensors are signed
+                  strides: (Int, Int), // the stride to use for the convolution
+                  pads: (Int, Int), // the padding to use for the convolution
+                  print: Boolean = false
+                )
   extends Module {
 
   assert(inputShape._2 == kernelShape._2, "The second dimension of the input and kernel tensors must be the same")

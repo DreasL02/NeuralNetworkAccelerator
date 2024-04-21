@@ -1,6 +1,7 @@
-import operators.{Add, Initializer, MatMul, ReLU, Rounder}
+import operators.{Add, Initializer, ReLU, Rounder}
 import chisel3._
 import chisel3.util.DecoupledIO
+import operators.systolic_array.BufferedSystolicArray
 import scala_utils.DimensionManipulation._
 import scala_utils.Optional._
 
@@ -80,7 +81,7 @@ class SineNetwork(
   val biases2 = Module(new Initializer(wResult, 1, 16, initialBiasMemoryStates(1)))
   val biases3 = Module(new Initializer(wResult, 1, 1, initialBiasMemoryStates(2)))
 
-  val mmu1 = Module(new MatMul(w, wResult, 1, 16, 1, signed, enableDebuggingIO))
+  val mmu1 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 1, signed, enableDebuggingIO))
   mmu1.io.inputChannel <> io.inputChannel
   mmu1.io.weightChannel <> weights1.io.outputChannel
 
@@ -94,7 +95,7 @@ class SineNetwork(
   val rounder1 = Module(new Rounder(wResult, w, 1, 16, signed, fixedPoint))
   rounder1.io.inputChannel <> relu1.io.outputChannel
 
-  val mmu2 = Module(new MatMul(w, wResult, 1, 16, 16, signed, enableDebuggingIO))
+  val mmu2 = Module(new BufferedSystolicArray(w, wResult, 1, 16, 16, signed, enableDebuggingIO))
   mmu2.io.inputChannel <> rounder1.io.outputChannel
   mmu2.io.weightChannel <> weights2.io.outputChannel
 
@@ -108,7 +109,7 @@ class SineNetwork(
   val rounder2 = Module(new Rounder(wResult, w, 1, 16, signed, fixedPoint))
   rounder2.io.inputChannel <> relu2.io.outputChannel
 
-  val mmu3 = Module(new MatMul(w, wResult, 1, 1, 16, signed, enableDebuggingIO))
+  val mmu3 = Module(new BufferedSystolicArray(w, wResult, 1, 1, 16, signed, enableDebuggingIO))
   mmu3.io.inputChannel <> rounder2.io.outputChannel
   mmu3.io.weightChannel <> weights3.io.outputChannel
 
@@ -143,9 +144,9 @@ class SineNetwork(
     io.debugMMU2Weights.get := mmu2.io.debugWeights.get
     io.debugMMU3Weights.get := mmu3.io.debugWeights.get
 
-    io.debugMMU1Result.get := mmu1.io.debugResults.get
-    io.debugMMU2Result.get := mmu2.io.debugResults.get
-    io.debugMMU3Result.get := mmu3.io.debugResults.get
+    io.debugMMU1Result.get := mmu1.io.outputChannel.bits
+    io.debugMMU2Result.get := mmu2.io.outputChannel.bits
+    io.debugMMU3Result.get := mmu3.io.outputChannel.bits
 
     io.debugBias1Biases.get := bias1.io.debugBiases.get
     io.debugBias2Biases.get := bias2.io.debugBiases.get

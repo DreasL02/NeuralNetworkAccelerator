@@ -2,15 +2,16 @@ package operators
 
 import chisel3._
 import chisel3.util.DecoupledIO
+import operators.systolic_array.BufferedSystolicArray
 
-class MatMul4d(
-                w: Int,
-                wResult: Int,
-                shapeInput: (Int, Int, Int, Int),
-                shapeWeight: (Int, Int, Int, Int),
-                signed: Boolean,
-                enableDebuggingIO: Boolean = false
-              )
+class BufferedSystolicArray4d(
+                               w: Int,
+                               wResult: Int,
+                               shapeInput: (Int, Int, Int, Int),
+                               shapeWeight: (Int, Int, Int, Int),
+                               signed: Boolean,
+                               enableDebuggingIO: Boolean = false
+                             )
   extends Module {
 
   assert(shapeInput._1 == shapeWeight._1, "The first shape of the input and weight matrices must be the same")
@@ -26,7 +27,7 @@ class MatMul4d(
     val outputChannel = new DecoupledIO(Vec(shapeOutput._1, Vec(shapeOutput._2, Vec(shapeOutput._3, Vec(shapeOutput._4, UInt(wResult.W))))))
   })
 
-  private val matMuls = VecInit.fill(shapeOutput._1, shapeOutput._2)(Module(new MatMul(w, wResult, shapeInput._3, shapeWeight._4, shapeWeight._3, signed, enableDebuggingIO)).io)
+  private val matMuls = VecInit.fill(shapeOutput._1, shapeOutput._2)(Module(new BufferedSystolicArray(w, wResult, shapeInput._3, shapeWeight._4, shapeWeight._3, signed, enableDebuggingIO)).io)
 
   for (i <- 0 until shapeOutput._1) {
     for (j <- 0 until shapeOutput._2) {

@@ -1,6 +1,7 @@
-import operators.{Add, MatMul, ReLU, Rounder}
+import operators.{Add, ReLU, Rounder}
 import chisel3._
 import chisel3.util.DecoupledIO
+import operators.systolic_array.BufferedSystolicArray
 import scala_utils.Optional.optional
 
 
@@ -31,14 +32,14 @@ class LayerCalculator(
     val debugReLUInputs = optional(enableDebuggingIO, Output(Vec(numberOfRows, Vec(numberOfColumns, UInt(wResult.W)))))
   })
 
-  private val matMul = Module(new MatMul(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
+  private val matMul = Module(new BufferedSystolicArray(w, wResult, numberOfRows, numberOfColumns, commonDimension, signed, enableDebuggingIO))
   matMul.io.inputChannel <> io.inputChannel
   matMul.io.weightChannel <> io.weightChannel
 
   if (enableDebuggingIO) {
     io.debugInputs.get := matMul.io.debugInputs.get
     io.debugWeights.get := matMul.io.debugWeights.get
-    io.debugMatMulResults.get := matMul.io.debugResults.get
+    io.debugMatMulResults.get := matMul.io.outputChannel.bits
   }
 
   private val add = Module(new Add(wResult, numberOfRows, numberOfColumns, enableDebuggingIO))

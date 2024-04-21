@@ -1,13 +1,13 @@
 
 import chisel3._
 import chiseltest._
-import operators.MatMul
+import operators.systolic_array.BufferedSystolicArray
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.MatrixUtils._
 import scala_utils.FixedPointConversion._
 import scala_utils.RandomData.randomMatrix
 
-class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
+class BufferedSystolicArraySpec extends AnyFreeSpec with ChiselScalatestTester {
   // ======= configure the test =======
   val w = 8
   val wResult = 4 * w
@@ -22,9 +22,8 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   val threshold = 1f
 
   val printing = Array.fill(numberOfTests)(false)
-  val printWeightsAndInputs = false // only supported for systolic array
+  val printWeightsAndInputs = false
   val printInterfaces = true
-  val printCounters = true // only supported for one at a time matrix multiplication
 
   // We can enable printing for a specific test by setting the index to true
   printing(0) = true
@@ -44,7 +43,7 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
     val enablePrinting = printing(testNum)
 
     "operators.MatMul should calculate correctly for test %d".format(testNum) in {
-      test(new MatMul(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
+      test(new BufferedSystolicArray(w = w, wResult = wResult, numberOfRows = numberOfRows, numberOfColumns = numberOfColumns, commonDimension = matrixCommonDimension, signed = signed, enableDebuggingIO = true)) { dut =>
         var inputsFloat = randomMatrix(numberOfRows, matrixCommonDimension, min, max, seeds(testNum * 2))
         var weightsFloat = randomMatrix(matrixCommonDimension, numberOfColumns, min, max, seeds(testNum * 2 + 1))
 
@@ -137,35 +136,16 @@ class MatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
               println()
             }
 
-            if (printCounters) {
-              println("COUNTERS")
-              println("Row Counter: %d".format(dut.io.debugCounters.get(0).peek().litValue))
-              println("Column Counter: %d".format(dut.io.debugCounters.get(1).peek().litValue))
-              println("Common Counter: %d".format(dut.io.debugCounters.get(2).peek().litValue))
-              println()
-              println("CYCLE INPUTS")
-              println("Cycle Input: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(0).peek().litValue, fixedPoint, w, signed)))
-              println("Cycle Weight: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(1).peek().litValue, fixedPoint, w, signed)))
-              println("Stored Result: %f".format(fixedToFloat(dut.io.debugCycleInputs.get(2).peek().litValue, fixedPoint * 2, wResult, signed)))
-              println()
-            }
-
-            println("DEBUG RESULTS - Fixed")
-            for (i <- 0 until numberOfRows) {
-              for (j <- 0 until numberOfColumns) {
-                print(dut.io.debugResults.get(i)(j).peek().litValue)
-                print(" ")
-              }
-              println()
-            }
             println()
-            println("DEBUG RESULTS - Float")
+            println("DEBUG RESULTS - Fixed")
             val resultFixed: Array[Array[BigInt]] = Array.fill(multiplicationResultFixed.length, multiplicationResultFixed(0).length)(0)
             for (i <- multiplicationResultFixed.indices) {
               for (j <- multiplicationResultFixed(0).indices) {
                 resultFixed(i)(j) = dut.io.outputChannel.bits(i)(j).peek().litValue
               }
             }
+            print(matrixToString(resultFixed))
+            println("DEBUG RESULTS - Float")
             val resultFloat = convertFixedMatrixToFloatMatrix(resultFixed, fixedPoint * 2, wResult, signed)
             print(matrixToString(resultFloat))
             println()

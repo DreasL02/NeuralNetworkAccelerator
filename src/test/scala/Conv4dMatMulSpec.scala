@@ -1,6 +1,6 @@
 import chisel3._
 import chiseltest._
-import operators.Conv4dMatmul
+import operators.ConvIm2Col
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
@@ -27,7 +27,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
   "Convolution should calculate correctly when padding" in {
-    test(new Conv4dMatmul(
+    test(new ConvIm2Col(
       w = 8,
       wResult = 32,
       inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
@@ -140,7 +140,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
   "Convolution should calculate correctly when no padding" in {
-    test(new Conv4dMatmul(
+    test(new ConvIm2Col(
       w = 8,
       wResult = 32,
       inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
@@ -299,7 +299,7 @@ class Conv4dMatMulSpec extends AnyFreeSpec with ChiselScalatestTester {
   ))
 
   "Convolution should calculate for 3D example" in {
-    test(new Conv4dMatmul(
+    test(new ConvIm2Col(
       w = 8,
       wResult = 32,
       inputShape = (test3Input.length, test3Input(0).length, test3Input(0)(0).length, test3Input(0)(0)(0).length),

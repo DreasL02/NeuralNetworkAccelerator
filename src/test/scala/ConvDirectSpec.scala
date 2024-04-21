@@ -1,10 +1,10 @@
 import chisel3._
 import chiseltest._
-import operators.Conv4d
+import operators.ConvDirect
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
-class Conv4dSpec extends AnyFreeSpec with ChiselScalatestTester {
+class ConvDirectSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   // Using tests from https://github.com/onnx/onnx/blob/main/docs/Operators.md#Conv
 
@@ -26,7 +26,7 @@ class Conv4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   val toPrintNoPadding = true
 
   "Convolution should calculate correctly when padding" in {
-    test(new Conv4d(
+    test(new ConvDirect(
       w = 8,
       wResult = 32,
       inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
@@ -113,7 +113,7 @@ class Conv4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Convolution should calculate correctly when no padding" in {
-    test(new Conv4d(
+    test(new ConvDirect(
       w = 8,
       wResult = 32,
       inputShape = (inputs.length, inputs(0).length, inputs(0)(0).length, inputs(0)(0)(0).length),
@@ -210,7 +210,7 @@ class Conv4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   )
 
   "Convolution should calculate for multichannel example" in {
-    test(new Conv4d(
+    test(new ConvDirect(
       w = 8,
       wResult = 32,
       inputShape = (test2Inputs.length, test2Inputs(0).length, test2Inputs(0)(0).length, test2Inputs(0)(0)(0).length),
@@ -345,7 +345,7 @@ class Conv4dSpec extends AnyFreeSpec with ChiselScalatestTester {
   ))
 
   "Convolution should calculate for 3D example" in {
-    test(new Conv4d(
+    test(new ConvDirect(
       w = 8,
       wResult = 32,
       inputShape = (test3Input.length, test3Input(0).length, test3Input(0)(0).length, test3Input(0)(0)(0).length),
