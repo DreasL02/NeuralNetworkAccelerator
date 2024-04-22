@@ -1,7 +1,7 @@
 package module_utils
 
 import chisel3._
-import chisel3.util.Cat
+import chisel3.util.{Cat, DecoupledIO}
 
 // Scalable byte splitter of a w bit input into a Vec of 8 bit outputs
 class ByteSplitter(w: Int = 8) extends Module {
@@ -94,4 +94,27 @@ class ByteIntoVectorCollector(w: Int, dimension: Int) extends Module {
     }
     io.output(i) := byteCollector.io.output // output the collected vector element
   }
+}
+
+class ByteIntoFlatVectorCollector(inputByteCount: Int, outputUnit: Int) extends Module {
+  private val outputLength = (inputByteCount * 8) / outputUnit
+
+  val io = IO(new Bundle {
+    val inputChannel = Flipped(DecoupledIO(Vec(inputByteCount, UInt(8.W))))
+    val outputChannel = Flipped(DecoupledIO(Vec(outputLength, UInt(outputUnit.W))))
+  })
+
+  io.outputChannel.ready := io.inputChannel.ready
+  io.outputChannel.valid := io.inputChannel.valid
+
+  val inputBits = io.inputChannel.bits.reduce(_ ## _)
+
+  io.outputChannel.bits(7) := inputBits( 8,  0)
+  io.outputChannel.bits(6) := inputBits(17,  9)
+  io.outputChannel.bits(5) := inputBits(26, 18)
+  io.outputChannel.bits(4) := inputBits(35, 27)
+  io.outputChannel.bits(3) := inputBits(44, 36)
+  io.outputChannel.bits(2) := inputBits(53, 45)
+  io.outputChannel.bits(1) := inputBits(62, 54)
+  io.outputChannel.bits(0) := inputBits(71, 63)
 }

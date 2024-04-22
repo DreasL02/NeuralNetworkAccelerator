@@ -17,6 +17,11 @@ object UartCoding {
     "0" + dataBitStringLsbFirst + "11"
   }
 
+  def padLeft(byte: Byte): String = {
+    val dataBitString = String.format("%8s", byte.toBinaryString).replace(' ', '0')
+    dataBitString
+  }
+
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
     val dataBitStrings = bytes.map(encodeByteToUartBits)
     val combinedDataBitString = dataBitStrings.mkString
