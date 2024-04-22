@@ -763,24 +763,24 @@ for stage in graph:
         implementation = "open"
         baud_rate = 1
         frequency = 1
-        input_shape = current_stage["shape"]
-        input_bit_width = current_stage["bit_width_result"]
+        output_shape = current_stage["shape"]
+        output_bit_width = current_stage["bit_width_result"]
         userInput = input("Enter implementation for output with index " +
                           str(current_stage["index"]) + " and shape " + str(current_stage["shape"]) + " (open/uart): ")
         if userInput == "uart":
             implementation = "uart"
-            baud_rate = input("Enter baud rate: ")
-            frequency = input("Enter frequency: ")
-            input_shape = (1, 1, 1, 1)
-            input_bit_width = 1
+            baud_rate = int(input("Enter baud rate: "))
+            frequency = int(input("Enter frequency: "))
+            output_shape = (1, 1, 1, 1)
+            output_bit_width = 1
         chisel_dict["Output"].append({
             "index": current_stage["index"],
-            "bit_width": current_stage["bit_width_operands"],
+            "bit_width": output_bit_width,
             "connections": current_stage["connections"],
-            "shape": current_stage["shape"],
+            "shape": output_shape,
             "implementation": implementation,
-            "input_shape": input_shape,
-            "input_bit_width": input_bit_width,
+            "input_shape": current_stage["shape"],
+            "input_bit_width": current_stage["bit_width_operands"],
             "baud_rate": baud_rate,
             "frequency": frequency
         })
