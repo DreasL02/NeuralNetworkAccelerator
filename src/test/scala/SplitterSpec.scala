@@ -1,7 +1,8 @@
 import chisel3._
 import chiseltest._
-import module_utils.{ByteCollector, ByteIntoVectorCollector, ByteSplitter, VectorIntoByteSplitter}
+import module_utils.{ByteCollector, ByteIntoFlatVectorCollector, ByteIntoVectorCollector, ByteSplitter, VectorIntoByteSplitter}
 import org.scalatest.freespec.AnyFreeSpec
+import scala_utils.UartCoding.padLeft
 
 class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Should not split a byte" in {
@@ -95,4 +96,38 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.output(3).expect(1) // two next bytes (1, 0)
     }
   }
+
+  "Should collect 9 bytes (total 72 bits) into 8 9-bit values (also 72 bits)" in {
+    val outputUnit = 9
+    val byteCount = 9
+
+    test(new ByteIntoFlatVectorCollector(byteCount, outputUnit)) { dut =>
+
+      val input = Seq(7, 0, 84, 8, 227, 0, 1, 0, 11)
+      assert(input.length == byteCount)
+      //val input = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+      for (i <- input.indices) {
+        dut.io.input(i).poke(input(i).U(8.W))
+      }
+
+      // TODO: IVAN
+      //val inputAsBinaryString = input.map(padLeft()).mkString(" ")
+      //println(s"inputAsBinaryString:  $inputAsBinaryString")
+      //println(s"count of ones: ${inputAsBinaryString.count(_ == '1')}")
+
+      val outputAsBinaryString = dut.io.output.map(_.peekInt().toInt.toBinaryString).mkString(" ")
+      println(s"outputAsBinaryString: $outputAsBinaryString")
+      println(s"count of ones: ${outputAsBinaryString.count(_ == '1')}")
+
+
+      //dut.io.output(0).expect(7) // two first bytes (7, 0)
+      //dut.io.output(1).expect(2132) // two next bytes (84, 8)
+      //dut.io.output(2).expect(227) // two next bytes (227, 0)
+      //dut.io.output(3).expect(1) // two next bytes (1, 0)
+    }
+  }
+
+
+
 }
