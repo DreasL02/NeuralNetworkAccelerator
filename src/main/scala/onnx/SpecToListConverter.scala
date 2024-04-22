@@ -54,8 +54,18 @@ object SpecToListConverter {
       val w = entry("bit_width").num.toInt
       val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
+      val implementationString = entry("implementation").str
+      val implementation = implementationString match {
+        case "open" => InputImplementation.Open
+        case "uart" => InputImplementation.Uart
+        case _ => throw new Exception("Unknown implementation: " + implementationString)
+      }
+      val frequency = entry("frequency").num.toInt
+      val baudRate = entry("baud_rate").num.toInt
+      val inputShape = toTuple4(entry("input_shape").arr.map(_.num.toInt).toArray)
+      val inputW = entry("input_bit_width").num.toInt
       if (toPrint) println("Input: " + index + " " + w + " " + shape)
-      (index, Operators.InputType(w, w, shape, shape, InputImplementation.Open, 1, 1), List())
+      (index, Operators.InputType(inputW, w, inputShape, shape, implementation, frequency, baudRate), List())
     }).toList
 
     val outputList = outputs.map(entry => {
@@ -63,8 +73,18 @@ object SpecToListConverter {
       val shape = toTuple4(entry("shape").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
+      val implementationString = entry("implementation").str
+      val implementation = implementationString match {
+        case "open" => OutputImplementation.Open
+        case "uart" => OutputImplementation.Uart
+        case _ => throw new Exception("Unknown implementation: " + implementationString)
+      }
+      val frequency = entry("frequency").num.toInt
+      val baudRate = entry("baud_rate").num.toInt
+      val inputShape = toTuple4(entry("input_shape").arr.map(_.num.toInt).toArray)
+      val inputW = entry("input_bit_width").num.toInt
       if (toPrint) println("Output: " + index + " " + w + " " + shape + " " + connectionIndex)
-      (index, Operators.OutputType(w, w, shape, shape, OutputImplementation.Open, 1, 1), connectionIndex)
+      (index, Operators.OutputType(inputW, w, inputShape, shape, implementation, frequency, baudRate), connectionIndex)
     }).toList
 
     val rounderList = rounders.map(entry => {
@@ -89,8 +109,14 @@ object SpecToListConverter {
       val pads = toTuple2(entry("padding").arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
+      val implementationString = entry("implementation").str
+      val implementation = implementationString match {
+        case "direct" => ConvImplementation.Direct
+        case "im2col" => ConvImplementation.Im2Col
+        case _ => throw new Exception("Unknown implementation: " + implementationString)
+      }
       if (toPrint) println("Conv: " + index + " " + w + " " + wResult + " " + inputShape + " " + kernelShape + " " + signed + " " + strides + " " + pads + " " + connectionIndex)
-      (index, Operators.ConvType(w, wResult, inputShape, kernelShape, signed, strides, pads, ConvImplementation.Im2Col), connectionIndex)
+      (index, Operators.ConvType(w, wResult, inputShape, kernelShape, signed, strides, pads, implementation), connectionIndex)
     }).toList
 
     val matmulList = matmuls.map(entry => {
@@ -101,8 +127,14 @@ object SpecToListConverter {
       val operandBShape = toTuple4(entry("input_shape")(1).arr.map(_.num.toInt).toArray)
       val index = entry("index").num.toInt
       val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
+      val implementationString = entry("implementation").str
+      val implementation = implementationString match {
+        case "direct" => MatMulImplementation.Direct
+        case "systolic_array" => MatMulImplementation.SystolicArray
+        case _ => throw new Exception("Unknown implementation: " + implementationString)
+      }
       if (toPrint) println("MatMul: " + index + " " + wOperands + " " + wResult + " " + signed + " " + operandAShape + " " + operandBShape + " " + connectionIndex)
-      (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape, MatMulImplementation.SystolicArray), connectionIndex)
+      (index, Operators.MatMulType(wOperands, wResult, signed, operandAShape, operandBShape, implementation), connectionIndex)
     }).toList
 
     val maxPoolList = maxPools.map(entry => {
@@ -171,11 +203,6 @@ object SpecToListConverter {
       if (toPrint) println("Broadcaster: " + index + " " + w + " " + inputShape + " " + outputShape + " " + connectionIndex)
       (index, Operators.BroadcasterType(w, inputShape, outputShape), connectionIndex)
     }).toList
-
-    // only one input and one output is supported
-    if (inputList.length != 1 || outputList.length != 1) {
-      throw new Exception("Only one input and one output is supported")
-    }
 
     val allLists = List(inputList, outputList, rounderList, convList, matmulList, maxPoolList, reshapeList, reluList, addList, initializerList, broadcasterList)
     // sort elements by index (first element of tuple):

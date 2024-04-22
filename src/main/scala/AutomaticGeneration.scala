@@ -92,7 +92,7 @@ class AutomaticGeneration(
     val connectionIndices = connectionList(i)
     currentStage match {
       case input: InputStage =>
-        if (printing) println("Connecting to input channel")
+        if (printing) println("Connecting to input channel " + inputIndex)
         // Should only happen once
         input.io.inputChannel <> io.inputChannels(inputIndex)
         inputIndex += 1
@@ -112,7 +112,7 @@ class AutomaticGeneration(
           case _ =>
             throw new Exception("Unknown stage type")
         }
-        if (printing) println("Connecting to output channel")
+        if (printing) println("Connecting to output channel " + outputIndex)
         io.outputChannels(outputIndex) <> output.io.outputChannel
         outputIndex += 1
 
