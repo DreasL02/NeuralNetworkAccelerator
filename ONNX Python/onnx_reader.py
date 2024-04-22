@@ -13,7 +13,7 @@ model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/bob.onnx"
 export_path = "json/sine.json"
 
-bit_width_multiplication = 9
+bit_width_multiplication = 8
 bit_width_base = 32  # bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
@@ -769,8 +769,8 @@ for stage in graph:
                           str(current_stage["index"]) + " and shape " + str(current_stage["shape"]) + " (open/uart): ")
         if userInput == "uart":
             implementation = "uart"
-            baud_rate = input("Enter baud rate: ")
-            frequency = input("Enter frequency: ")
+            baud_rate = int(input("Enter baud rate: "))
+            frequency = int(input("Enter frequency: "))
             input_shape = (1, 1, 1, 1)
             input_bit_width = 1
         chisel_dict["Output"].append({

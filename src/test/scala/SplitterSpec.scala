@@ -108,7 +108,7 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       //val input = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
       for (i <- input.indices) {
-        dut.io.input(i).poke(input(i).U(8.W))
+        dut.io.inputChannel.bits(i).poke(input(i).U(8.W))
       }
 
       // TODO: IVAN
@@ -116,7 +116,7 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       //println(s"inputAsBinaryString:  $inputAsBinaryString")
       //println(s"count of ones: ${inputAsBinaryString.count(_ == '1')}")
 
-      val outputAsBinaryString = dut.io.output.map(_.peekInt().toInt.toBinaryString).mkString(" ")
+      val outputAsBinaryString = dut.io.outputChannel.bits.map(_.peekInt().toInt.toBinaryString).mkString(" ")
       println(s"outputAsBinaryString: $outputAsBinaryString")
       println(s"count of ones: ${outputAsBinaryString.count(_ == '1')}")
 

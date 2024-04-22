@@ -39,9 +39,17 @@ class InputStage(
 
     byteConverter.io.inputChannel <> bufferedUartRx.io.outputChannel
 
-    val reshaper = Module(new Reshape(wOut, (1, 1, 1, bytesRequired), (1, 1, 1, 1), outputShape))
+    val reshaper = Module(new Reshape(wOut, (1, 1, 1, 1), (1, 1, 1, 1), outputShape))
 
-    reshaper.io.inputChannel <> byteConverter.io.outputChannel
+
+    reshaper.io.inputChannel.valid := byteConverter.io.outputChannel.valid
+    reshaper.io.shapeChannel.valid := true.B
+    reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U
+
+
+    byteConverter.io.outputChannel.ready := reshaper.io.inputChannel.ready
+
+    reshaper.io.inputChannel.bits(0)(0)(0)(0) := byteConverter.io.outputChannel.bits(0)
 
     io.outputChannel <> reshaper.io.outputChannel
 
