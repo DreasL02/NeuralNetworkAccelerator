@@ -9,9 +9,9 @@ from onnx import load, numpy_helper
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/mnist-12.onnx"
-model_path = "models/smaller_mnist_1.onnx"
+model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/bob.onnx"
-export_path = "json/smaller_mnist_1.json"
+export_path = "json/sine.json"
 
 bit_width_multiplication = 9
 bit_width_base = 32  # bit_width_multiplication*4
@@ -116,18 +116,18 @@ for initializer in onnx_model.graph.initializer:
     }
     index += 1
 
-for input in onnx_model.graph.input:
+for input_ in onnx_model.graph.input:
     # if the input name does not appear in the initializer list, then it is an outside input
     # This may happen as initializers may also be inputs, but not always.
     # https://github.com/onnx/onnx/issues/1449
     # https://github.com/onnx/onnx/issues/2660
-    if input.name not in graph:
-        graph[input.name] = {
+    if input_.name not in graph:
+        graph[input_.name] = {
             "type": "input",
-            "name": input.name,
+            "name": input_.name,
             "input": "?",
-            "output": input.name,
-            "shape": ensure_dims_are_4d(shape_to_list(input.type.tensor_type.shape)),
+            "output": input_.name,
+            "shape": ensure_dims_are_4d(shape_to_list(input_.type.tensor_type.shape)),
             "op_type": "Input",
             "attributes": [],
             "extra": [],
@@ -155,7 +155,7 @@ for node in onnx_model.graph.node:
     }
     index += 1
 
-# Outputs are handeled separately after all nodes are processed to ensure its index is the last
+# Outputs are handeled separately after all nodes are processed
 
 # -------------------------------------------- Graph creation end --------------------------------------------
 # pprint.pprint(graph)
@@ -167,8 +167,8 @@ def find_output(stage):
     stage_output_name = demote_dimensions(graph[stage]["output"])
     output = None
     for stage_ in graph:
-        for input in graph[stage_]["input"]:
-            if input == stage_output_name:
+        for input_ in graph[stage_]["input"]:
+            if input_ == stage_output_name:
                 output = graph[stage_]
                 break
     if output is None:
@@ -322,16 +322,16 @@ for stage in graph:
     input_storage = []
     operand_index = 0
     while operand_index < graph[stage]["input"].__len__():
-        input = graph[stage]["input"][operand_index]
+        input_ = graph[stage]["input"][operand_index]
         bit_width_of_stage_operand = graph[stage]["bit_width_operands"][operand_index]
 
-        bit_width_input = graph[input]["bit_width_result"]
+        bit_width_input = graph[input_]["bit_width_result"]
 
         if bit_width_input != bit_width_of_stage_operand:
             # add rounder
-            name = "rounder_" + graph[input]["name"] + \
+            name = "rounder_" + graph[input_]["name"] + \
                 "_to_" + graph[stage]["name"]
-            rounder_input = (graph[input]["output"])
+            rounder_input = (graph[input_]["output"])
             rounder = {
                 "type": "rounder",
                 "name": name,
@@ -343,15 +343,15 @@ for stage in graph:
                 "index": index,
                 "bit_width_operands": bit_width_input,
                 "bit_width_result": bit_width_of_stage_operand,
-                "fixed_point_operands": graph[input]["fixed_point_result"],
+                "fixed_point_operands": graph[input_]["fixed_point_result"],
                 "fixed_point_result": graph[stage]["fixed_point_operands"][operand_index],
             }
             index += 1
             rounders.append(rounder)
-            graph[input]["output"] = rounder["input"]
+            graph[input_]["output"] = rounder["input"]
             input_storage.append(name)
         else:
-            input_storage.append(input)
+            input_storage.append(input_)
         operand_index += 1
 
     graph[stage]["input"] = input_storage
@@ -434,7 +434,7 @@ def find_shape(stage_name):
             padding = [floor((strides[0]*(input1[2]-1) - input1[2] + input2[2]) / 2),
                        floor((strides[1]*(input1[3]-1) - input1[3] + input2[3]) / 2)]
 
-            # if padding is larger than 2d tensor but all values over 2, then we assume it is a 2d tensor
+        # if padding is larger than 2d tensor but all values over 2, then we assume it is a 2d tensor
         if padding.__len__() > 2:
             padding = padding[:2]
 
@@ -466,7 +466,7 @@ def find_shape(stage_name):
         # e = (c - kernel_shape[0] + 2*pads[0]) / strides[0] + 1
         # f = (d - kernel_shape[1] + 2*pads[1]) / strides[1] + 1
 
-        input = find_shape(graph[stage_name]["input"][0])
+        input_ = find_shape(graph[stage_name]["input"][0])
 
         # find kernel_shape, padding, strides
         kernel_shape = [1, 1]
@@ -498,12 +498,12 @@ def find_shape(stage_name):
             padding = [0, 0]
         elif auto_pad == "SAME_UPPER":
             # TODO: check if this is correct
-            padding = [ceil((strides[0]*(input[2]-1) - input[2] + kernel_shape[0]) / 2),
-                       ceil((strides[1]*(input[3]-1) - input[3] + kernel_shape[1]) / 2)]
+            padding = [ceil((strides[0]*(input_[2]-1) - input_[2] + kernel_shape[0]) / 2),
+                       ceil((strides[1]*(input_[3]-1) - input_[3] + kernel_shape[1]) / 2)]
         elif auto_pad == "SAME_LOWER":
             # TODO: check if this is correct
-            padding = [floor((strides[0]*(input[2]-1) - input[2] + kernel_shape[0]) / 2),
-                       floor((strides[1]*(input[3]-1) - input[3] + kernel_shape[1]) / 2)]
+            padding = [floor((strides[0]*(input_[2]-1) - input_[2] + kernel_shape[0]) / 2),
+                       floor((strides[1]*(input_[3]-1) - input_[3] + kernel_shape[1]) / 2)]
 
         if len(kernel_shape) != 2:
             raise Exception("Kernel shape must be a 2 element array")
@@ -526,10 +526,10 @@ def find_shape(stage_name):
         graph[stage_name]["extra"].append(strides)
         graph[stage_name]["extra"].append(kernel_shape)
 
-        a = input[0]
-        b = input[1]
-        c = input[2]
-        d = input[3]
+        a = input_[0]
+        b = input_[1]
+        c = input_[2]
+        d = input_[3]
         e = floor((c - kernel_shape[0] + 2*padding[0]) / strides[0] + 1)
         f = floor((d - kernel_shape[1] + 2*padding[1]) / strides[1] + 1)
 
@@ -540,7 +540,7 @@ def find_shape(stage_name):
         # At most one dimension of the new shape can be -1.
         # In this case, the value is inferred from the size of the tensor and the remaining dimensions.
         # A dimension could also be 0, in which case the actual dimension value is unchanged (i.e. taken from the input tensor).
-        input = find_shape(graph[stage_name]["input"][0])
+        input_ = find_shape(graph[stage_name]["input"][0])
 
         # find desired shape from attributes
         shape = []
@@ -574,9 +574,9 @@ def find_shape(stage_name):
         new_shape = []
         for i in range(shape.__len__()):
             if shape[i] == 0:
-                new_shape.append(input[i])
+                new_shape.append(input_[i])
             elif shape[i] == -1:
-                new_shape.append(int(np.prod(input) / np.prod(shape)))
+                new_shape.append(int(np.prod(input_) / np.prod(shape)))
             else:
                 new_shape.append(shape[i])
 
@@ -664,8 +664,8 @@ for stage in graph:
         continue  # skip stages that don't have defined inputs
     else:
         graph[stage]["input_shape"] = []
-        for input in graph[stage]["input"]:
-            graph[stage]["input_shape"].append(find_shape(input))
+        for input_ in graph[stage]["input"]:
+            graph[stage]["input_shape"].append(find_shape(input_))
 
 
 # -------------------------------------------- Calculate dimensions end --------------------------------------------
@@ -710,8 +710,8 @@ for stage in graph:
         continue  # skip static stages as they don't have inputs
 
     connections = []
-    for input in graph[stage]["input"]:
-        connections.append(graph[input]["index"])
+    for input_ in graph[stage]["input"]:
+        connections.append(graph[input_]["index"])
     graph[stage]["connections"] = connections
 # -------------------------------------------- Connections end --------------------------------------------
 # pprint.pprint(graph)
@@ -734,19 +734,55 @@ for stage in graph:
     current_stage = graph[stage]
 
     if current_stage["op_type"] == "Input":
+        implementation = "open"
+        baud_rate = 1
+        frequency = 1
+        input_shape = current_stage["shape"]
+        input_bit_width = current_stage["bit_width_result"]
+        userInput = input("Enter implementation for input with index " +
+                          str(current_stage["index"]) + " and shape " + str(current_stage["shape"]) + " (open/uart): ")
+        if userInput == "uart":
+            implementation = "uart"
+            baud_rate = input("Enter baud rate: ")
+            frequency = input("Enter frequency: ")
+            input_shape = (1, 1, 1, 1)
+            input_bit_width = 1
 
         chisel_dict["Input"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_result"],
             "shape": current_stage["shape"],
+            "implementation": implementation,
+            "input_shape": input_shape,
+            "input_bit_width": input_bit_width,
+            "baud_rate": baud_rate,
+            "frequency": frequency
         })
 
     elif current_stage["op_type"] == "Output":
+        implementation = "open"
+        baud_rate = 1
+        frequency = 1
+        input_shape = current_stage["shape"]
+        input_bit_width = current_stage["bit_width_result"]
+        userInput = input("Enter implementation for output with index " +
+                          str(current_stage["index"]) + " and shape " + str(current_stage["shape"]) + " (open/uart): ")
+        if userInput == "uart":
+            implementation = "uart"
+            baud_rate = input("Enter baud rate: ")
+            frequency = input("Enter frequency: ")
+            input_shape = (1, 1, 1, 1)
+            input_bit_width = 1
         chisel_dict["Output"].append({
             "index": current_stage["index"],
             "bit_width": current_stage["bit_width_operands"],
             "connections": current_stage["connections"],
-            "shape": current_stage["shape"]
+            "shape": current_stage["shape"],
+            "implementation": implementation,
+            "input_shape": input_shape,
+            "input_bit_width": input_bit_width,
+            "baud_rate": baud_rate,
+            "frequency": frequency
         })
 
     elif current_stage["op_type"] in ["Rounder"]:
@@ -761,12 +797,18 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "MatMul":
+        implementation = "direct"
+        userInput = input("Enter implementation for MatMul with index " + str(current_stage["index"]) + ", input shapes " + str(current_stage["input_shape"]) + " and output shape " + str(
+            current_stage["shape"]) + " (direct/systolic_array): ")
+        if userInput == "systolic_array":
+            implementation = "systolic_array"
         chisel_dict["MatMul"].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"][0],
             "bit_width_result": current_stage["bit_width_result"],
             "connections": current_stage["connections"],
-            "input_shape": current_stage["input_shape"]
+            "input_shape": current_stage["input_shape"],
+            "implementation": implementation
         })
 
     elif current_stage["op_type"] in ["Add", "Relu"]:
@@ -778,6 +820,11 @@ for stage in graph:
         })
 
     elif current_stage["op_type"] == "Conv":
+        implementation = "direct"
+        userInput = input("Enter implementation for Conv with index " + str(current_stage["index"]) + " input shapes " + str(current_stage["input_shape"]) + " and output shape " + str(
+            current_stage["shape"]) + " (direct/im2col): ")
+        if userInput == "im2col":
+            implementation = "im2col"
         chisel_dict["Conv"].append({
             "index": current_stage["index"],
             "bit_width_operands": current_stage["bit_width_operands"][0],
@@ -786,6 +833,7 @@ for stage in graph:
             "input_shape": current_stage["input_shape"],
             "padding": current_stage["extra"][0],
             "strides": current_stage["extra"][1],
+            "implementation": implementation
         })
 
     elif current_stage["op_type"] == "MaxPool":
