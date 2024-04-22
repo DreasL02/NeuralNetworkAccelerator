@@ -9,16 +9,16 @@
         1,
         1
       ],
-      "implementation": "open",
+      "implementation": "uart",
       "input_shape": [
         1,
         1,
         1,
         1
       ],
-      "input_bit_width": 9,
-      "baud_rate": 1,
-      "frequency": 1
+      "input_bit_width": 1,
+      "baud_rate": "1",
+      "frequency": "2"
     }
   ],
   "Output": [
@@ -34,16 +34,16 @@
         1,
         1
       ],
-      "implementation": "open",
+      "implementation": "uart",
       "input_shape": [
         1,
         1,
         1,
         1
       ],
-      "input_bit_width": 32,
-      "baud_rate": 1,
-      "frequency": 1
+      "input_bit_width": 1,
+      "baud_rate": "1",
+      "frequency": "2"
     }
   ],
   "Rounder": [
