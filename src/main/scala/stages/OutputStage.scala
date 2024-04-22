@@ -2,6 +2,9 @@ package stages
 
 import onnx.Operators.OutputType
 import chisel3._
+import communication.chisel.lib.uart.{BufferedUartRxForTestingOnly, BufferedUartTxForTestingOnly}
+import module_utils.ByteIntoFlatVectorCollector
+import operators.Reshape
 
 class OutputStage(
                    wIn: Int,
@@ -18,11 +21,29 @@ class OutputStage(
   override lazy val shapeOut = outputShape
 
   if (implementation == OutputImplementation.Uart) {
-    // TODO: Implement UART output, for now raise an error
     assert(outputShape == (1, 1, 1, 1), "UART output only supports one output")
     assert(wOut == 1, "UART output only supports one bit-width output")
 
-    throw new NotImplementedError("UART output not implemented")
+    val totalElements = outputShape._1 * outputShape._2 * outputShape._3 * outputShape._4
+    val outputBitWidth = totalElements * wOut
+
+    val bytesRequired = (outputBitWidth / 8.0f).ceil.toInt
+    val bufferedUartTx = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, bytesRequired))
+
+    bufferedUartTx.io.txd := io.inputChannel.bits(0)(0)(0)(0)
+    io.inputChannel.ready := true.B
+    bufferedUartTx.io.inputChannel.valid := io.inputChannel.valid
+
+    // Convert the bytes into a flat vector of correct width numbers
+    val byteConverter = Module(new ByteIntoFlatVectorCollector(bytesRequired, wOut))
+
+    byteConverter.io.inputChannel <> bufferedUartTx.io.inputChannel
+
+    val reshaper = Module(new Reshape(wOut, (1, 1, 1, bytesRequired), (1, 1, 1, 1), outputShape))
+
+    reshaper.io.inputChannel <> byteConverter.io.outputChannel
+
+    io.outputChannel <> reshaper.io.outputChannel
 
     io.outputChannel.ready := true.B
 

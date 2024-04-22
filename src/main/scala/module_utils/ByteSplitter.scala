@@ -101,15 +101,20 @@ class ByteIntoFlatVectorCollector(inputByteCount: Int, outputUnit: Int) extends 
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(DecoupledIO(Vec(inputByteCount, UInt(8.W))))
-    val outputChannel = Flipped(DecoupledIO(Vec(outputLength, UInt(outputUnit.W))))
+    val outputChannel = DecoupledIO(Vec(outputLength, UInt(outputUnit.W)))
   })
 
-  io.outputChannel.ready := io.inputChannel.ready
+  io.inputChannel.ready := io.outputChannel.ready
   io.outputChannel.valid := io.inputChannel.valid
 
   val inputBits = io.inputChannel.bits.reduce(_ ## _)
 
-  io.outputChannel.bits(7) := inputBits( 8,  0)
+  for (i <- 0 until outputLength) {
+    io.outputChannel.bits(i) := inputBits((i + 1) * outputUnit - 1, i * outputUnit)
+  }
+
+
+  /*io.outputChannel.bits(7) := inputBits( 8,  0)
   io.outputChannel.bits(6) := inputBits(17,  9)
   io.outputChannel.bits(5) := inputBits(26, 18)
   io.outputChannel.bits(4) := inputBits(35, 27)
@@ -117,4 +122,6 @@ class ByteIntoFlatVectorCollector(inputByteCount: Int, outputUnit: Int) extends 
   io.outputChannel.bits(2) := inputBits(53, 45)
   io.outputChannel.bits(1) := inputBits(62, 54)
   io.outputChannel.bits(0) := inputBits(71, 63)
+
+   */
 }
