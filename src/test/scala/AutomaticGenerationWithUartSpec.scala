@@ -32,13 +32,10 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
   val fixedFlatData = flatData.map(i => floatToFixed(i, fixedPoint, width, signed))
 
-
   println("width: " + width)
 
   val minBytePerNumber = (width.toFloat / 8.0f).ceil.toInt
   println("minBytePerNumber: " + minBytePerNumber)
-  val bytesPerMatrix = minBytePerNumber * 8 * 8
-
 
   val bytes = ArrayBuffer[Byte]()
 
@@ -62,7 +59,7 @@ class AutomaticGenerationWithUartSpec extends AnyFreeSpec with ChiselScalatestTe
   println(encodedBits.mkString(""))
 
   "Should support a single byte buffer" in {
-    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, print, bytesPerMatrix)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+    test(new AutomaticGenerationWithUart(frequency, baudRate, lists._2, lists._3, print)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
       dut.clock.setTimeout(clockTimeout)
 
       val bitCount = encodedBits.length
