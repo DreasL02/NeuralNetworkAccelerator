@@ -2,8 +2,8 @@ package stages
 
 import onnx.Operators.OutputType
 import chisel3._
-import communication.chisel.lib.uart.{BufferedUartRxForTestingOnly, BufferedUartTxForTestingOnly}
-import module_utils.{ByteIntoFlatVectorCollector, FlatVectorIntoBytesCollector}
+import communication.chisel.lib.uart.{BufferedUartTxForTestingOnly}
+import module_utils.{FlatVectorIntoBytesCollector}
 import operators.Reshape
 
 class OutputStage(
@@ -30,9 +30,9 @@ class OutputStage(
     val bytesRequired = (outputBitWidth / 8.0f).ceil.toInt
 
     val reshaper = Module(new Reshape(wOut, inputShape, (1, 1, 1, 1), (1, 1, 1, 1)))
-    reshaper.io.shapeChannel.valid := true.B
-    reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U
 
+    reshaper.io.shapeChannel.valid := true.B // ignore me
+    reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U // ignore me
 
     reshaper.io.inputChannel <> io.inputChannel
 
