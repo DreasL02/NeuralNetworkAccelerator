@@ -3,7 +3,7 @@ package stages
 import onnx.Operators.OutputType
 import chisel3._
 import communication.chisel.lib.uart.{BufferedUartRxForTestingOnly, BufferedUartTxForTestingOnly}
-import module_utils.ByteIntoFlatVectorCollector
+import module_utils.{ByteIntoFlatVectorCollector, FlatVectorIntoBytesCollector}
 import operators.Reshape
 
 class OutputStage(
@@ -25,27 +25,33 @@ class OutputStage(
     assert(wOut == 1, "UART output only supports one bit-width output")
 
     val totalElements = outputShape._1 * outputShape._2 * outputShape._3 * outputShape._4
-    val outputBitWidth = totalElements * wOut
+    val outputBitWidth = totalElements * wIn
 
     val bytesRequired = (outputBitWidth / 8.0f).ceil.toInt
+
+    val reshaper = Module(new Reshape(wOut, inputShape, (1, 1, 1, 1), (1, 1, 1, 1)))
+    reshaper.io.shapeChannel.valid := true.B
+    reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U
+
+
+    reshaper.io.inputChannel <> io.inputChannel
+
+    val byteConverter = Module(new FlatVectorIntoBytesCollector(wIn, 1))
+
+    byteConverter.io.inputChannel.valid := reshaper.io.outputChannel.valid
+    reshaper.io.outputChannel.ready := byteConverter.io.inputChannel.ready
+    byteConverter.io.inputChannel.bits := reshaper.io.outputChannel.bits(0)(0)(0)
+
     val bufferedUartTx = Module(new BufferedUartTxForTestingOnly(frequency, baudRate, bytesRequired))
 
-    bufferedUartTx.io.txd := io.inputChannel.bits(0)(0)(0)(0)
-    io.inputChannel.ready := true.B
-    bufferedUartTx.io.inputChannel.valid := io.inputChannel.valid
+    io.outputChannel.bits(0)(0)(0)(0) := bufferedUartTx.io.txd
+    io.outputChannel.valid := true.B
 
-    // Convert the bytes into a flat vector of correct width numbers
-    val byteConverter = Module(new ByteIntoFlatVectorCollector(bytesRequired, wOut))
+    println(s"OutputStage: bytesRequired: $bytesRequired")
+    println(byteConverter.io.outputChannel.bits.length)
+    println(bufferedUartTx.io.inputChannel.bits.length)
 
-    byteConverter.io.inputChannel <> bufferedUartTx.io.inputChannel
-
-    val reshaper = Module(new Reshape(wOut, (1, 1, 1, bytesRequired), (1, 1, 1, 1), outputShape))
-
-    reshaper.io.inputChannel <> byteConverter.io.outputChannel
-
-    io.outputChannel <> reshaper.io.outputChannel
-
-    io.outputChannel.ready := true.B
+    bufferedUartTx.io.inputChannel <> byteConverter.io.outputChannel
 
     latency = 0
     dspUsage = 0

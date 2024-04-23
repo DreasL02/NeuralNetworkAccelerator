@@ -13,7 +13,7 @@ model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/bob.onnx"
 export_path = "json/sine.json"
 
-bit_width_multiplication = 9
+bit_width_multiplication = 8
 bit_width_base = 32  # bit_width_multiplication*4
 fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
