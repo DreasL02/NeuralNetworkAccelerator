@@ -73,17 +73,17 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
         dut.clock.step(1)
       }
 
-      for (i <- 0 until 50) {
+      for (i <- 0 until 100) {
 
         val uartBit = dut.io.outputChannels(0).bits(0)(0)(0)(0).peekInt()
         uartStringBuffer.append(uartBit)
 
-        println(i + ": " + dut.io.outputChannels(0).bits(0)(0)(0)(0).peekInt() + " debugchannel: " + dut.io.debug.get(0).bits(0)(0)(0)(0).peekInt())
-        dut.clock.step(2)
+        // println(i + ": " + uartBit)
+        println(i + ": " + uartBit)
+        dut.clock.step(1)
       }
 
       UartCoding.decodeUartBitsToByteArray(uartStringBuffer.toArray).foreach(println)
-
     }
   }
 }

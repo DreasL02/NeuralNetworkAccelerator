@@ -29,7 +29,7 @@ class OutputStage(
 
     val bytesRequired = (outputBitWidth / 8.0f).ceil.toInt
 
-    val reshaper = Module(new Reshape(wOut, inputShape, (1, 1, 1, 1), (1, 1, 1, 1)))
+    val reshaper = Module(new Reshape(wIn, inputShape, (1, 1, 1, 1), (1, 1, 1, 1)))
 
     reshaper.io.shapeChannel.valid := true.B // ignore me
     reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U // ignore me
