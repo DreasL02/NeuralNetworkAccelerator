@@ -29,7 +29,7 @@ class MatMulStage(
     io.outputChannel <> matMul.io.outputChannel
 
     latency = 0 // TODO: calculate latency
-    dspUsage = shapeIn1._2 * shapeIn2._2 * shapeIn1._3 * shapeIn2._4
+    dspUsage = shapeIn1._2 * shapeIn1._2 * shapeIn1._3 * shapeIn2._4
   } else {
     val matMul = Module(new DirectMatMul4d(wIn, wOut, shapeIn1, shapeIn2, signed))
     matMul.io.inputChannel <> io.input1Channel
@@ -37,6 +37,6 @@ class MatMulStage(
     io.outputChannel <> matMul.io.outputChannel
 
     latency = 0 // TODO: calculate latency
-    dspUsage = 0 // TODO: calculate DSP usage
+    dspUsage = shapeIn1._1 * shapeIn2._2 * shapeIn1._3 * shapeIn2._4 * shapeIn2._3
   }
 }
