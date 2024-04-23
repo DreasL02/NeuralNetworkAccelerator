@@ -2,12 +2,14 @@ import chisel3._
 import chisel3.util.{DecoupledIO, MixedVec}
 import onnx.Operators._
 import operators._
+import scala_utils.Optional.optional
 import stages._
 
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           printing: Boolean = false
+                           printing: Boolean = false,
+                           enableDebuggingIO: Boolean = false
                          ) extends Module {
   var latency = 0
   var dspUsage = 0
@@ -24,9 +26,17 @@ class AutomaticGeneration(
     outputChannel
   }
 
+  // TODO: remove
+  private val debugChannels = for (i <- outputs.indices) yield {
+    val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].inputShape._1, Vec(outputs(i).asInstanceOf[OutputType].inputShape._2, Vec(outputs(i).asInstanceOf[OutputType].inputShape._3, Vec(outputs(i).asInstanceOf[OutputType].inputShape._4, UInt(outputs(i).asInstanceOf[OutputType].wIn.W))))))
+    outputChannel
+  }
+
   val io = IO(new Bundle {
     val inputChannels = MixedVec(automaticInputChannels)
     val outputChannels = MixedVec(automaticOutputChannels)
+
+    val debug = optional(enableDebuggingIO, MixedVec(debugChannels))
   })
 
   // Module Creation
@@ -114,6 +124,8 @@ class AutomaticGeneration(
         }
         if (printing) println("Connecting to output channel " + outputIndex)
         io.outputChannels(outputIndex) <> output.io.outputChannel
+        io.debug.get(outputIndex).bits := output.io.inputChannel.bits
+        io.debug.get(outputIndex).valid := output.io.outputChannel.valid
         outputIndex += 1
 
       case _: Stage0 =>
