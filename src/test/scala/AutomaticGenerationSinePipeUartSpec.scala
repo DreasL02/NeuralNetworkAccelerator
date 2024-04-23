@@ -45,7 +45,10 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
   }
 
   "Should work" in {
-    test(new AutomaticGeneration(lists._2, lists._3, printConnections)) { dut =>
+    test(new AutomaticGeneration(lists._2, lists._3, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+
+      dut.clock.setTimeout(100000)
+
       var inputNum = 0
       var resultNum = 0
       var cycleTotal = 0
@@ -73,7 +76,7 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
         uartStringBuffer.append(uartBit)
 
         println(i + ": " + dut.io.outputChannels(0).bits(0)(0)(0)(0).peekInt())
-        dut.clock.step(2)
+        dut.clock.step(100)
       }
 
       UartCoding.decodeUartBitsToByteArray(uartStringBuffer.toArray).foreach(println)
