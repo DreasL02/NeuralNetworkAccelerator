@@ -22,6 +22,11 @@ object UartCoding {
     dataBitString
   }
 
+  def padLeft(value: BigInt, length: Int): String = {
+    val dataBitString = String.format("%" + length + "s", value.toString(2)).replace(' ', '0')
+    dataBitString
+  }
+
   def encodeBytesToUartBits(bytes: Array[Byte]): String = {
     val dataBitStrings = bytes.map(encodeByteToUartBits)
     val combinedDataBitString = dataBitStrings.mkString

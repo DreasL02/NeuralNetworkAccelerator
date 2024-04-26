@@ -20,6 +20,7 @@ import chisel3.util._
 class UartTx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val txd = Output(UInt(1.W))
+    val rts = Input(Bool()) // Ready To Send
     val inputChannel = Flipped(new DecoupledIO(UInt(8.W)))
   })
 
@@ -32,7 +33,7 @@ class UartTx(frequency: Int, baudRate: Int) extends Module {
   val cyclesCountReg = RegInit(0.U(20.W))
   val bitsIndexReg = RegInit(0.U(4.W))
 
-  io.inputChannel.ready := (cyclesCountReg === 0.U) && (bitsIndexReg === 0.U)
+  io.inputChannel.ready := (cyclesCountReg === 0.U) && (bitsIndexReg === 0.U) && io.rts
   io.txd := shiftReg(0)
 
   when(cyclesCountReg === 0.U) {
@@ -44,8 +45,8 @@ class UartTx(frequency: Int, baudRate: Int) extends Module {
       bitsIndexReg := bitsIndexReg - 1.U
     }.otherwise {
       // cyclesCountReg is 0 and bitsIndexReg is 0, so we are ready to send a new byte.
-      // If the input channel is valid, we send the daya from inputChannel. Otherwise, we send 11 idle bits.
-      when(io.inputChannel.valid) {
+      // If the input channel is valid, and the receiver is ready (rts), we send the daya from inputChannel. Otherwise, we send 11 idle bits.
+      when(io.inputChannel.valid && io.rts) {
         // two stop bits, data, one start bit
         shiftReg := "b11".U ## io.inputChannel.bits ## "b0".U
         bitsIndexReg := SEQUENCE_LENGTH.U

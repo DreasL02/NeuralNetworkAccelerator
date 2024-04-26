@@ -1,6 +1,6 @@
 import chisel3._
 import chiseltest._
-import module_utils.{ByteCollector, ByteIntoFlatVectorCollector, ByteIntoVectorCollector, ByteSplitter, VectorIntoByteSplitter}
+import module_utils.{ByteCollector, ByteIntoFlatVectorCollector, ByteIntoVectorCollector, ByteSplitter, FlatVectorIntoBytesCollector, VectorIntoByteSplitter}
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.UartCoding.padLeft
 
@@ -98,33 +98,83 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should collect 9 bytes (total 72 bits) into 8 9-bit values (also 72 bits)" in {
-    val outputUnit = 9
     val byteCount = 9
+    val outputUnit = 9
 
     test(new ByteIntoFlatVectorCollector(byteCount, outputUnit)) { dut =>
 
-      val input = Seq(7, 0, 84, 8, 227, 0, 1, 0, 11)
+      val input = Seq[Byte](7, 0, 84, 8, 110, 0, 1, 0, 11)
       assert(input.length == byteCount)
-      //val input = Seq(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
       for (i <- input.indices) {
-        dut.io.inputChannel.bits(i).poke(input(i).U(8.W))
+        val b = input(i).U(8.W)
+        dut.io.inputChannel.bits(i).poke(b)
       }
 
-      // TODO: IVAN
-      //val inputAsBinaryString = input.map(padLeft()).mkString(" ")
-      //println(s"inputAsBinaryString:  $inputAsBinaryString")
-      //println(s"count of ones: ${inputAsBinaryString.count(_ == '1')}")
+      val inputAsBinaryString = input.map(padLeft).mkString("")
+      println(s"inputAsBinaryString:  $inputAsBinaryString")
 
-      val outputAsBinaryString = dut.io.outputChannel.bits.map(_.peekInt().toInt.toBinaryString).mkString(" ")
+      val outputBits = dut.io.outputChannel.bits
+      val outputAsBinaryString = outputBits.map(_.peekInt()).map(padLeft(_, 9)).reverse.mkString("")
       println(s"outputAsBinaryString: $outputAsBinaryString")
-      println(s"count of ones: ${outputAsBinaryString.count(_ == '1')}")
+
+      assert(inputAsBinaryString == outputAsBinaryString)
+    }
+  }
+
+  "Should collect 2 bytes (total 16 bits) into 2 9-bit values (18 bits)" in {
+    val byteCount = 2
+    val outputUnit = 9
+
+    test(new ByteIntoFlatVectorCollector(byteCount, outputUnit)) { dut =>
+
+      val input = Seq[Byte](110, 89)
+      assert(input.length == byteCount)
+
+      for (i <- input.indices) {
+        val b = input(i).U(8.W)
+        dut.io.inputChannel.bits(i).poke(b)
+      }
+
+      val inputAsBinaryString = input.map(padLeft).mkString("")
+      println(s"inputAsBinaryString:  $inputAsBinaryString")
+
+      val outputBits = dut.io.outputChannel.bits
+      val outputAsBinaryString = outputBits.map(_.peekInt()).map(padLeft(_, 16)).reverse.mkString("")
+      println(s"outputAsBinaryString: $outputAsBinaryString")
+
+      //assert(outputAsBinaryString == )
+    }
+  }
 
 
-      //dut.io.output(0).expect(7) // two first bytes (7, 0)
-      //dut.io.output(1).expect(2132) // two next bytes (84, 8)
-      //dut.io.output(2).expect(227) // two next bytes (227, 0)
-      //dut.io.output(3).expect(1) // two next bytes (1, 0)
+
+  "Should assemble 2 9-bit values (18 bits) into 3 8-bit bytes (24 bits)" in {
+    val inputUnit = 9
+    val unitCount = 2
+
+    test(new FlatVectorIntoBytesCollector(inputUnit, unitCount)) { dut =>
+
+      println("bob")
+
+      val input = Seq(359, 414) // Both values are 9 bits
+      assert(input.length == unitCount)
+
+      for (i <- input.indices) {
+        val v = input(i).U(9.W)
+        dut.io.inputChannel.bits(i).poke(v)
+      }
+
+      val inputAsBinaryString = input.map(v => padLeft(BigInt(v), 9)).mkString("")
+      println(s"inputAsBinaryString:  $inputAsBinaryString")
+      assert(inputAsBinaryString === "101100111110011110") // 359 = 0b101100111, 414 = 0b110011110
+
+      val outputBits = dut.io.outputChannel.bits
+      outputBits.map(_.peekInt()).foreach(println)
+      val outputAsBinaryString = outputBits.map(_.peekInt()).map(padLeft(_, 8)).reverse.mkString("")
+      println(s"outputAsBinaryString: $outputAsBinaryString")
+
+      assert(outputAsBinaryString endsWith inputAsBinaryString)
     }
   }
 

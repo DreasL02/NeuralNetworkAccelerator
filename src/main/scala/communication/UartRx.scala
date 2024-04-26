@@ -13,13 +13,14 @@ package chisel.lib.uart
 import chisel3._
 import chisel3.util._
 
-// Refactored version of Chisel ip-contribution uart by Martin Schoeberl
+// Extended and refactored version of Chisel ip-contribution uart by Martin Schoeberl
 // https://github.com/freechipsproject/ip-contributions/blob/master/src/main/scala/chisel/lib/uart/Uart.scala
 // (visited 08-04-2024)
 
 class UartRx(frequency: Int, baudRate: Int) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
+    val cts = Output(UInt(1.W)) // Clear To Send
     val outputChannel = new DecoupledIO(UInt(8.W))
   })
 
@@ -57,4 +58,6 @@ class UartRx(frequency: Int, baudRate: Int) extends Module {
 
   io.outputChannel.bits := dataBitsShiftReg
   io.outputChannel.valid := validReg
+
+  io.cts := io.outputChannel.ready
 }

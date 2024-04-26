@@ -18,6 +18,7 @@ class DeSerializingByteBuffer(bufferByteSize: Int) extends Module {
 
   val byteBufferValidReg = RegInit(false.B)
   io.outputChannel.valid := byteBufferValidReg
+  io.inputChannel.ready := !byteBufferValidReg
 
   val byteBuffer = RegInit(VecInit(Seq.fill(bufferByteSize)(0.U(8.W))))
   io.outputChannel.bits := byteBuffer

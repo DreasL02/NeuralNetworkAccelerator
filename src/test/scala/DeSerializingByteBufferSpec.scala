@@ -16,7 +16,12 @@ class DeSerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester
 
       val testValue = 187.U(8.W)
 
+      dut.io.inputChannel.ready.expect(true.B)
+      dut.io.outputChannel.valid.expect(false.B)
+
       dut.io.inputChannel.valid.poke(false.B)
+      dut.io.outputChannel.ready.poke(false.B)
+
       dut.clock.step()
 
       dut.io.outputChannel.valid.expect(false.B)
@@ -26,6 +31,7 @@ class DeSerializingByteBufferSpec extends AnyFreeSpec with ChiselScalatestTester
 
       dut.clock.step(2)
 
+      dut.io.inputChannel.ready.expect(false.B)
       dut.io.outputChannel.valid.expect(true.B)
       dut.io.outputChannel.bits(0).expect(testValue)
     }

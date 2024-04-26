@@ -21,6 +21,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
+      dut.io.rts.poke(true.B)
 
       for (i <- 0 until tenSeconds) {
         dut.io.inputChannel.ready.expect(true.B)
@@ -30,11 +31,52 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "Should respect RTS" in {
+    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
+
+      dut.clock.setTimeout(clockTimeout)
+
+      val testValue = 117.toByte
+
+      // We put data on the input and mark it valid. We also set RTS to false, so the data should not be sent.
+      dut.io.inputChannel.bits(0).poke(testValue.U(8.W))
+      dut.io.inputChannel.valid.poke(true.B)
+      dut.io.rts.poke(false.B)
+      dut.clock.step()
+      dut.io.inputChannel.valid.poke(false.B)
+      dut.clock.step()
+
+      for (_ <- 0 until tenSeconds) {
+        dut.io.txd.expect(1.U(1.W))
+        dut.clock.step(1)
+      }
+
+      // We set RTS to true, so the data should be sent.
+      dut.io.rts.poke(true.B)
+
+      val uartOutput = ListBuffer[BigInt]()
+      for (_ <- 0 until 2*uartFrameSize) {
+        uartOutput.append(dut.io.txd.peekInt())
+        dut.clock.step(cyclesPerSerialBit)
+      }
+
+      println("uartOutput: " + uartOutput.mkString)
+
+      val bytesFromEmittedUartFrames = scala_utils.UartCoding.decodeUartBitsToByteArray(uartOutput.toArray)
+      println("Bytes from emitted UART frames: " + bytesFromEmittedUartFrames.mkString(", "))
+      assert(bytesFromEmittedUartFrames.length == 1)
+      assert(bytesFromEmittedUartFrames(0) == testValue)
+
+    }
+  }
+
+
   "Should support a single byte buffer" in {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
+      dut.io.rts.poke(true.B)
       dut.io.inputChannel.ready.expect(true.B)
 
       val testValue = 117.toByte
@@ -60,7 +102,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
-
+      dut.io.rts.poke(true.B)
       dut.io.inputChannel.ready.expect(true.B)
 
       val testValue1 = 117.toByte
@@ -182,7 +224,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
-
+      dut.io.rts.poke(true.B)
       dut.io.inputChannel.ready.expect(true.B)
 
       val testValue1 = 117.toByte

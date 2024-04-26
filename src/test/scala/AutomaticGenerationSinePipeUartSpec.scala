@@ -49,19 +49,15 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
 
       dut.clock.setTimeout(100000)
 
-      var inputNum = 0
-      var resultNum = 0
-      var cycleTotal = 0
+      //val xValue = 0.0f
+      //val xFixed = floatToFixed(xValue, fixedPoint, w, signed)
+      //println("xFixed: " + xFixed)
 
-      val xValue = 0.0f
-      val xFixed = floatToFixed(xValue, fixedPoint, w, signed)
-      println("xFixed: " + xFixed)
-
-      val uartBits = UartCoding.encodeByteToUartBits(xFixed.toByte)
+      //val uartBits = UartCoding.encodeByteToUartBits(xFixed.toByte)
 
       dut.io.inputChannels(0).valid.poke(true.B)
       dut.io.outputChannels(0).ready.poke(true.B)
-      dut.io.inputChannels(0).bits(0)(0)(0)(0).poke(xFixed)
+      dut.io.inputChannels(0).bits(0)(0)(0)(0).poke(0)
       dut.clock.step()
       dut.io.inputChannels(0).valid.poke(false.B)
 
@@ -69,11 +65,11 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
 
       // wait for the uart to begin sending data, "1" is idle signal
       while (dut.io.outputChannels(0).bits(0)(0)(0)(0).peekInt() == 1) {
-        println("debugchannel: " + dut.io.debug.get(0).bits(0)(0)(0)(0).peekInt())
+        //println("debugchannel: " + dut.io.debug.get(0).bits(0)(0)(0)(0).peekInt())
         dut.clock.step(1)
       }
 
-      for (i <- 0 until 100) {
+      for (i <- 0 until 150) {
 
         val uartBit = dut.io.outputChannels(0).bits(0)(0)(0)(0).peekInt()
         uartStringBuffer.append(uartBit)
@@ -83,7 +79,7 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
         dut.clock.step(1)
       }
 
-      UartCoding.decodeUartBitsToByteArray(uartStringBuffer.toArray).foreach(println)
+      //UartCoding.decodeUartBitsToByteArray(uartStringBuffer.toArray).foreach(println)
     }
   }
 }

@@ -12,16 +12,18 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val tenSeconds = frequency * 10
 
   "Should support a single byte buffer" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, 1)) { dut =>
+    test(new BufferedUartRxForTestingOnly(frequency, baudRate, bufferByteSize = 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
+
+      dut.io.cts.expect(true.B)
 
       val testValue = 113.toByte
 
       val bitsToSend = scala_utils.UartCoding.encodeBytesToUartBits(Array(testValue))
       println("Sending bit vector: " + bitsToSend)
 
-      dut.io.outputChannel.ready.poke(true.B)
+      dut.io.outputChannel.ready.poke(false.B)
 
       bitsToSend.foreach { bit =>
         val bitAsBigInt = BigInt(bit - 48)
@@ -41,6 +43,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
 
       dut.io.outputChannel.bits(0).expect(testValue.U)
+      dut.io.cts.expect(false.B)
     }
   }
 

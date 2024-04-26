@@ -10,11 +10,13 @@ import chisel3.util._
 class BufferedUartRxForTestingOnly(frequency: Int, baudRate: Int, bufferByteSize: Int) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
+    val cts = Output(UInt(1.W)) // Clear To Send
     val outputChannel = new DecoupledIO(Vec(bufferByteSize, UInt(8.W)))
   })
 
   val uartRx = Module(new UartRx(frequency, baudRate))
   uartRx.io.rxd := io.rxd
+  io.cts := uartRx.io.cts
 
   val byteBuffer = Module(new DeSerializingByteBuffer(bufferByteSize))
 

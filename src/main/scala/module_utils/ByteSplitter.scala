@@ -97,7 +97,7 @@ class ByteIntoVectorCollector(w: Int, dimension: Int) extends Module {
 }
 
 class ByteIntoFlatVectorCollector(inputByteCount: Int, outputUnit: Int) extends Module {
-  private val outputLength = (inputByteCount * 8) / outputUnit
+  private val outputLength = ((inputByteCount * 8).toFloat / outputUnit).floor.toInt
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(DecoupledIO(Vec(inputByteCount, UInt(8.W))))
@@ -110,26 +110,17 @@ class ByteIntoFlatVectorCollector(inputByteCount: Int, outputUnit: Int) extends 
   val inputBits = io.inputChannel.bits.reduce(_ ## _)
 
   for (i <- 0 until outputLength) {
+    println(s"i: $i")
     io.outputChannel.bits(i) := inputBits((i + 1) * outputUnit - 1, i * outputUnit)
   }
-  /*io.outputChannel.bits(7) := inputBits( 8,  0)
-  io.outputChannel.bits(6) := inputBits(17,  9)
-  io.outputChannel.bits(5) := inputBits(26, 18)
-  io.outputChannel.bits(4) := inputBits(35, 27)
-  io.outputChannel.bits(3) := inputBits(44, 36)
-  io.outputChannel.bits(2) := inputBits(53, 45)
-  io.outputChannel.bits(1) := inputBits(62, 54)
-  io.outputChannel.bits(0) := inputBits(71, 63)
-
-   */
 }
 
 class FlatVectorIntoBytesCollector(inputUnit: Int, unitCount: Int) extends Module {
-
-  println("FlatVectorIntoBytesCollector: inputUnit: " + inputUnit + ", unitCount: " + unitCount + ", outputUnit: 8")
-
   val outputUnit = 8
   val outputLength = ((inputUnit * unitCount).toFloat / 8).ceil.toInt
+  val fillerBitCount = (outputLength * 8) - (inputUnit * unitCount)
+
+  println(s"FlatVectorIntoBytesCollector outputLength: $outputLength")
 
   val io = IO(new Bundle {
     val inputChannel = Flipped(DecoupledIO(Vec(unitCount, UInt(inputUnit.W))))
@@ -139,7 +130,7 @@ class FlatVectorIntoBytesCollector(inputUnit: Int, unitCount: Int) extends Modul
   io.inputChannel.ready := io.outputChannel.ready
   io.outputChannel.valid := io.inputChannel.valid
 
-  val inputBits = io.inputChannel.bits.reduce(_ ## _)
+  val inputBits = 0.U(fillerBitCount.W) ## io.inputChannel.bits.reduce(_ ## _)
 
   for (i <- 0 until outputLength) {
     io.outputChannel.bits(i) := inputBits((i + 1) * outputUnit - 1, i * outputUnit)

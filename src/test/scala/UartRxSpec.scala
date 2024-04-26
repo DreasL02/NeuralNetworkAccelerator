@@ -17,7 +17,6 @@ class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new UartRx(frequency, baudRate)) { dut =>
 
       val testValue = 113.toByte
-
       val bitsToSend = scala_utils.UartCoding.encodeBytesToUartBits(Array(testValue))
       println("Sending bit vector: " + bitsToSend)
 
@@ -26,6 +25,8 @@ class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.outputChannel.valid.expect(false.B)
 
       dut.clock.step(10)
+
+      dut.io.cts.expect(false.B)
 
       bitsToSend.foreach { bit =>
         val bitAsBigInt = BigInt(bit - 48)
@@ -37,7 +38,12 @@ class UartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
       }
 
+      dut.io.cts.expect(false.B)
       dut.io.outputChannel.bits.expect(testValue.U)
+
+      dut.io.outputChannel.ready.poke(true.B)
+      dut.clock.step()
+      dut.io.cts.expect(true.B)
     }
   }
 
