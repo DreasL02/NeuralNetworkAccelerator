@@ -22,7 +22,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val fixedPointResult = parameters.fixedPointResult
 
   val signed = true
-  val threshold = 1000.75f
+  val threshold = 100.0f
   val numberOfInputs = 10
 
   val imageSize = 8

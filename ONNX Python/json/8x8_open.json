@@ -9,22 +9,22 @@
         8,
         8
       ],
-      "implementation": "uart",
+      "implementation": "open",
       "input_shape": [
         1,
         1,
-        1,
-        1
+        8,
+        8
       ],
-      "input_bit_width": 1,
-      "baud_rate": 9600,
-      "frequency": 50000000
+      "input_bit_width": 8,
+      "baud_rate": 1,
+      "frequency": 1
     }
   ],
   "Output": [
     {
       "index": 27,
-      "bit_width": 1,
+      "bit_width": 16,
       "connections": [
         20
       ],
@@ -32,9 +32,9 @@
         1,
         1,
         1,
-        1
+        10
       ],
-      "implementation": "uart",
+      "implementation": "open",
       "input_shape": [
         1,
         1,
@@ -42,8 +42,8 @@
         10
       ],
       "input_bit_width": 16,
-      "baud_rate": 9600,
-      "frequency": 50000000
+      "baud_rate": 1,
+      "frequency": 1
     }
   ],
   "Rounder": [

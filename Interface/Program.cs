@@ -6,7 +6,7 @@ class Program
     static public void Main(string[] args)
     {
 
-        string imageFilePath = "/home/ivan/DTU/Bachelor/NeuralNetworkAccelerator/ONNX Python/digits_8x8/6.txt";
+        string imageFilePath = "/home/ivan/DTU/Bachelor/NeuralNetworkAccelerator/ONNX Python/digits_8x8/0.txt";
         string[] lines = System.IO.File.ReadAllLines(imageFilePath);
         byte[] fixedPoint = lines.Select(line => FloatToFixed(float.Parse(line))).ToArray();
         fixedPoint = fixedPoint.Reverse().ToArray();
@@ -44,11 +44,21 @@ class Program
 
         Console.WriteLine();
 
+        List<UInt16> values = new List<UInt16>();
+
         for (int i = 0; i < 20; i += 2)
         {
-            Int16 value = BitConverter.ToInt16(responseBytes, i);
-            float bob = (float)value / 255.0f;
-            Console.Write(bob + " ");
+            UInt16 value = BitConverter.ToUInt16(responseBytes, i);
+            //float bob = (float)value / 255.0f;
+            values.Add(value);
+        }
+
+        values.Reverse();
+
+        foreach (var v in values)
+        {
+            Console.Write(v);
+            Console.Write(" ");
         }
 
         Console.WriteLine();
