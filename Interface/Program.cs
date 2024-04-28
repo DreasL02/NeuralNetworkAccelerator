@@ -5,24 +5,35 @@ class Program
 {
     static public void Main(string[] args)
     {
-        string basys3PortName = "/dev/ttyUSB1";
+
+        string imageFilePath = "/home/ivan/DTU/Bachelor/NeuralNetworkAccelerator/ONNX Python/digits_8x8/6.txt";
+        string[] lines = System.IO.File.ReadAllLines(imageFilePath);
+        byte[] fixedPoint = lines.Select(line => FloatToFixed(float.Parse(line))).ToArray();
+        fixedPoint = fixedPoint.Reverse().ToArray();
+
+        string basys3PortName = "/dev/ttyUSB0";
         int baudRate = 9600;
 
         var port = new SerialPort(basys3PortName, baudRate, Parity.None, 8, StopBits.Two);
         port.Open();
 
-        UInt16 fixedInput = 0;
-        Console.WriteLine("fixedInput: " + fixedInput);
-        var inputBytes = BitConverter.GetBytes(fixedInput).Reverse().ToArray();
-        port.Write(inputBytes, 0, inputBytes.Length);
+        //byte fixedInput = 64;
+        //Console.WriteLine("fixedInput: " + fixedInput);
+        ////var inputBytes = BitConverter.GetBytes(fixedInput).Reverse().ToArray();
+        ///
+        //byte[] inputBytes = new byte[1] { 1 };
+        port.DiscardInBuffer();
+        port.DiscardOutBuffer();
+        port.Write(fixedPoint, 0, fixedPoint.Length);
 
-        while (port.BytesToRead < 5)
+        int responseByteCount = 20;
+        while (port.BytesToRead < responseByteCount)
         {
             Console.WriteLine("Waiting for response...");
             Thread.Sleep(50);
         }
 
-        var responseBytes = new byte[5];
+        var responseBytes = new byte[responseByteCount];
         port.Read(responseBytes, 0, responseBytes.Length);
 
         foreach (var b in responseBytes)
@@ -33,12 +44,14 @@ class Program
 
         Console.WriteLine();
 
-        UInt64 response = 0;
-        for (int i = 0; i < responseBytes.Length; i++)
+        for (int i = 0; i < 20; i += 2)
         {
-            response |= (UInt64)responseBytes[i] << (8 * i);
+            Int16 value = BitConverter.ToInt16(responseBytes, i);
+            float bob = (float)value / 255.0f;
+            Console.Write(bob + " ");
         }
-        Console.WriteLine(response);
+
+        Console.WriteLine();
 
         //var k = BitConverter.ToInt32(responseBytes);
         //Console.WriteLine(k);
@@ -96,6 +109,7 @@ class Program
         Console.ReadKey();
         nna.Transmit();
         Console.ReadKey();*/
+
     }
 
     static private float FixedToFloat(int fixedPoint)
@@ -105,8 +119,7 @@ class Program
 
     static private byte FloatToFixed(float floatingPoint)
     {
-        return (byte)(floatingPoint * 255.0f);
+        return (byte)(floatingPoint * 16.0f);
     }
-
 
 }

@@ -24,19 +24,21 @@ class OutputStage(
     assert(outputShape == (1, 1, 1, 1), "UART output only supports one output")
     assert(wOut == 1, "UART output only supports one bit-width output")
 
-    val totalElements = outputShape._1 * outputShape._2 * outputShape._3 * outputShape._4
+    val totalElements = inputShape._1 * inputShape._2 * inputShape._3 * inputShape._4
     val outputBitWidth = totalElements * wIn
 
     val bytesRequired = (outputBitWidth / 8.0f).ceil.toInt
+    println(s"OutputStage: bytesRequired: $bytesRequired")
 
-    val reshaper = Module(new Reshape(wIn, inputShape, (1, 1, 1, 1), (1, 1, 1, 1)))
+    val flatInputShape = (1, 1, 1, inputShape._1 * inputShape._2 * inputShape._3 * inputShape._4)
+    val reshaper = Module(new Reshape(wIn, inputShape, (1, 1, 1, 1), flatInputShape))
 
     reshaper.io.shapeChannel.valid := true.B // ignore me
     reshaper.io.shapeChannel.bits(0)(0)(0)(0) := 0.U // ignore me
 
     reshaper.io.inputChannel <> io.inputChannel
 
-    val byteConverter = Module(new FlatVectorIntoBytesCollector(wIn, 1))
+    val byteConverter = Module(new FlatVectorIntoBytesCollector(wIn, unitCount = flatInputShape._4))
 
     byteConverter.io.inputChannel.valid := reshaper.io.outputChannel.valid
     reshaper.io.outputChannel.ready := byteConverter.io.inputChannel.ready
@@ -52,6 +54,7 @@ class OutputStage(
     println(bufferedUartTx.io.inputChannel.bits.length)
 
     bufferedUartTx.io.inputChannel <> byteConverter.io.outputChannel
+    bufferedUartTx.io.rts := io.outputChannel.ready
 
     latency = 0
     dspUsage = 0

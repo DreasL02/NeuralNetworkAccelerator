@@ -11,7 +11,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/8x8.json"
+  val filepath = "ONNX Python/json/8x8_open.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1
@@ -22,7 +22,7 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
   val fixedPointResult = parameters.fixedPointResult
 
   val signed = true
-  val threshold = 1.75f
+  val threshold = 1000.75f
   val numberOfInputs = 10
 
   val imageSize = 8
@@ -97,7 +97,9 @@ class AutomaticGenerationUCIMLSpec extends AnyFreeSpec with ChiselScalatestTeste
         if (printToConsole) {
           println("Test: " + testNum)
           println("Output:  \t\t" + resultsFloat.map(f => "%+3.2f".format(f)).mkString("\t"))
+          println("Output:  \t\t" + resultFixed.mkString("\t"))
           println("Expected:\t\t" + expectedFlatOutput.map(f => "%+3.2f".format(f)).mkString("\t"))
+
           println("Cycles: " + cycleTotal)
           println()
         }

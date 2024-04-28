@@ -10,7 +10,7 @@ import onnx.SpecToListConverter
 class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/8x8.json"
+  val filepath = "ONNX Python/json/8x8_open.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1

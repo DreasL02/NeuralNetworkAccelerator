@@ -9,7 +9,7 @@ class ReshapeStage(
                     shapeIn: (Int, Int, Int, Int),
                     shapeDimensions: (Int, Int, Int, Int),
                     shapeTarget: (Int, Int, Int, Int)
-                  ) extends Stage2(w, shapeIn, w, shapeDimensions, 1) {
+                  ) extends Stage2(w, shapeIn, 1, shapeDimensions, w) {
 
   def this(reshapeType: ReshapeType) = this(reshapeType.w, reshapeType.inputShape, reshapeType.shapeShape, reshapeType.newShape)
 

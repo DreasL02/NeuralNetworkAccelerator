@@ -9,13 +9,13 @@ from onnx import load, numpy_helper
 
 # model_path = "models/sinus_float_model_epoch_1000.onnx"
 # model_path = "models/mnist-12.onnx"
-model_path = "models/sinus_float_model_epoch_1000.onnx"
+model_path = "models/digits_8x8.onnx"
 # model_path = "models/bob.onnx"
-export_path = "json/sine.json"
+export_path = "json/8x8_open.json"
 
-bit_width_multiplication = 14
-bit_width_base = 37  # bit_width_multiplication*4
-fixed_point_multiplication = 9
+bit_width_multiplication = 8
+bit_width_base = 16  # bit_width_multiplication*4
+fixed_point_multiplication = 4
 fixed_point_base = fixed_point_multiplication*2
 signed = True  # True if the model is signed, False if the model is unsigned
 
