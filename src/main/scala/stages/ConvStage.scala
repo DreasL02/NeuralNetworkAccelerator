@@ -1,6 +1,7 @@
 package stages
 
 import chisel3._
+import chisel3.util.log2Ceil
 import onnx.Operators.ConvType
 import operators.{ConvDirect, ConvIm2Col}
 
@@ -42,11 +43,9 @@ class ConvStage(
     conv.io.kernelChannel <> io.input2Channel
     io.outputChannel <> conv.io.outputChannel
 
-    latency = 0 // TODO: calculate latency
+    latency = 1 + log2Ceil(shapeKernel._1 * shapeKernel._2) + 1
     dspUsage = 0 // TODO: calculate DSP usage
   }
-
-
 }
 
 

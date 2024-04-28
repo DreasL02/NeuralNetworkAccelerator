@@ -2,6 +2,7 @@ package stages
 
 import onnx.Operators.MatMulType
 import chisel3._
+import chisel3.util.log2Ceil
 import operators.{BufferedSystolicArray4d, DirectMatMul4d}
 
 class MatMulStage(
@@ -28,7 +29,7 @@ class MatMulStage(
     matMul.io.weightChannel <> io.input2Channel
     io.outputChannel <> matMul.io.outputChannel
 
-    latency = 0 // TODO: calculate latency
+    latency = shapeIn1._3 + shapeIn2._4 + shapeIn2._3 - 2 + 1
     dspUsage = shapeIn1._2 * shapeIn1._2 * shapeIn1._3 * shapeIn2._4
   } else {
     val matMul = Module(new DirectMatMul4d(wIn, wOut, shapeIn1, shapeIn2, signed))
@@ -36,7 +37,7 @@ class MatMulStage(
     matMul.io.weightChannel <> io.input2Channel
     io.outputChannel <> matMul.io.outputChannel
 
-    latency = 0 // TODO: calculate latency
+    latency = 1 + log2Ceil(shapeIn2._3) + 1
     dspUsage = shapeIn1._1 * shapeIn2._2 * shapeIn1._3 * shapeIn2._4 * shapeIn2._3
   }
 }

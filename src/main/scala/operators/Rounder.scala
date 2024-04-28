@@ -25,20 +25,38 @@ class Rounder(
     for (column <- 0 until numberOfColumns) {
       if (signed) {
         val sign = io.inputChannel.bits(row)(column)(wBefore - 1)
-        if (fixedPoint == 0) {
-          results(row)(column) := sign ## io.inputChannel.bits(row)(column)(wBefore - 1, 0)
-        } else {
-          results(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(wBefore - 1, 0).asUInt
-        }
+        val maxPositiveValue = ((1 << (wAfter - 1)) - 1).U
+        val minNegativeValue = (1 << (wAfter - 1)).U
+        println("maxPositiveValue: " + maxPositiveValue)
+        println("minNegativeValue: " + minNegativeValue)
+        // saturation check
+        when(io.inputChannel.bits(row)(column) > minNegativeValue) {
+          results(row)(column) := minNegativeValue
+        }.elsewhen(io.inputChannel.bits(row)(column) > maxPositiveValue) {
+          results(row)(column) := maxPositiveValue
+        }.otherwise( // no saturation
+          if (fixedPoint == 0) {
+            results(row)(column) := sign ## io.inputChannel.bits(row)(column)(wBefore - 1, 0)
+          } else {
+            results(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(wBefore - 1, 0).asUInt
+          }
+        )
       } else {
-        if (fixedPoint == 0) {
-          results(row)(column) := io.inputChannel.bits(row)(column)
-        } else {
-          results(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
-        }
+        // saturation check
+        val maxPositiveValue = (1 << wAfter).U - 1.U
+        when(io.inputChannel.bits(row)(column) > maxPositiveValue) {
+          results(row)(column) := maxPositiveValue
+        }.otherwise( // no saturation
+          if (fixedPoint == 0) {
+            results(row)(column) := io.inputChannel.bits(row)(column)
+          } else {
+            results(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
+          }
+        )
       }
     }
   }
+
 
   private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid
