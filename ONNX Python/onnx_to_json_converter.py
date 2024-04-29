@@ -63,16 +63,27 @@ chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
 
 def convert_to_fixed_point(number, fixedPoint, width, signed):
     scaledToFixed = round((number * (2 ** fixedPoint)))
-    max = (2 ** (width - int(signed)))
     if signed:
-        if number < 0 and scaledToFixed <= 0:
-            scaledToFixed = max + scaledToFixed
+        if scaledToFixed > (2 ** (width - 1)) - 1 or scaledToFixed < -2 ** (width-1):
+            if scaledToFixed > (2 ** (width - 1)) - 1:
+                print("Number " + str(number) +
+                      " is too large for the given width. Saturation will occur.")
+                scaledToFixed = (2 ** (width - 1)) - 1
+            else:  # If the number is too small, saturate it to the minimum value
+                print("Number " + str(number) +
+                      " is too small for the given width. Saturation will occur.")
+                scaledToFixed = -2 ** (width-1)
 
-    if scaledToFixed >= max:
-        scaledToFixed = max - 1  # saturate to max value
+        if scaledToFixed < 0:
+            scaledToFixed = (2 ** width) + scaledToFixed
 
-    if scaledToFixed < 0:
-        scaledToFixed = 0
+    else:
+        if scaledToFixed < 0:
+            raise ValueError("Number is too small for the given width")
+        if scaledToFixed > (2 ** width) - 1:
+            print("Number " + str(number) +
+                  " is too large for the given width. Saturation will occur.")
+            scaledToFixed = (2 ** width) - 1
 
     return scaledToFixed
 
