@@ -7,11 +7,11 @@ import scala_utils.FixedPointConversion.{fixedToFloat, floatToFixed}
 
 class RounderSpec extends AnyFreeSpec with ChiselScalatestTester {
 
-  val wBefore = 4
-  val wAfter = 3
-  val fixedPointAfter = 0
+  val wBefore = 16
+  val wAfter = 8
+  val fixedPointAfter = 4
   val fixedPointBefore = fixedPointAfter * 2
-  val inputFloat = -7f
+  val inputFloat = -7.4f
   val sign = true
   val inputFixed = floatToFixed(inputFloat, fixedPointBefore, wBefore, sign)
 
