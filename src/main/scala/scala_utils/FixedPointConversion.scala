@@ -17,15 +17,22 @@ object FixedPointConversion {
 
   def floatToFixed(floatRepresentation: Float, fixedPointFractionalBits: Int, width: Int, signed: Boolean): BigInt = {
     var scaledToFixed: BigInt = (floatRepresentation * (1 << fixedPointFractionalBits)).round
-    val max = BigDecimal.valueOf(Math.pow(2, width)).toBigInt
     if (signed) {
-      if (floatRepresentation < 0 && scaledToFixed <= 0) {
-        scaledToFixed = max + scaledToFixed
+      if (scaledToFixed > (1 << (width - 1)) - 1) {
+        scaledToFixed = (1 << (width - 1)) - 1
+      } else if (scaledToFixed < -(1 << (width - 1))) {
+        scaledToFixed = -(1 << (width - 1))
       }
-    }
-    // If the number is too large, set it to 0
-    if (scaledToFixed >= max) {
-      scaledToFixed = 0
+
+      if (scaledToFixed < 0) {
+        scaledToFixed = (1 << width) + scaledToFixed
+      }
+    } else {
+      if (scaledToFixed > (1 << width) - 1) {
+        scaledToFixed = (1 << width) - 1
+      } else if (scaledToFixed < 0) {
+        scaledToFixed = 0
+      }
     }
     scaledToFixed
   }

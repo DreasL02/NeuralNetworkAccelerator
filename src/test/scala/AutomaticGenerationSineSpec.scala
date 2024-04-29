@@ -10,10 +10,10 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
 
   val printToFile = false // set to true to print the results to a file
   val printToConsole = true // set to true to print the results to the console
-  val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/sine.json"
+  val printConnections = false // set to true to print the connections to the console
+  val filepath = "ONNX Python/json/open_sine.json"
 
-  val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
+  val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, printConnections)
   val parameters = lists._1
 
   val w = parameters.w
@@ -64,8 +64,8 @@ class AutomaticGenerationSineSpec extends AnyFreeSpec with ChiselScalatestTester
           println("Input: " + inputs(testNum))
           println("Input Fixed: " + inputsFixed(testNum))
           println("Input refloated: " + fixedToFloat(inputsFixed(testNum), fixedPoint, w, signed))
-          println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
           println("Output Fixed: " + resultFixed)
+          println("Output: " + fixedToFloat(resultFixed, fixedPointResult, wResult, signed))
           println("Expected: " + expected(testNum))
           println("Cycles: " + cycleTotal)
           println()
