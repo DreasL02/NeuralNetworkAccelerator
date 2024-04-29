@@ -85,8 +85,8 @@
     },
     {
       "index": 23,
-      "bit_width_operands": 1,
-      "bit_width_result": 0,
+      "bit_width_operands": 2,
+      "bit_width_result": 1,
       "fixed_point_operands": 0,
       "fixed_point_result": 0,
       "connections": [
@@ -103,8 +103,8 @@
     },
     {
       "index": 24,
-      "bit_width_operands": 1,
-      "bit_width_result": 0,
+      "bit_width_operands": 2,
+      "bit_width_result": 1,
       "fixed_point_operands": 0,
       "fixed_point_result": 0,
       "connections": [

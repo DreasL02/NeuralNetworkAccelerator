@@ -42,36 +42,47 @@ class AutomaticGeneration(
   // Module Creation
   val stages: List[Stage] = listOfNodes.map {
     case inputType: InputType =>
+      if (printing) println("Creating input stage from " + inputType)
       val input = Module(new InputStage(inputType))
       input
     case outputType: OutputType =>
+      if (printing) println("Creating output stage from " + outputType)
       val output = Module(new OutputStage(outputType))
       output
     case initializerType: InitializerType =>
+      if (printing) println("Creating initializer stage from " + initializerType)
       val initializer = Module(new InitializerStage(initializerType))
       initializer
     case addType: AddType =>
+      if (printing) println("Creating add stage from " + addType)
       val add = Module(new AddStage(addType))
       add
     case matMulType: MatMulType =>
+      if (printing) println("Creating matmul stage from " + matMulType)
       val matMul = Module(new MatMulStage(matMulType))
       matMul
     case reluType: ReluType =>
+      if (printing) println("Creating relu stage from " + reluType)
       val relu = Module(new ReLUStage(reluType))
       relu
     case rounderType: RounderType =>
+      if (printing) println("Creating rounder stage from " + rounderType)
       val rounder = Module(new RounderStage(rounderType))
       rounder
     case reshapeType: ReshapeType =>
+      if (printing) println("Creating reshape stage from " + reshapeType)
       val reshape = Module(new ReshapeStage(reshapeType))
       reshape
     case convType: ConvType =>
+      if (printing) println("Creating conv stage from " + convType)
       val conv = Module(new ConvStage(convType))
       conv
     case maxPoolType: MaxPoolType =>
+      if (printing) println("Creating maxpool stage from " + maxPoolType)
       val maxPool = Module(new MaxPoolStage(maxPoolType))
       maxPool
     case broadcasterType: BroadcasterType =>
+      if (printing) println("Creating broadcaster stage from " + broadcasterType)
       val broadcaster = Module(new BroadcasterStage(broadcasterType))
       broadcaster
     case _ =>
