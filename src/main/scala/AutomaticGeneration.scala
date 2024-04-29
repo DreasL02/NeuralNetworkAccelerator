@@ -85,6 +85,10 @@ class AutomaticGeneration(
       if (printing) println("Creating broadcaster stage from " + broadcasterType)
       val broadcaster = Module(new BroadcasterStage(broadcasterType))
       broadcaster
+    case tanhType: TanhType =>
+      if (printing) println("Creating tanh stage from " + tanhType)
+      val tanh = Module(new TanhStage(tanhType))
+      tanh
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
   }
