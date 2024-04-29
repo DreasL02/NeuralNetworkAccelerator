@@ -63,12 +63,15 @@ chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
 
 def convert_to_fixed_point(number, fixedPoint, width, signed):
     scaledToFixed = round((number * (2 ** fixedPoint)))
-    max = (2 ** (width))
+    max = (2 ** (width - int(signed)))
     if signed:
         if number < 0 and scaledToFixed <= 0:
             scaledToFixed = max + scaledToFixed
 
-    if scaledToFixed >= max or scaledToFixed < 0:
+    if scaledToFixed >= max:
+        scaledToFixed = max - 1  # saturate to max value
+
+    if scaledToFixed < 0:
         scaledToFixed = 0
 
     return scaledToFixed
