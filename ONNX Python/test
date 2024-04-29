@@ -1,0 +1,49 @@
+
+\section{Matrix multiplication}
+Designing a matrix multiplication unit is by itself a very large design space, with the possibility for large-scale parallelism. 
+
+A fully parallel approach can utilize the fact that all the $m \times n \times p$ multiplications can happen in parallel, leaving only the summation of the multiplication results. 
+The summation of the $n$ multiplication results in each of the $m \times p$ indices of the matrix can then be processed with a structure of $(n-1)$ adder stages in a tree structure, where the output of each stage is the sum of the previous stage's outputs.
+The main constraint in this design is the number of multiplication modules required, which scales rapidly with the shapes of the operands. This solution is titled the \textit{direct} approach. 
+
+A solution that could put the number of multiplication modules to a minimum would be a design where a single multiply-accumulate (MAC) operation is executed every cycle, following which the result is either stored in an output buffer or added to result in the coming cycle. 
+The throughput of such a solution would be minimal and would not make use of the inherent parallelism of an FPGA. 
+Each cycle's selection of the operands also requires considerable control logic when handling operands with large shapes. 
+
+A compromise between these two solutions could be a matrix-vector computation unit that takes a single column of one of the matrices at a time, limiting the multiplication modules required to $m \times n$ (or $n \times p$ if the other operand is decomposed). 
+This would reduce the throughput, as the parallel module would have to operate once for each column, coupling the latency of the operator to a multiplication with one of the shape parameters. 
+
+Another design choice is a systolic array architecture, commonly found in single computation engine matrix multiplication accelerators, such as %TODO, 
+.
+This multicycle approach sequences multiple MAC units together with registers in between and formats the operands and output in such a way that the matrix multiplication is replicated. 
+There exist three kinds of dataflows that can mimic a matrix multiplication: output stationary (OS), weight stationary (WS), and input stationary (IS), each option with its pros and cons. 
+
+Conventionally in single computation engine accelerators, the shape of the systolic array (i.e. how many MAC units are used) is chosen to be an $(n,n)$, as seen in %TODO
+, but as the matrix multiplication block has all knowledge of the operation, the shape can be specified to exactly what is required, eliminating potential wasted resources. 
+Here the three data flows have an important property: they regulate which operand or output the shape of the systolic depends on, so if an OS data flow is chosen, then the shape of the systolic array, if the operation is to happen in one execution, is dependent on the output shape, i.e. $m \times p$. 
+The latency from valid operands until valid outputs, for a systolic array, is also only an addition of the shape parameters, with the exact numbers depending on the choice of data flow. 
+
+The four design choices above can be visualized in a trade-off spectrum figure such as %TODO
+
+Considering high throughput the most valued property the direct apporach and a systolic array approach are chosen. 
+The sections below will go into more detail on the exact parametrized RTL design for the two solutions.
+
+% strassen: https://ieeexplore-ieee-org.proxy.findit.cvt.dk/stamp/stamp.jsp?tp=&arnumber=5548764
+
+
+% Describe the different ways of structuring a matmul and pros / cons (spectrum figure)
+\subsection{Direct approach}
+% Describe the direct approach and the design choices made
+The design of the direct approach can 
+
+The summation of the multiplication results 
+
+\subsection{Systolic array approach}
+% Describe the systolic array approach and the design choices made
+
+
+
+\section{Convolution}
+% as for the matmul
+\subsection{Direct approach} 
+\subsection{Im2Col approach}
