@@ -1,7 +1,7 @@
 import chisel3._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import communication.chisel.lib.uart.BufferedUartRxForTestingOnly
+import communication.chisel.lib.uart.BufferedUartRx
 
 class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
@@ -12,7 +12,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val tenSeconds = frequency * 10
 
   "Should support a single byte buffer" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, bufferByteSize = 1)) { dut =>
+    test(new BufferedUartRx(frequency, baudRate, bufferByteSize = 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -48,7 +48,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should support a two byte buffer" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, 2)) { dut =>
+    test(new BufferedUartRx(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -85,7 +85,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should support a nine byte buffer" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, 9)) { dut =>
+    test(new BufferedUartRx(frequency, baudRate, 9)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -125,7 +125,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
   "Should support multiple buffer fills of one byte" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, 1)) { dut =>
+    test(new BufferedUartRx(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -188,7 +188,7 @@ class BufferedUartRxSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should support multiple buffer fills of two bytes" in {
-    test(new BufferedUartRxForTestingOnly(frequency, baudRate, 2)) { dut =>
+    test(new BufferedUartRx(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 

@@ -2,7 +2,7 @@ package stages
 
 import chisel3._
 import onnx.Operators.InitializerType
-import operators.{Initializer, Initializer4d}
+import operators.{Initializer4d}
 
 class InitializerStage(
                         wOut: Int,

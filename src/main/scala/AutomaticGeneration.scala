@@ -1,8 +1,6 @@
 import chisel3._
 import chisel3.util.{DecoupledIO, MixedVec}
 import onnx.Operators._
-import operators._
-import scala_utils.Optional.optional
 import stages._
 
 class AutomaticGeneration(

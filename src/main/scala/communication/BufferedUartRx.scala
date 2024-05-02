@@ -7,7 +7,7 @@ import chisel3.util._
 
 // This Module only exists for testing purposes. It is not intended to be used in a real design.
 // For real designs, instantiate a ByteBuffer and UartRx separately. This allows for Uart module reuse.
-class BufferedUartRxForTestingOnly(frequency: Int, baudRate: Int, bufferByteSize: Int) extends Module {
+class BufferedUartRx(frequency: Int, baudRate: Int, bufferByteSize: Int) extends Module {
   val io = IO(new Bundle {
     val rxd = Input(UInt(1.W))
     val cts = Output(UInt(1.W)) // Clear To Send

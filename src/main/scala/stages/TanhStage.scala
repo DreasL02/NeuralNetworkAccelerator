@@ -1,8 +1,8 @@
 package stages
 
 import chisel3._
-import onnx.Operators.{ReluType, TanhType}
-import operators.{ReLU4d, Tanh4d}
+import onnx.Operators.{TanhType}
+import operators.{Tanh4d}
 
 class TanhStage(
                  w: Int,

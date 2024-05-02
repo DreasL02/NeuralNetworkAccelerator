@@ -1,7 +1,6 @@
 package stages
 
 import chisel3._
-import chisel3.util.log2Ceil
 import onnx.Operators.ConvType
 import operators.{ConvDirect, ConvIm2Col}
 

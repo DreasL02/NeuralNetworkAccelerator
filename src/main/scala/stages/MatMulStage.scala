@@ -2,7 +2,6 @@ package stages
 
 import onnx.Operators.MatMulType
 import chisel3._
-import chisel3.util.log2Ceil
 import operators.{BufferedSystolicArray4d, DirectMatMul4d}
 
 class MatMulStage(

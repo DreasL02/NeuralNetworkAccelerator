@@ -2,7 +2,7 @@ package stages
 
 import chisel3._
 import onnx.Operators.AddType
-import operators.{Add, Add4d}
+import operators.{Add4d}
 
 class AddStage(
                 w: Int,

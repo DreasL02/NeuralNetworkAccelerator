@@ -2,9 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util._
-import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFSM}
-import module_utils.SmallModules.timer
-import scala_utils.Optional.optional
+import module_utils.{NoCalculationDelayInterfaceFSM}
 
 class Rounder(
                wBefore: Int,

@@ -1,6 +1,6 @@
 import chisel3._
 import chiseltest._
-import communication.chisel.lib.uart.BufferedUartTxForTestingOnly
+import communication.chisel.lib.uart.BufferedUartTx
 import org.scalatest.freespec.AnyFreeSpec
 
 import scala.collection.mutable.ListBuffer
@@ -18,7 +18,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   val low = 0.U(1.W)
 
   "Should send UART idle signal by default" in {
-    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
+    test(new BufferedUartTx(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
       dut.io.rts.poke(true.B)
@@ -32,7 +32,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should respect RTS" in {
-    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
+    test(new BufferedUartTx(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -55,7 +55,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.rts.poke(true.B)
 
       val uartOutput = ListBuffer[BigInt]()
-      for (_ <- 0 until 2*uartFrameSize) {
+      for (_ <- 0 until 2 * uartFrameSize) {
         uartOutput.append(dut.io.txd.peekInt())
         dut.clock.step(cyclesPerSerialBit)
       }
@@ -72,7 +72,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
 
   "Should support a single byte buffer" in {
-    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 1)) { dut =>
+    test(new BufferedUartTx(frequency, baudRate, 1)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
 
@@ -99,7 +99,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Should support a two byte buffer" in {
-    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
+    test(new BufferedUartTx(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
       dut.io.rts.poke(true.B)
@@ -221,7 +221,7 @@ class BufferedUartTxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   */
   "Should support refilling a two byte buffer" in {
-    test(new BufferedUartTxForTestingOnly(frequency, baudRate, 2)) { dut =>
+    test(new BufferedUartTx(frequency, baudRate, 2)) { dut =>
 
       dut.clock.setTimeout(clockTimeout)
       dut.io.rts.poke(true.B)

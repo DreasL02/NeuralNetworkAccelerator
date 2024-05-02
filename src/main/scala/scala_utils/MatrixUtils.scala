@@ -1,7 +1,5 @@
 package scala_utils
 
-import FixedPointConversion._
-
 object MatrixUtils {
   def calculateMatrixMultiplication(m1: Array[Array[Float]], m2: Array[Array[Float]]): Array[Array[Float]] = {
     // Golden model for matrix multiplication implemented as per the algorithm described at
