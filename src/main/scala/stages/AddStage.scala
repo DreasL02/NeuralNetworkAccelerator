@@ -17,7 +17,4 @@ class AddStage(
   add.io.inputChannel <> io.input1Channel
   add.io.biasChannel <> io.input2Channel
   io.outputChannel <> add.io.outputChannel
-
-  latency = 1
-  dspUsage = 0
 }

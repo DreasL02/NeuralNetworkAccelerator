@@ -13,14 +13,17 @@ class TanhSpec extends AnyFreeSpec with ChiselScalatestTester {
   val sign = true
   val inputFixed = floatToFixed(inputFloat, fixedPoint, w, sign)
 
-  "Rounder should round correctly" in {
+  "Tanh should approximate correctly" in {
     test(new Tanh(w, (1, 1), fixedPoint, true)) {
       dut =>
         println(s"input: $inputFloat, inputFixed: $inputFixed")
         dut.io.inputChannel.valid.poke(true.B)
         dut.io.outputChannel.ready.poke(true.B)
         dut.io.inputChannel.bits(0)(0).poke(inputFixed.U)
-        dut.clock.step(1)
+        while (dut.io.outputChannel.valid.peek().litToBoolean == false) {
+          println("one step")
+          dut.clock.step()
+        }
         val outputFixed = dut.io.outputChannel.bits(0)(0).peek().litValue
         val outputFloat = fixedToFloat(outputFixed, fixedPoint, w, sign)
         println(s"outputFixed: $outputFixed")

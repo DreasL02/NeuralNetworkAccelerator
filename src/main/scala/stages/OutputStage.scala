@@ -56,11 +56,7 @@ class OutputStage(
     bufferedUartTx.io.inputChannel <> byteConverter.io.outputChannel
     bufferedUartTx.io.rts := io.outputChannel.ready
 
-    latency = 0
-    dspUsage = 0
   } else {
     io.outputChannel <> io.inputChannel
-    latency = 0
-    dspUsage = 0
   }
 }

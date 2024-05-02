@@ -93,17 +93,6 @@ class AutomaticGeneration(
       throw new Exception("Unknown specified module type (module creation)")
   }
 
-  stages.foreach { stage =>
-    latency += stage.latency
-    dspUsage += stage.dspUsage
-  }
-
-  if (printing) {
-    println("====================================")
-    println("Total estimated latency: " + latency)
-    println("Total estimated DSP usage: " + dspUsage)
-    println("====================================")
-  }
 
   if (printing) println("Modules Initialized. Beginning connection logic.")
 
@@ -139,8 +128,6 @@ class AutomaticGeneration(
         }
         if (printing) println("Connecting to output channel " + outputIndex)
         io.outputChannels(outputIndex) <> output.io.outputChannel
-        //io.debug.get(outputIndex).bits := output.io.inputChannel.bits
-        //io.debug.get(outputIndex).valid := output.io.outputChannel.valid
         outputIndex += 1
 
       case _: Stage0 =>

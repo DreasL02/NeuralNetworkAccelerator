@@ -21,6 +21,5 @@ class ReshapeStage(
   reshape.io.shapeChannel <> io.input2Channel
   io.outputChannel <> reshape.io.outputChannel
 
-  latency = 0
-  dspUsage = 0
+
 }

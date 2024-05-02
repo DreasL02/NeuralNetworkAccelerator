@@ -53,12 +53,7 @@ class InputStage(
     reshaper.io.inputChannel.bits(0)(0)(0) := byteConverter.io.outputChannel.bits
 
     io.outputChannel <> reshaper.io.outputChannel
-
-    latency = 0
-    dspUsage = 0
   } else {
     io.outputChannel <> io.inputChannel
-    latency = 0
-    dspUsage = 0
   }
 }

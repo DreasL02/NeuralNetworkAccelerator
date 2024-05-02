@@ -19,6 +19,4 @@ class RounderStage(
   rounder.io.inputChannel <> io.inputChannel
   io.outputChannel <> rounder.io.outputChannel
 
-  latency = 1
-  dspUsage = 0
 }

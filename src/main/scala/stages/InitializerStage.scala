@@ -14,7 +14,4 @@ class InitializerStage(
   val initializer = Module(new Initializer4d(wOut, shapeOut, data))
 
   io.outputChannel <> initializer.io.outputChannel
-
-  latency = 0
-  dspUsage = 0
 }

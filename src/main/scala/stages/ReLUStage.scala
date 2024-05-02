@@ -17,6 +17,4 @@ class ReLUStage(
   relu.io.inputChannel <> io.inputChannel
   io.outputChannel <> relu.io.outputChannel
 
-  latency = 1
-  dspUsage = 0
 }

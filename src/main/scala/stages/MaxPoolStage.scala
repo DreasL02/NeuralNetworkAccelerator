@@ -27,6 +27,4 @@ class MaxPoolStage(
   maxPool.io.inputChannel <> io.inputChannel
   io.outputChannel <> maxPool.io.outputChannel
 
-  latency = 1
-  dspUsage = 0
 }

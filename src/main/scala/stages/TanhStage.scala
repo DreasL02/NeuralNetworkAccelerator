@@ -18,6 +18,5 @@ class TanhStage(
   tanh.io.inputChannel <> io.inputChannel
   io.outputChannel <> tanh.io.outputChannel
 
-  latency = 1
-  dspUsage = 0
+
 }
