@@ -3,6 +3,7 @@ import chiseltest._
 import module_utils.{ByteCollector, ByteIntoFlatVectorCollector, ByteIntoVectorCollector, ByteSplitter, FlatVectorIntoBytesCollector, VectorIntoByteSplitter}
 import org.scalatest.freespec.AnyFreeSpec
 import scala_utils.UartCoding.padLeft
+// This file was part of the Special course hand-in and has largely remained unchanged.
 
 class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Should not split a byte" in {
@@ -148,7 +149,6 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
 
-
   "Should assemble 2 9-bit values (18 bits) into 3 8-bit bytes (24 bits)" in {
     val inputUnit = 9
     val unitCount = 2
@@ -177,7 +177,6 @@ class SplitterSpec extends AnyFreeSpec with ChiselScalatestTester {
       assert(outputAsBinaryString endsWith inputAsBinaryString)
     }
   }
-
 
 
 }
