@@ -11,8 +11,6 @@ class AutomaticGeneration(
                            printing: Boolean = false,
                            enableDebuggingIO: Boolean = false
                          ) extends Module {
-  var latency = 0
-  var dspUsage = 0
 
   private val inputs = listOfNodes.filter(_.isInstanceOf[InputType])
   private val automaticInputChannels = for (i <- inputs.indices) yield {
@@ -26,17 +24,9 @@ class AutomaticGeneration(
     outputChannel
   }
 
-  // TODO: remove
-  //private val debugChannels = for (i <- outputs.indices) yield {
-  //  val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].inputShape._1, Vec(outputs(i).asInstanceOf[OutputType].inputShape._2, Vec(outputs(i).asInstanceOf[OutputType].inputShape._3, Vec(outputs(i).asInstanceOf[OutputType].inputShape._4, UInt(outputs(i).asInstanceOf[OutputType].wIn.W))))))
-  //  outputChannel
-  //}
-
   val io = IO(new Bundle {
     val inputChannels = MixedVec(automaticInputChannels)
     val outputChannels = MixedVec(automaticOutputChannels)
-
-    //val debug = optional(enableDebuggingIO, MixedVec(debugChannels))
   })
 
   // Module Creation
