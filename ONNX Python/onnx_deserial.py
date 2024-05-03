@@ -1,5 +1,5 @@
 import pprint
 import onnx
 
-model = onnx.load("models/mnist-12.onnx")
+model = onnx.load("models/lenet.onnx")
 pprint.pprint(model)

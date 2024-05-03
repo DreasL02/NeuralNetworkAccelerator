@@ -35,7 +35,7 @@ fixed_point_base = fixed_point_multiplication*2
 supported_graphs = ["Input", "Initializer", "Output"]
 # full list: https://github.com/onnx/onnx/blob/main/docs/Operators.md
 supported_node_operations = ["Conv", "MatMul", "MaxPool",
-                             "Reshape", "Relu", "Constant",  "Add"]
+                             "Reshape", "Relu", "Constant",  "Add", "Tanh"]
 
 # stages that use multiplication (and thus need a lower bit width than the base bit width)
 stages_using_multiplication = ["Conv", "MatMul"]
@@ -54,7 +54,7 @@ broadcast_operations = ["Add", "And", "Div", "Equal", "Greater", "Less", "Max", 
 # Chisel module that are supported for automatic generation.
 # Note that some modules are used for multiple operations, e.g. Initializer is used for both Constant and Initializer
 chisel_modules = ["Input", "Output", "Rounder", "Conv", "MatMul", "MaxPool",
-                  "Reshape", "Relu", "Add", "Initializer", "Broadcaster"]
+                  "Reshape", "Relu", "Add", "Initializer", "Broadcaster", "Tanh"]
 
 # -------------------------------------------- Constants end --------------------------------------------
 
@@ -930,6 +930,15 @@ for stage in graph:
             "connections": current_stage["connections"],
             "input_shape": current_stage["input_shape"],
             "shape": current_stage["shape"]
+        })
+
+    elif current_stage["op_type"] == "Tanh":
+        chisel_dict["Tanh"].append({
+            "index": current_stage["index"],
+            "bit_width": current_stage["bit_width_result"],
+            "connections": current_stage["connections"],
+            "input_shape": current_stage["input_shape"],
+            "fixed_point": current_stage["fixed_point_result"]
         })
 
     else:
