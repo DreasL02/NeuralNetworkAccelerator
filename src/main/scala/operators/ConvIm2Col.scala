@@ -21,6 +21,8 @@ class ConvIm2Col(
 
   assert(inputShape._2 == kernelShape._2, "The second dimension of the input and kernel tensors must be the same")
   assert(kernelShape._3 == kernelShape._4, "Only square kernels are supported")
+  assert(strides._1 == 1) // only stride 1 is supported
+  assert(strides._2 == 1) // only stride 1 is supported
 
   private val outputDimensions = (
     inputShape._1, // batch size
