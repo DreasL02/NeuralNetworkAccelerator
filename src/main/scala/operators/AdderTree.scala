@@ -7,7 +7,8 @@ import module_utils.SmallModules._
 
 // General design is inspired by the approach presented at
 // https://github.com/pConst/basic_verilog/blob/master/adder_tree.sv (visited on 08-04-2024)
-// by Konstantin Pavlov.
+// by Konstantin Pavlov
+// The code is licensed under CC BY-SA 4_0 (https://creativecommons.org/licenses/by-sa/4.0/).
 
 class AdderTree(
                  w: Int,
