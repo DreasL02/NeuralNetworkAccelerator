@@ -5,16 +5,11 @@ import chisel3.util.{DecoupledIO, log2Ceil}
 import module_utils.CalculationDelayInterfaceFSM
 import module_utils.SmallModules._
 
-// General design is inspired by the approach presented at
-// https://github.com/pConst/basic_verilog/blob/master/adder_tree.sv (visited on 08-04-2024)
-// by Konstantin Pavlov
-// The code is licensed under CC BY-SA 4_0 (https://creativecommons.org/licenses/by-sa/4.0/).
-
 class MaxFinderTree(
                      w: Int,
                      numberOfInputs: Int, // number of columns in the first matrix and number of rows in the second matrix
-                     toPrint: Boolean = false,
-                     signed: Boolean = false
+                     signed: Boolean = false,
+                     toPrint: Boolean = false
                    ) extends Module {
 
   val io = IO(new Bundle {
@@ -40,10 +35,10 @@ class MaxFinderTree(
       for (maxer <- 0 until numberOfInputsInt) {
         if (maxer < numberOfInputs) { // connect to input channel if there are still inputs
           data(stage)(maxer) := io.inputChannel.bits(maxer)
-          if (toPrint) println("Connected (stage, adder): (" + stage + ", " + maxer + ")" + " to input channel " + maxer)
+          if (toPrint) println("Connected (stage, max): (" + stage + ", " + maxer + ")" + " to input channel " + maxer)
         } else { // connect to 0 if there are no more inputs
           data(stage)(maxer) := 0.U
-          if (toPrint) println("Connected (stage, adder): (" + stage + ", " + maxer + ")" + " to 0")
+          if (toPrint) println("Connected (stage, max): (" + stage + ", " + maxer + ")" + " to 0")
         }
       }
     } else {
