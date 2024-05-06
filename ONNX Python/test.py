@@ -3,13 +3,16 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
     scaledToFixed = round((number * (2 ** fixedPoint)))
     if signed:
         if scaledToFixed > (2 ** (width - 1)) - 1 or scaledToFixed < -2 ** (width-1):
-            print("Number " + str(number) +
-                  " is too large for the given width. Saturation will occur.")
+
             # If the number is too large, saturate it to the maximum value
             if scaledToFixed > (2 ** (width - 1)) - 1:
                 scaledToFixed = (2 ** (width - 1)) - 1
+                print("Number " + str(number) +
+                      " is too large for the given width" + str(width) + ". Saturation will occur to " + str(scaledToFixed))
             else:  # If the number is too small, saturate it to the minimum value
                 scaledToFixed = -2 ** (width-1)
+                print("Number " + str(number) +
+                      " is too small for the given width" + str(width) + ". Saturation will occur to " + str(scaledToFixed))
 
         if scaledToFixed < 0:
             scaledToFixed = (2 ** width) + scaledToFixed
@@ -18,9 +21,9 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
         if scaledToFixed < 0:
             raise ValueError("Number is too small for the given width")
         if scaledToFixed > (2 ** width) - 1:
-            print("Number " + str(number) +
-                  " is too large for the given width. Saturation will occur.")
             scaledToFixed = (2 ** width) - 1
+            print("Number " + str(number) +
+                  " is too large for the given width. Saturation will occur to " + str(scaledToFixed))
 
     return scaledToFixed
 

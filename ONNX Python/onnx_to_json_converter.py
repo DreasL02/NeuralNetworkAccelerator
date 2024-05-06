@@ -66,13 +66,13 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
     if signed:
         if scaledToFixed > (2 ** (width - 1)) - 1 or scaledToFixed < -2 ** (width-1):
             if scaledToFixed > (2 ** (width - 1)) - 1:
-                print("Number " + str(number) +
-                      " is too large for the given width. Saturation will occur.")
                 scaledToFixed = (2 ** (width - 1)) - 1
-            else:  # If the number is too small, saturate it to the minimum value
                 print("Number " + str(number) +
-                      " is too small for the given width. Saturation will occur.")
+                      " is too large for the given width " + str(width) + ". Saturation will occur to " + str(scaledToFixed))
+            else:  # If the number is too small, saturate it to the minimum value
                 scaledToFixed = -2 ** (width-1)
+                print("Number " + str(number) +
+                      " is too small for the given width " + str(width) + ". Saturation will occur to " + str(scaledToFixed))
 
         if scaledToFixed < 0:
             scaledToFixed = (2 ** width) + scaledToFixed
@@ -81,10 +81,9 @@ def convert_to_fixed_point(number, fixedPoint, width, signed):
         if scaledToFixed < 0:
             raise ValueError("Number is too small for the given width")
         if scaledToFixed > (2 ** width) - 1:
-            print("Number " + str(number) +
-                  " is too large for the given width. Saturation will occur.")
             scaledToFixed = (2 ** width) - 1
-
+            print("Number " + str(number) +
+                  " is too large for the given width " + str(width) + ". Saturation will occur to " + str(scaledToFixed))
     return scaledToFixed
 
 
@@ -176,6 +175,11 @@ for node in onnx_model.graph.node:
     }
     index += 1
 
+for stage in graph:
+    if graph[stage]["op_type"] not in supported_node_operations + supported_graphs:
+        raise Exception("Unsupported node operation: " +
+                        graph[stage]["op_type"])
+
 # Outputs are handeled separately after all nodes are processed
 
 # -------------------------------------------- Graph creation end --------------------------------------------
@@ -204,9 +208,6 @@ for stage in graph:
     operands = []
     operands.append([])  # bit width
     operands.append([])  # fixed point
-
-    if stage_op_type not in supported_node_operations + supported_graphs:
-        raise Exception("Unsupported node operation: " + stage_op_type)
 
     # If the stage uses multiplication, then the bit width and fixed point of the operands and result are set to the values defined at the beginning of the script
     if stage_op_type in stages_using_multiplication:
