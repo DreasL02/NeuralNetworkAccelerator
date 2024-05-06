@@ -6,8 +6,7 @@ import stages._
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           printing: Boolean = false,
-                           enableDebuggingIO: Boolean = false
+                           printing: Boolean = false
                          ) extends Module {
 
   private val inputs = listOfNodes.filter(_.isInstanceOf[InputType])
@@ -95,12 +94,10 @@ class AutomaticGeneration(
     currentStage match {
       case input: InputStage =>
         if (printing) println("Connecting to input channel " + inputIndex)
-        // Should only happen once
         input.io.inputChannel <> io.inputChannels(inputIndex)
         inputIndex += 1
 
       case output: OutputStage =>
-        // Should only happen once
         if (printing) {
           println("Connecting to module: " + stages(connectionIndices.head) + " index: " + connectionIndices.head)
         }
