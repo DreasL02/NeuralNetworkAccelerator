@@ -40,25 +40,16 @@ class MaxPool(
         }
       }
 
+      val maxFinder = Module(new MaxFinderTree(w, kernelShape._1 * kernelShape._2, signed))
 
-      if (signed) {
-        results(i)(j) := inputSlice.flatten.reduce((a, b) => Mux(a.asSInt > b.asSInt, a, b))
-      } else {
-        results(i)(j) := inputSlice.flatten.reduce((a, b) => Mux(a > b, a, b))
-      }
+      maxFinder.io.inputChannel.bits := inputSlice.flatten
+      maxFinder.io.inputChannel.valid := io.inputChannel.valid
+      io.inputChannel.ready := maxFinder.io.inputChannel.ready
+      results(i)(j) := maxFinder.io.outputChannel.bits
+      maxFinder.io.outputChannel.ready := io.outputChannel.ready
+      io.outputChannel.valid := maxFinder.io.outputChannel.valid
     }
   }
 
-  private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
-  interfaceFSM.io.inputValid := io.inputChannel.valid
-  interfaceFSM.io.outputReady := io.outputChannel.ready
-
-  io.outputChannel.valid := interfaceFSM.io.outputValid
-  io.inputChannel.ready := interfaceFSM.io.inputReady
-
-  val buffer = RegInit(VecInit.fill(numberOfOutputRows, numberOfOutputColumn)(0.U(w.W)))
-  when(interfaceFSM.io.storeResult) {
-    buffer := results
-  }
-  io.outputChannel.bits := buffer
+  io.outputChannel.bits := results
 }
