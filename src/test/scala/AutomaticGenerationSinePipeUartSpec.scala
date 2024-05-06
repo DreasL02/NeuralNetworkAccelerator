@@ -45,7 +45,7 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
   }
 
   "Should work" in {
-    test(new AutomaticGeneration(lists._2, lists._3, printConnections, true)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
+    test(new AutomaticGeneration(lists._2, lists._3, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
 
       dut.clock.setTimeout(100000)
 
@@ -75,7 +75,6 @@ class AutomaticGenerationSinePipeUartSpec extends AnyFreeSpec with ChiselScalate
         uartStringBuffer.append(uartBit)
 
         // println(i + ": " + uartBit)
-        println(i + ": " + uartBit)
         dut.clock.step(1)
       }
 

@@ -50,7 +50,7 @@ class Rounder(
         when(roundedValue > maxPositiveValue) { // saturated
           results(row)(column) := maxPositiveValue
         }.otherwise( // no saturation
-          results(row)(column) := roundedValue(wAfter - 1, 0).asUInt
+          results(row)(column) := roundedValue
         )
       }
     }
