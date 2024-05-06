@@ -2,6 +2,8 @@ package module_utils
 
 import chisel3._
 
+// This file was part of the Special course hand-in and has largely remained unchanged.
+
 class ShiftedBuffer(w: Int, depth: Int, shift: Int) extends Module {
   val io = IO(new Bundle {
     val load = Input(Bool()) // load values?

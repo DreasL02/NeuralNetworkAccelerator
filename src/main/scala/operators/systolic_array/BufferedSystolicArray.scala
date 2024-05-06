@@ -1,10 +1,10 @@
 package operators.systolic_array
 
 import chisel3._
-import chisel3.util.{DecoupledIO, log2Ceil}
+import chisel3.util.{DecoupledIO}
 import scala_utils.Optional.optional
 import module_utils.{CalculationDelayInterfaceFSM, ShiftedBuffer}
-import module_utils.SmallModules.{risingEdge, timer}
+import module_utils.SmallModules.{timer}
 
 
 class BufferedSystolicArray(

@@ -1,18 +1,13 @@
 import chisel3._
 import chisel3.util.{DecoupledIO, MixedVec}
 import onnx.Operators._
-import operators._
-import scala_utils.Optional.optional
 import stages._
 
 class AutomaticGeneration(
                            listOfNodes: List[Any],
                            connectionList: List[List[Int]],
-                           printing: Boolean = false,
-                           enableDebuggingIO: Boolean = false
+                           printing: Boolean = false
                          ) extends Module {
-  var latency = 0
-  var dspUsage = 0
 
   private val inputs = listOfNodes.filter(_.isInstanceOf[InputType])
   private val automaticInputChannels = for (i <- inputs.indices) yield {
@@ -26,69 +21,65 @@ class AutomaticGeneration(
     outputChannel
   }
 
-  // TODO: remove
-  //private val debugChannels = for (i <- outputs.indices) yield {
-  //  val outputChannel = DecoupledIO(Vec(outputs(i).asInstanceOf[OutputType].inputShape._1, Vec(outputs(i).asInstanceOf[OutputType].inputShape._2, Vec(outputs(i).asInstanceOf[OutputType].inputShape._3, Vec(outputs(i).asInstanceOf[OutputType].inputShape._4, UInt(outputs(i).asInstanceOf[OutputType].wIn.W))))))
-  //  outputChannel
-  //}
-
   val io = IO(new Bundle {
     val inputChannels = MixedVec(automaticInputChannels)
     val outputChannels = MixedVec(automaticOutputChannels)
-
-    //val debug = optional(enableDebuggingIO, MixedVec(debugChannels))
   })
 
   // Module Creation
   val stages: List[Stage] = listOfNodes.map {
     case inputType: InputType =>
+      if (printing) println("Creating input stage from " + inputType)
       val input = Module(new InputStage(inputType))
       input
     case outputType: OutputType =>
+      if (printing) println("Creating output stage from " + outputType)
       val output = Module(new OutputStage(outputType))
       output
     case initializerType: InitializerType =>
+      if (printing) println("Creating initializer stage from " + initializerType)
       val initializer = Module(new InitializerStage(initializerType))
       initializer
     case addType: AddType =>
+      if (printing) println("Creating add stage from " + addType)
       val add = Module(new AddStage(addType))
       add
     case matMulType: MatMulType =>
+      if (printing) println("Creating matmul stage from " + matMulType)
       val matMul = Module(new MatMulStage(matMulType))
       matMul
     case reluType: ReluType =>
+      if (printing) println("Creating relu stage from " + reluType)
       val relu = Module(new ReLUStage(reluType))
       relu
     case rounderType: RounderType =>
+      if (printing) println("Creating rounder stage from " + rounderType)
       val rounder = Module(new RounderStage(rounderType))
       rounder
     case reshapeType: ReshapeType =>
+      if (printing) println("Creating reshape stage from " + reshapeType)
       val reshape = Module(new ReshapeStage(reshapeType))
       reshape
     case convType: ConvType =>
+      if (printing) println("Creating conv stage from " + convType)
       val conv = Module(new ConvStage(convType))
       conv
     case maxPoolType: MaxPoolType =>
+      if (printing) println("Creating maxpool stage from " + maxPoolType)
       val maxPool = Module(new MaxPoolStage(maxPoolType))
       maxPool
     case broadcasterType: BroadcasterType =>
+      if (printing) println("Creating broadcaster stage from " + broadcasterType)
       val broadcaster = Module(new BroadcasterStage(broadcasterType))
       broadcaster
+    case tanhType: TanhType =>
+      if (printing) println("Creating tanh stage from " + tanhType)
+      val tanh = Module(new TanhStage(tanhType))
+      tanh
     case _ =>
       throw new Exception("Unknown specified module type (module creation)")
   }
 
-  stages.foreach { stage =>
-    latency += stage.latency
-    dspUsage += stage.dspUsage
-  }
-
-  if (printing) {
-    println("====================================")
-    println("Total estimated latency: " + latency)
-    println("Total estimated DSP usage: " + dspUsage)
-    println("====================================")
-  }
 
   if (printing) println("Modules Initialized. Beginning connection logic.")
 
@@ -103,12 +94,10 @@ class AutomaticGeneration(
     currentStage match {
       case input: InputStage =>
         if (printing) println("Connecting to input channel " + inputIndex)
-        // Should only happen once
         input.io.inputChannel <> io.inputChannels(inputIndex)
         inputIndex += 1
 
       case output: OutputStage =>
-        // Should only happen once
         if (printing) {
           println("Connecting to module: " + stages(connectionIndices.head) + " index: " + connectionIndices.head)
         }
@@ -124,8 +113,6 @@ class AutomaticGeneration(
         }
         if (printing) println("Connecting to output channel " + outputIndex)
         io.outputChannels(outputIndex) <> output.io.outputChannel
-        //io.debug.get(outputIndex).bits := output.io.inputChannel.bits
-        //io.debug.get(outputIndex).valid := output.io.outputChannel.valid
         outputIndex += 1
 
       case _: Stage0 =>

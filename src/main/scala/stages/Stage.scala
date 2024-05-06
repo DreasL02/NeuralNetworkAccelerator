@@ -4,8 +4,6 @@ import chisel3._
 import chisel3.util.DecoupledIO
 
 class Stage extends Module {
-  var latency = 0
-  var dspUsage = 0
 }
 
 class Stage0(

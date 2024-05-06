@@ -4,8 +4,7 @@ import chisel3._
 import chisel3.util.{Fill, log2Ceil}
 
 object SmallModules {
-  def risingEdge(x: Bool): Bool = x && !RegNext(x) // detect rising edge
-  
+
   def timer(max: Int, reset: Bool): Bool = { // timer that counts up to max and stays there until reset manually by asserting reset
     val x = RegInit(0.U(log2Ceil(max + 1).W))
     val done = x === max.U // done when x reaches max

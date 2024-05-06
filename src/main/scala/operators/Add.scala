@@ -3,7 +3,6 @@ package operators
 import chisel3._
 import chisel3.util.DecoupledIO
 import module_utils.NoCalculationDelayInterfaceFSM
-import module_utils.SmallModules.timer
 import scala_utils.Optional.optional
 
 class Add(w: Int, numberOfRows: Int, numberOfColumns: Int, enableDebuggingIO: Boolean) extends Module {

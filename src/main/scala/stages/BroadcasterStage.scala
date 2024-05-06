@@ -19,7 +19,4 @@ class BroadcasterStage(
 
   broadcaster.io.inputChannel <> io.inputChannel
   io.outputChannel <> broadcaster.io.outputChannel
-
-  latency = 0
-  dspUsage = 0
 }

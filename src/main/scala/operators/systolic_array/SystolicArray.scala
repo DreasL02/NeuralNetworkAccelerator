@@ -1,8 +1,8 @@
 package operators.systolic_array
 
 import chisel3._
-import chisel3.util.log2Ceil
 
+// This file was part of the Special course hand-in and has largely remained unchanged.
 // Inspired by code by Kazutomo Yoshii:
 // https://github.com/kazutomo/Chisel-MatMul/tree/master (Visited 08-04-2024)
 // and the approach presented at the ECE459 course page by NJIT:

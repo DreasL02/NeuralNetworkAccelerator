@@ -33,6 +33,7 @@ object SpecToListConverter {
     val adds = json("Add").arr
     val initializers = json("Initializer").arr
     val broadcasters = json("Broadcaster").arr
+    val tanhs = json("Tanh").arr
     val modelParameters = json("Parameters").arr
 
     val parameters = modelParameters.map(entry => {
@@ -204,7 +205,18 @@ object SpecToListConverter {
       (index, Operators.BroadcasterType(w, inputShape, outputShape), connectionIndex)
     }).toList
 
-    val allLists = List(inputList, outputList, rounderList, convList, matmulList, maxPoolList, reshapeList, reluList, addList, initializerList, broadcasterList)
+    val tanhList = tanhs.map(entry => {
+      val w = entry("bit_width").num.toInt
+      val inputShape = toTuple4(entry("input_shape")(0).arr.map(_.num.toInt).toArray)
+      val signed = parameters(0).signed
+      val index = entry("index").num.toInt
+      val fixedPoint = entry("fixed_point").num.toInt
+      val connectionIndex = entry("connections").arr.map(_.num.toInt).toList
+      if (toPrint) println("Tanh: " + index + " " + w + " " + inputShape + " " + connectionIndex)
+      (index, Operators.TanhType(w, fixedPoint, signed, inputShape), connectionIndex)
+    }).toList
+
+    val allLists = List(inputList, outputList, rounderList, convList, matmulList, maxPoolList, reshapeList, reluList, addList, initializerList, broadcasterList, tanhList)
     // sort elements by index (first element of tuple):
     val sortedList = allLists.flatten.sortBy(_._1)
 

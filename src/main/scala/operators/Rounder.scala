@@ -2,8 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util._
-import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFSM}
-import module_utils.SmallModules.timer
+import module_utils.{NoCalculationDelayInterfaceFSM}
 
 class Rounder(
                wBefore: Int,
@@ -11,7 +10,7 @@ class Rounder(
                numberOfRows: Int,
                numberOfColumns: Int,
                signed: Boolean,
-               fixedPoint: Int
+               fixedPoint: Int,
              ) extends Module {
 
   val io = IO(new Bundle {
@@ -23,22 +22,40 @@ class Rounder(
   val results = Wire(Vec(numberOfRows, Vec(numberOfColumns, UInt(wAfter.W))))
   for (row <- 0 until numberOfRows) {
     for (column <- 0 until numberOfColumns) {
+      val roundedValue = Wire(UInt((wBefore - fixedPoint - 1).W)) // rounded value after moving the fixed point
+
+      if (fixedPoint == 0) { // no fixed point, no rounding
+        roundedValue := io.inputChannel.bits(row)(column).asUInt(wBefore - 1, 0)
+      } else { // round to nearest
+        roundedValue := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)
+      }
+
       if (signed) {
         val sign = io.inputChannel.bits(row)(column)(wBefore - 1)
-        if (fixedPoint == 0) {
-          results(row)(column) := sign ## io.inputChannel.bits(row)(column)(wBefore - 1, 0)
-        } else {
-          results(row)(column) := sign ## ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U)(wBefore - 1, 0).asUInt
+        val maxPositiveValue = ((1 << (wAfter - 1)) - 1).U
+        val minNegativeValueNotSignExtended = 1 << (wAfter - 1)
+        val minNegativeValue = Fill(wBefore - fixedPoint - 1 - wAfter, sign) ## minNegativeValueNotSignExtended.U
+
+        when(sign === 1.U && roundedValue.asSInt < minNegativeValue.asSInt) { // saturation check in negative direction
+          results(row)(column) := minNegativeValue
+        }.elsewhen(sign === 0.U && roundedValue > maxPositiveValue) { // saturation check in positive direction
+          results(row)(column) := maxPositiveValue
+        }.otherwise { // no saturation
+          results(row)(column) := sign ## roundedValue(wAfter - 2, 0).asUInt // move sign bit down
         }
       } else {
-        if (fixedPoint == 0) {
-          results(row)(column) := io.inputChannel.bits(row)(column)
-        } else {
-          results(row)(column) := ((io.inputChannel.bits(row)(column) + (1.U << (fixedPoint.U - 1.U)).asUInt) >> fixedPoint.U).asUInt
-        }
+        // saturation check
+        val maxPositiveValue = ((1 << wAfter) - 1).U
+
+        when(roundedValue > maxPositiveValue) { // saturated
+          results(row)(column) := maxPositiveValue
+        }.otherwise( // no saturation
+          results(row)(column) := roundedValue
+        )
       }
     }
   }
+
 
   private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid

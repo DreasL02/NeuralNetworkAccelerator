@@ -2,6 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util.DecoupledIO
+import module_utils.NoCalculationDelayInterfaceFSM
 import module_utils.SmallModules.{mult, timer}
 
 class ComponentMultiplier(
@@ -19,30 +20,24 @@ class ComponentMultiplier(
     val outputChannel = new DecoupledIO(Vec(numberOfRows, Vec(numberOfColumns, Vec(commonDimension, UInt(wResult.W)))))
   })
 
-  private val inputs = RegNext(io.inputChannel.bits)
-  private val weights = RegNext(io.weightChannel.bits)
-
   private val multiplicationResults = Wire(Vec(numberOfRows, Vec(numberOfColumns, Vec(commonDimension, UInt(wResult.W)))))
   for (i <- 0 until numberOfRows) {
     for (j <- 0 until numberOfColumns) {
       for (k <- 0 until commonDimension) {
-        multiplicationResults(i)(j)(k) := mult(inputs(i)(k), weights(k)(j), w, wResult, signed)
+        multiplicationResults(i)(j)(k) := mult(io.inputChannel.bits(i)(k), io.weightChannel.bits(k)(j), w, wResult, signed)
       }
     }
   }
 
-  private val cyclesUntilOutputValid: Int = 1
-
-  private val interfaceFSM = Module(new module_utils.CalculationDelayInterfaceFSM)
+  private val interfaceFSM = Module(new NoCalculationDelayInterfaceFSM)
   interfaceFSM.io.inputValid := io.inputChannel.valid && io.weightChannel.valid
   interfaceFSM.io.outputReady := io.outputChannel.ready
-  interfaceFSM.io.doneWithCalculation := timer(cyclesUntilOutputValid, interfaceFSM.io.calculateStart)
 
   io.outputChannel.valid := interfaceFSM.io.outputValid
   io.inputChannel.ready := interfaceFSM.io.inputReady
   io.weightChannel.ready := interfaceFSM.io.inputReady
 
-  val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
+  private val buffer = RegInit(VecInit.fill(numberOfRows, numberOfColumns, commonDimension)(0.U(wResult.W)))
   when(interfaceFSM.io.storeResult) {
     buffer := multiplicationResults
   }

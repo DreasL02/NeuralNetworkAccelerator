@@ -33,20 +33,12 @@ class ConvStage(
     im2col.io.inputChannel <> io.input1Channel
     im2col.io.kernelChannel <> io.input2Channel
     io.outputChannel <> im2col.io.outputChannel
-
-    latency = 0 // TODO: calculate latency
-    dspUsage = 0 // TODO: calculate DSP usage
   } else {
     val conv = Module(new ConvDirect(wIn, wOut, shapeInput, shapeKernel, signed, strides, pads, print))
     conv.io.inputChannel <> io.input1Channel
     conv.io.kernelChannel <> io.input2Channel
     io.outputChannel <> conv.io.outputChannel
-
-    latency = 0 // TODO: calculate latency
-    dspUsage = 0 // TODO: calculate DSP usage
   }
-
-
 }
 
 

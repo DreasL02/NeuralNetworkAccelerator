@@ -1,9 +1,10 @@
 package operators.systolic_array
 
 import chisel3._
-import chisel3.util.{Fill, log2Ceil}
 import module_utils.SmallModules.mult
 
+// This file was part of the Special course hand-in and has largely remained unchanged.
+// The exception is the change of the multiplication to the mult function from the SmallModules package.
 // Inspired by code by Kazutomo Yoshii:
 // https://github.com/kazutomo/Chisel-MatMul/tree/master (Visited 08-04-2024)
 // and the approach presented at the ECE459 course page by NJIT:

@@ -141,4 +141,13 @@ object Operators {
     require(newShape._3 > 0, "newDimensions._3 must be greater than 0")
     require(newShape._4 > 0, "newDimensions._4 must be greater than 0")
   }
+
+  case class TanhType(w: Int, fixedPoint: Int, signed: Boolean, shape: (Int, Int, Int, Int)) {
+    require(w > 0, "w must be greater than 0")
+    require(fixedPoint >= 0, "fixedPoint must be greater than or equal 0")
+    require(shape._1 > 0, "operandDimensions._1 must be greater than 0")
+    require(shape._2 > 0, "operandDimensions._2 must be greater than 0")
+    require(shape._3 > 0, "operandDimensions._3 must be greater than 0")
+    require(shape._4 > 0, "operandDimensions._4 must be greater than 0")
+  }
 }

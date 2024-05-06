@@ -2,7 +2,7 @@ package stages
 
 import chisel3._
 import onnx.Operators.InitializerType
-import operators.{Initializer, Initializer4d}
+import operators.{Initializer4d}
 
 class InitializerStage(
                         wOut: Int,
@@ -14,7 +14,4 @@ class InitializerStage(
   val initializer = Module(new Initializer4d(wOut, shapeOut, data))
 
   io.outputChannel <> initializer.io.outputChannel
-
-  latency = 0
-  dspUsage = 0
 }

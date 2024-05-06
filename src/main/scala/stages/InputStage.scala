@@ -2,7 +2,7 @@ package stages
 
 import onnx.Operators.InputType
 import chisel3._
-import communication.chisel.lib.uart.BufferedUartRxForTestingOnly
+import communication.chisel.lib.uart.BufferedUartRx
 import module_utils.ByteIntoFlatVectorCollector
 import operators.Reshape
 
@@ -28,7 +28,7 @@ class InputStage(
     val inputBitWidth = totalElements * wOut
 
     val bytesRequired = (inputBitWidth / 8.0f).ceil.toInt
-    val bufferedUartRx = Module(new BufferedUartRxForTestingOnly(frequency, baudRate, bytesRequired))
+    val bufferedUartRx = Module(new BufferedUartRx(frequency, baudRate, bytesRequired))
 
     bufferedUartRx.io.rxd := io.inputChannel.bits(0)(0)(0)(0)
     io.inputChannel.ready := true.B
@@ -53,12 +53,7 @@ class InputStage(
     reshaper.io.inputChannel.bits(0)(0)(0) := byteConverter.io.outputChannel.bits
 
     io.outputChannel <> reshaper.io.outputChannel
-
-    latency = 0
-    dspUsage = 0
   } else {
     io.outputChannel <> io.inputChannel
-    latency = 0
-    dspUsage = 0
   }
 }

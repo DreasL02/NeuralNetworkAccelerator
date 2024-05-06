@@ -3,7 +3,7 @@ package operators
 import chisel3._
 import chisel3.util.DecoupledIO
 import module_utils.NoCalculationDelayInterfaceFSM
-import module_utils.SmallModules.{mult, timer}
+import module_utils.SmallModules.{mult}
 
 // Hadamard product
 

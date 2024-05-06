@@ -2,6 +2,7 @@ import chisel3._
 import chiseltest._
 import module_utils.ShiftedBuffer
 import org.scalatest.freespec.AnyFreeSpec
+// This file was part of the Special course hand-in and has largely remained unchanged.
 
 class ShiftedBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Buffer should behave correctly" in {

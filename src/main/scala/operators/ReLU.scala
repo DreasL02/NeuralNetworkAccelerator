@@ -2,8 +2,7 @@ package operators
 
 import chisel3._
 import chisel3.util.DecoupledIO
-import module_utils.{CalculationDelayInterfaceFSM, NoCalculationDelayInterfaceFSM}
-import module_utils.SmallModules.timer
+import module_utils.{NoCalculationDelayInterfaceFSM}
 
 class ReLU(w: Int, numberOfRows: Int, numberOfColumns: Int, signed: Boolean) extends Module {
 
