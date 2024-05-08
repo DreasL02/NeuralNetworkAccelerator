@@ -14,7 +14,6 @@ class CalculationDelayInterfaceFSM extends Module {
     val inputReady = Output(Bool())
     val outputValid = Output(Bool())
     val storeResult = Output(Bool())
-    val enableTimer = Output(Bool())
   })
 
   private val idle :: calculating :: finished :: Nil = Enum(3)
@@ -24,7 +23,6 @@ class CalculationDelayInterfaceFSM extends Module {
   io.inputReady := false.B
   io.outputValid := false.B
   io.storeResult := false.B
-  io.enableTimer := false.B
 
 
   switch(state) {
@@ -34,12 +32,10 @@ class CalculationDelayInterfaceFSM extends Module {
         // input is valid, input handshake can happen and we can start calculating
         state := calculating
         io.calculateStart := true.B
-        io.enableTimer := true.B
       }
       // otherwise, input is not valid, wait until it is
     }
     is(calculating) {
-      io.enableTimer := true.B
       when(io.doneWithCalculation) {
         // the number of cycles it takes to calculate the result has passed and we store the result in the buffer
         state := finished
@@ -56,7 +52,5 @@ class CalculationDelayInterfaceFSM extends Module {
       // otherwise, output handshake cannot happen yet because the output is not ready and we need to wait
     }
   }
-
-
 }
 
