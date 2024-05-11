@@ -13,7 +13,8 @@ class MaxPool(
                kernelShape: (Int, Int),
                pads: (Int, Int),
                strides: (Int, Int),
-               signed: Boolean
+               signed: Boolean,
+               printing: Boolean = false
              ) extends Module {
 
   private val numberOfOutputRows = (numberOfRows - kernelShape._1 + 2 * pads._1) / strides._1 + 1
@@ -40,7 +41,7 @@ class MaxPool(
         }
       }
 
-      val maxFinder = Module(new MaxFinderTree(w, kernelShape._1 * kernelShape._2, signed))
+      val maxFinder = Module(new MaxFinderTree(w, kernelShape._1 * kernelShape._2, signed, printing))
 
       maxFinder.io.inputChannel.bits := inputSlice.flatten
       maxFinder.io.inputChannel.valid := io.inputChannel.valid
