@@ -10,7 +10,7 @@ import onnx.SpecToListConverter
 class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestTester {
   val printToConsole = true // set to true to print the results to the console
   val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/8x8_open.json"
+  val filepath = "ONNX Python/json/8x8_open_q1.2.1.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath, true)
   val parameters = lists._1
@@ -21,7 +21,7 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
   val fixedPointResult = parameters.fixedPointResult
 
   val signed = true
-  val threshold = 1.75f
+  val threshold = 0.75f
   val numberOfInputs = 10
 
   val imageSize = 8
@@ -51,7 +51,7 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
 
   val expectedResults = Array.fill(numberOfInputs)(Array.ofDim[Float](10))
   for (testNum <- 0 until numberOfInputs) {
-    val inputFileName = "ONNX Python/digits_8x8/expected_%d.txt".format(testNum)
+    val inputFileName = "ONNX Python/digits_28x28/expected_%d.txt".format(testNum)
     println(inputFileName)
     val flatData = scala.io.Source.fromFile(inputFileName).getLines().map(_.toFloat).toArray
     for (i <- 0 until 10) {
@@ -61,6 +61,8 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
 
   val results = Array.fill(numberOfInputs)(Array.ofDim[Float](10))
 
+
+  val cycleStart = Array.fill(numberOfInputs)(0)
 
   "AutomaticGenerationSpec should behave correctly" in {
     test(new AutomaticGeneration(lists._2, lists._3, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => // test with verilator
@@ -85,6 +87,8 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
               dut.io.inputChannels(0).bits(0)(0)(i)(j).poke(floatToFixed(testData(inputNum)(i)(j), fixedPoint, w, signed).U)
             }
           }
+
+          cycleStart(inputNum) = cycleTotal
           inputNum += 1
         }
 
@@ -98,6 +102,8 @@ class AutomaticGenerationUCIMLPipeSpec extends AnyFreeSpec with ChiselScalatestT
             println("Result for image " + resultNum + " Cycles Total: " + cycleTotal)
             println("Output:  \t\t" + results(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
             println("Expected:\t\t" + expectedResults(resultNum).map(f => "%+3.2f".format(f)).mkString("\t"))
+            println("Cycles Total: " + cycleTotal + " Cycles Since Input: " + (cycleTotal - cycleStart(resultNum)))
+
             println()
           }
           resultNum += 1

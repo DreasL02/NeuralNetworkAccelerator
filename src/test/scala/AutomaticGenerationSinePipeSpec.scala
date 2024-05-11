@@ -10,8 +10,8 @@ import onnx.SpecToListConverter
 class AutomaticGenerationSinePipeSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   val printToConsole = true // set to true to print the results to the console
-  val printConnections = true // set to true to print the connections to the console
-  val filepath = "ONNX Python/json/open_sine.json"
+  val printConnections = false // set to true to print the connections to the console
+  val filepath = "ONNX Python/json/sinus_open_q1.2.1_direct.json"
 
   val lists: (Parameters, List[Any], List[List[Int]]) = SpecToListConverter.convertSpecToLists(filepath)
   val parameters = lists._1
@@ -22,7 +22,7 @@ class AutomaticGenerationSinePipeSpec extends AnyFreeSpec with ChiselScalatestTe
   val fixedPointResult = parameters.fixedPointResult
   val signed = true
   val threshold = 0.25f
-  val numberOfInputs = 10
+  val numberOfInputs = 75
   val pipelineIO = false
 
   val inputs = (0 until numberOfInputs).map(i => 2 * Math.PI * i / numberOfInputs.toDouble)
@@ -42,7 +42,7 @@ class AutomaticGenerationSinePipeSpec extends AnyFreeSpec with ChiselScalatestTe
   }
 
   "Should work" in {
-    test(new AutomaticGeneration(lists._2, lists._3, printConnections)) { dut =>
+    test(new AutomaticGeneration(lists._2, lists._3, printConnections)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut =>
       var inputNum = 0
       var resultNum = 0
       var cycleTotal = 0

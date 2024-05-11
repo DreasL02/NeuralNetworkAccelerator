@@ -1,0 +1,670 @@
+{
+  "Input": [
+    {
+      "index": 6,
+      "bit_width": 4,
+      "shape": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "implementation": "open",
+      "input_shape": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "input_bit_width": 4,
+      "baud_rate": 1,
+      "frequency": 1
+    }
+  ],
+  "Output": [
+    {
+      "index": 17,
+      "bit_width": 8,
+      "connections": [
+        14
+      ],
+      "shape": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "implementation": "open",
+      "input_shape": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "input_bit_width": 8,
+      "baud_rate": 1,
+      "frequency": 1
+    }
+  ],
+  "Rounder": [
+    {
+      "index": 15,
+      "bit_width_operands": 8,
+      "bit_width_result": 4,
+      "fixed_point_operands": 2,
+      "fixed_point_result": 1,
+      "connections": [
+        9
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    },
+    {
+      "index": 16,
+      "bit_width_operands": 8,
+      "bit_width_result": 4,
+      "fixed_point_operands": 2,
+      "fixed_point_result": 1,
+      "connections": [
+        12
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    }
+  ],
+  "Conv": [],
+  "MatMul": [
+    {
+      "index": 7,
+      "bit_width_operands": 4,
+      "bit_width_result": 8,
+      "connections": [
+        6,
+        4
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ],
+      "implementation": "systolic_array"
+    },
+    {
+      "index": 10,
+      "bit_width_operands": 4,
+      "bit_width_result": 8,
+      "connections": [
+        15,
+        3
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ],
+        [
+          1,
+          1,
+          16,
+          16
+        ]
+      ],
+      "implementation": "systolic_array"
+    },
+    {
+      "index": 13,
+      "bit_width_operands": 4,
+      "bit_width_result": 8,
+      "connections": [
+        16,
+        5
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ],
+        [
+          1,
+          1,
+          16,
+          1
+        ]
+      ],
+      "implementation": "systolic_array"
+    }
+  ],
+  "MaxPool": [],
+  "Reshape": [],
+  "Relu": [
+    {
+      "index": 9,
+      "bit_width": 8,
+      "connections": [
+        8
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    },
+    {
+      "index": 12,
+      "bit_width": 8,
+      "connections": [
+        11
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    }
+  ],
+  "Add": [
+    {
+      "index": 8,
+      "bit_width": 8,
+      "connections": [
+        7,
+        2
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ],
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    },
+    {
+      "index": 11,
+      "bit_width": 8,
+      "connections": [
+        10,
+        1
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          16
+        ],
+        [
+          1,
+          1,
+          1,
+          16
+        ]
+      ]
+    },
+    {
+      "index": 14,
+      "bit_width": 8,
+      "connections": [
+        13,
+        0
+      ],
+      "input_shape": [
+        [
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "Initializer": [
+    {
+      "index": 0,
+      "bit_width": 8,
+      "shape": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "data": [
+        255
+      ]
+    },
+    {
+      "index": 1,
+      "bit_width": 8,
+      "shape": [
+        1,
+        1,
+        1,
+        16
+      ],
+      "data": [
+        0,
+        0,
+        0,
+        2,
+        0,
+        2,
+        2,
+        1,
+        0,
+        2,
+        2,
+        254,
+        0,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "index": 2,
+      "bit_width": 8,
+      "shape": [
+        1,
+        1,
+        1,
+        16
+      ],
+      "data": [
+        0,
+        4,
+        0,
+        0,
+        255,
+        0,
+        5,
+        0,
+        253,
+        255,
+        0,
+        0,
+        0,
+        0,
+        0,
+        252
+      ]
+    },
+    {
+      "index": 3,
+      "bit_width": 4,
+      "shape": [
+        1,
+        1,
+        16,
+        16
+      ],
+      "data": [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        15,
+        0,
+        0,
+        15,
+        0,
+        0,
+        15,
+        15,
+        0,
+        1,
+        15,
+        1,
+        1,
+        0,
+        0,
+        1,
+        15,
+        0,
+        15,
+        1,
+        1,
+        0,
+        0,
+        15,
+        0,
+        1,
+        15,
+        0,
+        15,
+        0,
+        15,
+        15,
+        1,
+        0,
+        15,
+        0,
+        0,
+        1,
+        0,
+        0,
+        15,
+        15,
+        0,
+        0,
+        0,
+        15,
+        1,
+        0,
+        15,
+        1,
+        0,
+        14,
+        1,
+        0,
+        0,
+        0,
+        1,
+        15,
+        15,
+        1,
+        15,
+        15,
+        0,
+        1,
+        15,
+        1,
+        1,
+        15,
+        15,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        1,
+        1,
+        15,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        2,
+        2,
+        1,
+        0,
+        1,
+        1,
+        15,
+        15,
+        0,
+        1,
+        0,
+        1,
+        0,
+        15,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        15,
+        15,
+        0,
+        15,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        14,
+        0,
+        2,
+        15,
+        1,
+        0,
+        0,
+        15,
+        0,
+        15,
+        0,
+        1,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        15,
+        1,
+        15,
+        1,
+        0,
+        0,
+        0,
+        0,
+        15,
+        1,
+        15,
+        1,
+        15,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        15,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        15,
+        0,
+        15,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        15,
+        0,
+        0,
+        15,
+        0,
+        15,
+        15,
+        0,
+        0,
+        14,
+        1,
+        1,
+        0,
+        0,
+        15,
+        0
+      ]
+    },
+    {
+      "index": 4,
+      "bit_width": 4,
+      "shape": [
+        1,
+        1,
+        1,
+        16
+      ],
+      "data": [
+        15,
+        0,
+        0,
+        1,
+        1,
+        15,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        15,
+        15,
+        0,
+        1
+      ]
+    },
+    {
+      "index": 5,
+      "bit_width": 4,
+      "shape": [
+        1,
+        1,
+        16,
+        1
+      ],
+      "data": [
+        0,
+        0,
+        1,
+        2,
+        1,
+        0,
+        2,
+        14,
+        15,
+        14,
+        15,
+        1,
+        1,
+        15,
+        2,
+        0
+      ]
+    }
+  ],
+  "Broadcaster": [],
+  "Tanh": [],
+  "Parameters": [
+    {
+      "bit_width_base": 8,
+      "fixed_point_base": 2,
+      "bit_width_multiplication": 4,
+      "fixed_point_multiplication": 1,
+      "signed": true
+    }
+  ]
+}
